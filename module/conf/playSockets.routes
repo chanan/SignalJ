@@ -1,0 +1,2 @@
+GET			/js/playSockets.js  					@controllers.PlaySockets.js()
+GET			/playSockets/Join						@controllers.PlaySockets.join()
