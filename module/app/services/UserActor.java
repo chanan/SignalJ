@@ -8,7 +8,7 @@ import play.libs.F.Callback;
 import play.libs.F.Callback0;
 import play.libs.Json;
 import play.mvc.WebSocket;
-import services.PlaySocketsActor.Join;
+import services.SignalJActor.Join;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
@@ -21,13 +21,13 @@ class UserActor extends UntypedActor {
 	private UUID uuid;
 	private WebSocket.Out<JsonNode> out;
     private WebSocket.In<JsonNode> in;
-    private final ActorRef playSockets;
+    private final ActorRef signalJActor;
     private final Map<String, ActorRef> channels = new HashMap<String, ActorRef>();
     
     
     @Inject
-    public UserActor(@Named("PlaySocketsActor") ActorRef playSockets) {
-    	this.playSockets = playSockets;
+    public UserActor(@Named("SignalJActor") ActorRef signalJActor) {
+    	this.signalJActor = signalJActor;
     }
 
 	@Override
@@ -42,7 +42,7 @@ class UserActor extends UntypedActor {
 			final ActorRef self = getSelf();
 			in.onClose(new Callback0() {
 				public void invoke() {
-					playSockets.tell(new PlaySocketsActor.Quit(uuid), self);
+					signalJActor.tell(new SignalJActor.Quit(uuid), self);
 	            }
 			});
 			in.onMessage(new Callback<JsonNode>() {
@@ -75,14 +75,14 @@ class UserActor extends UntypedActor {
 		if(message instanceof InternalMessage) {
 			final InternalMessage internalMessage = (InternalMessage) message;
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("ChannelJoin")) {
-				playSockets.tell(new PlaySocketsActor.ChannelJoin(internalMessage.json.get("channel").textValue(), 
+				signalJActor.tell(new SignalJActor.ChannelJoin(internalMessage.json.get("channel").textValue(), 
 						UUID.fromString(internalMessage.json.get("uuid").textValue())), getSelf());
 			}
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToAll")) {
-				playSockets.tell(new PlaySocketsActor.SendToAll(internalMessage.json.get("message").textValue()), getSelf());
+				signalJActor.tell(new SignalJActor.SendToAll(internalMessage.json.get("message").textValue()), getSelf());
 			}
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToChannel")) {
-				playSockets.tell(new PlaySocketsActor.SendToChannel(internalMessage.json.get("channel").textValue(),
+				signalJActor.tell(new SignalJActor.SendToChannel(internalMessage.json.get("channel").textValue(),
 						internalMessage.json.get("message").textValue()), getSelf());
 			}
 		}

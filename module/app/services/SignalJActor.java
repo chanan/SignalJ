@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Singleton;
 
 @Singleton
-public class PlaySocketsActor extends UntypedActor {
+public class SignalJActor extends UntypedActor {
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
 	private final Map<String, ActorRef> channels = new HashMap<String, ActorRef>();
 	
