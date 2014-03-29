@@ -72,6 +72,19 @@ class UserActor extends UntypedActor {
 			out.write(event);
 			Logger.debug(uuid + ": " + send.message);
 		}
+		if(message instanceof MethodReturn) {
+			final MethodReturn methodReturn = (MethodReturn) message;
+			final ObjectNode event = Json.newObject();
+			event.put("type", "methodReturn");
+			event.put("uuid", methodReturn.uuid.toString());
+			event.put("id", methodReturn.id);
+			event.put("returnValue", methodReturn.returnValue.toString());
+			event.put("hub", methodReturn.hub);
+			event.put("method", methodReturn.method);
+			event.put("returnType", methodReturn.returnType);
+			out.write(event);
+			Logger.debug("Return Value: " + event);
+		}
 		if(message instanceof InternalMessage) {
 			final InternalMessage internalMessage = (InternalMessage) message;
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("ChannelJoin")) {
@@ -96,6 +109,24 @@ class UserActor extends UntypedActor {
 		
 		public Send(String message) {
 			this.message = message;
+		}
+	}
+	
+	public static class MethodReturn {
+		final UUID uuid;
+		final String id;
+		final Object returnValue;
+		final String hub;
+		final String method;
+		final String returnType;
+		
+		public MethodReturn(UUID uuid, String id, Object returnValue, String hub, String method, String returnType) {
+			this.uuid = uuid;
+			this.id = id;
+			this.returnValue = returnValue;
+			this.hub = hub;
+			this.method = method;
+			this.returnType = returnType;
 		}
 	}
 	

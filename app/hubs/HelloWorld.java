@@ -12,4 +12,8 @@ public class HelloWorld extends Hub {
 			Logger.debug("The client said: " + something);
 		}
 	}
+	
+	public int Add(int a, int b) {
+		return a + b;
+	}
 }

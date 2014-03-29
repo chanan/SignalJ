@@ -5,6 +5,8 @@
 <button id="btnHello">Say Hello on the server!</button>
 <br>
 <button id="btnHello2">Say Hello twice</button>
+<br>
+<button id="btnAdd">Add 1 + 2</button>
 <script type="text/javascript">
 $(function() {
 	$('#btnHello').click(function() {
@@ -12,6 +14,9 @@ $(function() {
 	});
 	$('#btnHello2').click(function() {
 		HelloWorld_SaySomethingANumberOfTimes("hello", 2);
+	});
+	$('#btnAdd').click(function() {
+		HelloWorld_Add(1, 2);
 	});
 });
 </script>

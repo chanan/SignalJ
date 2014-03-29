@@ -19,6 +19,7 @@ import akka.actor.UntypedActor;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+//TODO Make params into an array instead of a flat object
 public class HubsActor extends UntypedActor {
 	private final ActorRef signalJActor;
 	
@@ -52,6 +53,9 @@ public class HubsActor extends UntypedActor {
 				sb.append("var j = {type: 'execute', hub: '").append(hub.getName()).append("', ");
 				sb.append("method: '").append(m.getName()).append("', ");
 				sb.append("paramCount: ").append(m.getParameterTypes().length);
+				if(m.getReturnType() != null) {
+					sb.append(", returnType: '").append(m.getReturnType()).append("'");
+				}
 				i = 0;
 				for(Class<?> p : m.getParameterTypes()) {
 					sb.append(", ").append("param_").append(i);

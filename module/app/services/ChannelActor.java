@@ -46,9 +46,17 @@ public class ChannelActor extends UntypedActor {
 		if(message instanceof Execute) {
 			final Execute execute = (Execute) message;
 			final String method = execute.json.get("method").textValue();
-			Class<?>[] classes = getParamTypeList(execute.json);
-			Method m = instance.getClass().getMethod(method, classes);
-            m.invoke(instance, getParams(execute.json, classes));
+			final Class<?>[] classes = getParamTypeList(execute.json);
+			final Method m = instance.getClass().getMethod(method, classes);
+            final Object ret = m.invoke(instance, getParams(execute.json, classes));
+            if(ret != null) {
+            	final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
+            	final String id = execute.json.get("id").textValue();
+            	final String hub = execute.json.get("hub").textValue();
+            	final String returnType = execute.json.get("returnType").textValue();
+            	final ActorRef user = users.get(uuid);
+            	user.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), getSelf());
+            }
 		}
 		if(message instanceof Send) {
 			final Send send = (Send) message;

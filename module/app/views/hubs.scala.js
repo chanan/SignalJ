@@ -6,6 +6,7 @@ function getSocket() {
 
 var socket = getSocket();
 var uuid;
+var id = 0;
 
 var receiveEvent = function(event) {
     var data = JSON.parse(event.data);
@@ -26,7 +27,9 @@ var receiveEvent = function(event) {
 socket.onmessage = receiveEvent;
 
 function systemsend(message) {
+	id = id + 1;
 	message.uuid = uuid;
+	message.id = '' + id;
 	var str = JSON.stringify(message);
 	console.log("Message to server: %O", message);
 	socket.send(str);
