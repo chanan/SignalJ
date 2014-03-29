@@ -7,6 +7,7 @@ function getSocket() {
 var socket = getSocket();
 var uuid;
 var id = 0;
+var map = {};
 
 var receiveEvent = function(event) {
     var data = JSON.parse(event.data);
@@ -20,6 +21,10 @@ var receiveEvent = function(event) {
     }
     if(data.type === "init") {
     	uuid = data.uuid;
+    }
+    if(data.type === "methodReturn") {
+    	var f = map[data.id];
+    	if(f != undefined) f(data.returnValue);
     }
     console.log("Message from server: %O", data);
 };
