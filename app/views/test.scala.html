@@ -1,22 +1,2 @@
-<script type="text/javascript" src="/assets/javascripts/jquery-1.9.0.min.js"></script>
-<!-- <script type="text/javascript" src="/js/signalJ.js"></script> -->
-<script type="text/javascript" src="/js/hubs.js"></script>
+<script type="text/javascript" src="/js/playSockets.js"></script>
 <h1>Here!</h1>
-<button id="btnHello">Say Hello on the server!</button>
-<br>
-<button id="btnHello2">Say Hello twice</button>
-<br>
-<button id="btnAdd">Add 1 + 2</button>
-<script type="text/javascript">
-$(function() {
-	$('#btnHello').click(function() {
-		HelloWorld_SayHello();
-	});
-	$('#btnHello2').click(function() {
-		HelloWorld_SaySomethingANumberOfTimes("hello", 2);
-	});
-	$('#btnAdd').click(function() {
-		HelloWorld_Add(1, 2);
-	});
-});
-</script>

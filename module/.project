@@ -1,5 +1,5 @@
 <projectDescription>
-  <name>SignalJ</name>
+  <name>PlaySockets</name>
   <buildSpec>
     <buildCommand>
       <name>org.eclipse.jdt.core.javabuilder</name>

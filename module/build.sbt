@@ -4,8 +4,7 @@ version := "0.1.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
 	"com.google.inject" % "guice" % "3.0",
-	"akkaguice" %% "akkaguice" % "0.7.0",
-	"org.reflections" % "reflections" % "0.9.9-RC1"
+	"akkaguice" %% "akkaguice" % "0.7.0"
 )
 
 publishTo <<= version { (v: String) =>

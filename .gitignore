@@ -13,13 +13,3 @@ dist
 /.project
 /RUNNING_PID
 /.settings
-bin/
-.target/
-.cache
-module/.classpath
-module/.project
-module/project/project
-module/project/target
-module/target
-module/.settings
-module/.target

@@ -8,7 +8,7 @@ import play.libs.F.Callback;
 import play.libs.F.Callback0;
 import play.libs.Json;
 import play.mvc.WebSocket;
-import services.SignalJActor.Join;
+import services.PlaySocketsActor.Join;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
@@ -21,13 +21,13 @@ class UserActor extends UntypedActor {
 	private UUID uuid;
 	private WebSocket.Out<JsonNode> out;
     private WebSocket.In<JsonNode> in;
-    private final ActorRef signalJActor;
+    private final ActorRef playSockets;
     private final Map<String, ActorRef> channels = new HashMap<String, ActorRef>();
     
     
     @Inject
-    public UserActor(@Named("SignalJActor") ActorRef signalJActor) {
-    	this.signalJActor = signalJActor;
+    public UserActor(@Named("PlaySocketsActor") ActorRef playSockets) {
+    	this.playSockets = playSockets;
     }
 
 	@Override
@@ -42,7 +42,7 @@ class UserActor extends UntypedActor {
 			final ActorRef self = getSelf();
 			in.onClose(new Callback0() {
 				public void invoke() {
-					signalJActor.tell(new SignalJActor.Quit(uuid), self);
+					playSockets.tell(new PlaySocketsActor.Quit(uuid), self);
 	            }
 			});
 			in.onMessage(new Callback<JsonNode>() {
@@ -72,34 +72,18 @@ class UserActor extends UntypedActor {
 			out.write(event);
 			Logger.debug(uuid + ": " + send.message);
 		}
-		if(message instanceof MethodReturn) {
-			final MethodReturn methodReturn = (MethodReturn) message;
-			final ObjectNode event = Json.newObject();
-			event.put("type", "methodReturn");
-			event.put("uuid", methodReturn.uuid.toString());
-			event.put("id", methodReturn.id);
-			event.put("returnValue", methodReturn.returnValue.toString());
-			event.put("hub", methodReturn.hub);
-			event.put("method", methodReturn.method);
-			event.put("returnType", methodReturn.returnType);
-			out.write(event);
-			Logger.debug("Return Value: " + event);
-		}
 		if(message instanceof InternalMessage) {
 			final InternalMessage internalMessage = (InternalMessage) message;
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("ChannelJoin")) {
-				signalJActor.tell(new SignalJActor.ChannelJoin(internalMessage.json.get("channel").textValue(), 
+				playSockets.tell(new PlaySocketsActor.ChannelJoin(internalMessage.json.get("channel").textValue(), 
 						UUID.fromString(internalMessage.json.get("uuid").textValue())), getSelf());
 			}
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToAll")) {
-				signalJActor.tell(new SignalJActor.SendToAll(internalMessage.json.get("message").textValue()), getSelf());
+				playSockets.tell(new PlaySocketsActor.SendToAll(internalMessage.json.get("message").textValue()), getSelf());
 			}
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToChannel")) {
-				signalJActor.tell(new SignalJActor.SendToChannel(internalMessage.json.get("channel").textValue(),
+				playSockets.tell(new PlaySocketsActor.SendToChannel(internalMessage.json.get("channel").textValue(),
 						internalMessage.json.get("message").textValue()), getSelf());
-			}
-			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("execute")) {
-				signalJActor.tell(new SignalJActor.Execute(internalMessage.json), getSelf());
 			}
 		}
 	}
@@ -109,24 +93,6 @@ class UserActor extends UntypedActor {
 		
 		public Send(String message) {
 			this.message = message;
-		}
-	}
-	
-	public static class MethodReturn {
-		final UUID uuid;
-		final String id;
-		final Object returnValue;
-		final String hub;
-		final String method;
-		final String returnType;
-		
-		public MethodReturn(UUID uuid, String id, Object returnValue, String hub, String method, String returnType) {
-			this.uuid = uuid;
-			this.id = id;
-			this.returnValue = returnValue;
-			this.hub = hub;
-			this.method = method;
-			this.returnType = returnType;
 		}
 	}
 	

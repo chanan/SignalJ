@@ -1,6 +1,6 @@
 function getSocket() {
 	var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
-	var socket = new WS("ws://localhost:9000/signalJ/Join"); //"at sign routes.PlaySockets.join().webSocketURL(request)"
+	var socket = new WS("ws://localhost:9000/playSockets/Join"); //"at sign routes.PlaySockets.join().webSocketURL(request)"
 	return socket;
 }
 
@@ -22,20 +22,13 @@ var receiveEvent = function(event) {
     if(!once) {
     	joinChannel('test');
     	send('Hello to all');
-    	//send('Hello to test channel!', 'test');
+    	send('Hello to test channel!', 'test');
     	once = true;
     }
 };
 
 function joinChannel(channelName) {
 	var str = JSON.stringify({ type: 'ChannelJoin', uuid: uuid, channel: channelName });
-	console.log(str);
-	socket.send(str);
-}
-
-function systemsend(message) {
-	message.uuid = uuid;
-	var str = JSON.stringify(message);
 	console.log(str);
 	socket.send(str);
 }

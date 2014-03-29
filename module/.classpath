@@ -1,7 +1,7 @@
 <classpath>
   <classpathentry kind="src" path="app" output=".target"/>
   <classpathentry kind="src" path="test" output=".target"/>
-  <classpathentry path="C:\Java\signalj\module\target\scala-2.10\classes_managed" kind="lib"></classpathentry>
+  <classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
   <classpathentry kind="lib" path="C:\Java\play-2.2.1\framework\..\repository\cache\com.google.inject\guice\jars\guice-3.0.jar"/>
   <classpathentry kind="lib" path="C:\Java\play-2.2.1\framework\..\repository\cache\javax.inject\javax.inject\jars\javax.inject-1.jar"/>
   <classpathentry kind="lib" path="C:\Java\play-2.2.1\framework\..\repository\cache\aopalliance\aopalliance\jars\aopalliance-1.0.jar"/>
@@ -58,6 +58,8 @@
   <classpathentry kind="lib" path="C:\Java\play-2.2.1\repository\local\com.google.guava\guava\14.0.1\bundles\guava.jar"/>
   <classpathentry kind="lib" path="C:\Java\play-2.2.1\repository\local\com.google.code.findbugs\jsr305\2.0.1\jars\jsr305.jar"/>
   <classpathentry kind="lib" path="C:\Java\play-2.2.1\repository\local\javax.servlet\javax.servlet-api\3.0.1\jars\javax.servlet-api.jar"/>
+  <classpathentry kind="lib" path="C:\Java\play-2.2.1\repository\local\playguicestatsd\playguicestatsd_2.10\0.5.0\jars\playguicestatsd_2.10.jar"/>
+  <classpathentry kind="lib" path="C:\Java\play-2.2.1\framework\..\repository\cache\com.typesafe.play.plugins\play-statsd_2.10\jars\play-statsd_2.10-2.2.0.jar"/>
   <classpathentry kind="lib" path="C:\Java\play-2.2.1\repository\local\com.typesafe.play\play-test_2.10\2.2.1\jars\play-test_2.10.jar"/>
   <classpathentry kind="lib" path="C:\Java\play-2.2.1\repository\local\junit\junit\4.11\jars\junit.jar"/>
   <classpathentry kind="lib" path="C:\Java\play-2.2.1\repository\local\org.hamcrest\hamcrest-core\1.3\jars\hamcrest-core.jar"/>
