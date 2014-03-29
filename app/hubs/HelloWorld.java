@@ -6,4 +6,10 @@ public class HelloWorld extends Hub {
 		Logger.debug("A client made me say hello!");
 		TellClients("This is a test!");
 	}
+	
+	public void SaySomethingANumberOfTimes(String something, int number) {
+		for(int i = 0; i < number; i++) {
+			Logger.debug("The client said: " + something);
+		}
+	}
 }

@@ -50,11 +50,18 @@ public class HubsActor extends UntypedActor {
 				}
 				sb.append(") {").append("\n");
 				sb.append("var j = {type: 'execute', hub: '").append(hub.getName()).append("', ");
-				sb.append("method: '").append(m.getName()).append("'");
+				sb.append("method: '").append(m.getName()).append("', ");
+				sb.append("paramCount: ").append(m.getParameterTypes().length);
 				i = 0;
 				for(Class<?> p : m.getParameterTypes()) {
-					sb.append(", ").append(p.getSimpleName().toLowerCase()).append("_").append(i);
+					sb.append(", ").append("param_").append(i);
 					sb.append(": ").append(p.getSimpleName().toLowerCase()).append("_").append(i);
+					i++;
+				}
+				i = 0;
+				for(Class<?> p : m.getParameterTypes()) {
+					sb.append(", ").append("paramType_").append(i);
+					sb.append(": '").append(p.getName()).append("'");
 					i++;
 				}
 				sb.append("};").append("\n");

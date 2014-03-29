@@ -20,12 +20,14 @@ var receiveEvent = function(event) {
     if(data.type === "init") {
     	uuid = data.uuid;
     }
-    console.log("Message: " + data.message);
+    console.log("Message from server: %O", data);
 };
+
+socket.onmessage = receiveEvent;
 
 function systemsend(message) {
 	message.uuid = uuid;
 	var str = JSON.stringify(message);
-	console.log(str);
+	console.log("Message to server: %O", message);
 	socket.send(str);
 }

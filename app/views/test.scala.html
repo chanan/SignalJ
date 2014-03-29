@@ -3,10 +3,15 @@
 <script type="text/javascript" src="/js/hubs.js"></script>
 <h1>Here!</h1>
 <button id="btnHello">Say Hello on the server!</button>
+<br>
+<button id="btnHello2">Say Hello twice</button>
 <script type="text/javascript">
 $(function() {
 	$('#btnHello').click(function() {
 		HelloWorld_SayHello();
+	});
+	$('#btnHello2').click(function() {
+		HelloWorld_SaySomethingANumberOfTimes("hello", 2);
 	});
 });
 </script>
