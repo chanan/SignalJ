@@ -10,4 +10,4 @@ GET		/test						controllers.Application.test()
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
 #Add PlaySockets
-->     /         					playSockets.Routes
+->     /         					signalj.Routes
