@@ -14,3 +14,10 @@ dist
 /RUNNING_PID
 /.settings
 /.target
+module/.target
+module/.settings
+module/project/project
+module/project/target
+module/target
+module/.classpath
+module/.project
