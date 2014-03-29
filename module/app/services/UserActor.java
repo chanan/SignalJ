@@ -85,6 +85,9 @@ class UserActor extends UntypedActor {
 				signalJActor.tell(new SignalJActor.SendToChannel(internalMessage.json.get("channel").textValue(),
 						internalMessage.json.get("message").textValue()), getSelf());
 			}
+			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("execute")) {
+				signalJActor.tell(new SignalJActor.Execute(internalMessage.json), getSelf());
+			}
 		}
 	}
 	

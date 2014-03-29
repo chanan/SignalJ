@@ -1,0 +1,3 @@
+GET			/js/signalJ.js  					@controllers.SignalJ.js()
+GET			/signalJ/Join						@controllers.SignalJ.join()
+GET			/js/hubs.js							@controllers.SignalJ.hubs()
