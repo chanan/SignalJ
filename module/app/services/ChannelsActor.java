@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import models.HubsDescriptor;
 import services.SignalJActor.Execute;
 import services.SignalJActor.RegisterHub;
 import services.SignalJActor.SendToChannel;
@@ -11,7 +12,8 @@ import akka.actor.UntypedActor;
 import akkaGuice.PropsContext;
 
 public class ChannelsActor extends UntypedActor {
-	private final Map<String, ActorRef> channels = new HashMap<String, ActorRef>();
+	private final Map<String, ActorRef> channels = new HashMap<>();
+	private final Map<String, HubsDescriptor.HubDescriptor> descriptors = new HashMap<>();
 
 	@Override
 	public void onReceive(Object message) throws Exception {
@@ -22,6 +24,7 @@ public class ChannelsActor extends UntypedActor {
 				ActorRef channel = getContext().actorOf(PropsContext.get(ChannelActor.class), channelName);
 				channel.tell(registerHub, getSelf());
 				channels.put(channelName, channel);
+				descriptors.put(channelName, registerHub.descriptor);
 			}
 		}
 		if(message instanceof ChannelJoin) {

@@ -31,6 +31,14 @@ var receiveEvent = function(event) {
 
 socket.onmessage = receiveEvent;
 
+function hubs_describe(callback) {
+	if(callback != undefined) {
+		map[id + 1] = callback;
+	}
+	var j = {type: 'describe'};
+	systemsend(j);
+} 
+
 function systemsend(message) {
 	id = id + 1;
 	message.uuid = uuid;

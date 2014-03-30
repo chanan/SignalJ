@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import models.HubsDescriptor;
 import play.Logger;
 import services.ChannelsActor.ChannelJoin;
 import services.SignalJActor.Execute;
@@ -25,12 +26,15 @@ import com.google.inject.Singleton;
 public class ChannelActor extends UntypedActor {
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
 	private final static ObjectMapper mapper = new ObjectMapper();
-	private Object instance;
+	private Object instance; //TODO New one should be created everytime, also IoC?
+	private HubsDescriptor.HubDescriptor descriptor;
+	
 
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof RegisterHub) {
 			final RegisterHub registerHub = (RegisterHub) message;
+			descriptor = registerHub.descriptor;
 			instance = registerHub.hub.newInstance();
 			Logger.debug("Registered channel: " + registerHub.hub.getName());
 		}

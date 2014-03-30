@@ -7,6 +7,7 @@ import play.libs.F.Promise;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.WebSocket;
+import services.HubsActor;
 import services.SignalJActor;
 import services.SignalJActor.Join;
 import akka.actor.ActorRef;
@@ -34,7 +35,7 @@ public class SignalJ extends Controller {
 	}
 	
 	public Promise<Result> hubs() {
-		return Promise.wrap(ask(hubsActor, "Get", 1000)).map(new Function<Object, Result>(){
+		return Promise.wrap(ask(hubsActor, new HubsActor.GetJavaScript(), 1000)).map(new Function<Object, Result>(){
 			@Override
 			public Result apply(Object response) throws Throwable {
 				return ok(response.toString());

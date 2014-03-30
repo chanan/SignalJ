@@ -9,6 +9,8 @@
 <button id="btnAdd">Add 1 + 2</button>
 <br>
 Result: <span id="result"></span>
+<br>
+<button id="btnDescribe">Log to console Describe</button>
 <script type="text/javascript">
 $(function() {
 	$('#btnHello').click(function() {
@@ -20,6 +22,11 @@ $(function() {
 	$('#btnAdd').click(function() {
 		HelloWorld_Add(1, 2, function(data) {
 			$('#result').html(data);
+		});
+	});
+	$('#btnDescribe').click(function() {
+		hubs_describe(function(data) {
+			console.log("Describe: %O", data);
 		});
 	});
 });

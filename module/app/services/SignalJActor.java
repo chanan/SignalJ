@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import models.HubsDescriptor;
 import play.Logger;
 import play.mvc.WebSocket;
 import akka.actor.ActorRef;
@@ -14,17 +15,20 @@ import akkaGuice.PropsContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 
 @Singleton
 public class SignalJActor extends UntypedActor  {
 	private final ActorRef usersActor;
 	private final ActorRef channelsActor;
+	private final ActorRef hubsActor;
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
 	
 	@Inject
-	public SignalJActor() {
+	public SignalJActor(@Named("HubsActor") ActorRef hubsActor) {
 		this.usersActor = getContext().actorOf(PropsContext.get(UsersActor.class), "users");
-		this.channelsActor = getContext().actorOf(PropsContext.get(ChannelsActor.class), "channels");;
+		this.channelsActor = getContext().actorOf(PropsContext.get(ChannelsActor.class), "channels");
+		this.hubsActor = hubsActor;
 	}
 	
 	@Override
@@ -62,6 +66,9 @@ public class SignalJActor extends UntypedActor  {
 		}
 		if(message instanceof Execute) {
 			channelsActor.forward(message, getContext());
+		}
+		if(message instanceof Describe) {
+			hubsActor.forward(message, getContext());
 		}
 //		if(message instanceof ChannelJoin) {
 //			final ChannelJoin channelJoin = (ChannelJoin) message;
@@ -141,9 +148,11 @@ public class SignalJActor extends UntypedActor  {
 	
 	public static class RegisterHub {
 		final Class<? extends Hub> hub;
+		final HubsDescriptor.HubDescriptor descriptor;
 		
-		public RegisterHub(Class<? extends Hub> hub) {
+		public RegisterHub(Class<? extends Hub> hub, HubsDescriptor.HubDescriptor descriptor) {
 			this.hub = hub;
+			this.descriptor = descriptor;
 		}
 	}
 	
@@ -152,6 +161,16 @@ public class SignalJActor extends UntypedActor  {
 		
 		public Execute(JsonNode json) {
 			this.json = json;
+		}
+	}
+	
+	public static class Describe {
+		final JsonNode json;
+		final ActorRef user;
+		
+		public Describe(JsonNode json, ActorRef user) {
+			this.json = json;
+			this.user = user;
 		}
 	}
 }

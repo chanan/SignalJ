@@ -101,6 +101,9 @@ class UserActor extends UntypedActor {
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("execute")) {
 				signalJActor.tell(new SignalJActor.Execute(internalMessage.json), getSelf());
 			}
+			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("describe")) {
+				signalJActor.tell(new SignalJActor.Describe(internalMessage.json, getSelf()), getSelf());
+			}
 		}
 	}
 	
