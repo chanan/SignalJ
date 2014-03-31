@@ -166,11 +166,8 @@ public class HubsDescriptor {
 				}
 				if(!returnType.toString().equalsIgnoreCase("void")) {
 					sb.append(", callback");
-					sb.append(") {").append(CRLF);
-					sb.append(views.js.addCallback.render()).append(CRLF);
-				} else {
-					sb.append(") {").append(CRLF);
 				}
+				sb.append(") {").append(CRLF);
 				sb.append("var j = {type: 'execute', hub: '").append(hub.getName()).append("', ");
 				sb.append("method: '").append(name).append("', ");
 				sb.append("paramCount: ").append(parameters.values().size());
@@ -184,7 +181,11 @@ public class HubsDescriptor {
 					sb.append(": '").append(p.type.getName()).append("'");
 				}
 				sb.append("};").append(CRLF);
-				sb.append("systemsend(j);").append(CRLF);
+				sb.append("systemsend(j");
+				if(!returnType.toString().equalsIgnoreCase("void")) {
+					sb.append(", callback");
+				}
+				sb.append(");").append(CRLF);
 				sb.append("}").append(CRLF);
 				return sb.toString();
 			}

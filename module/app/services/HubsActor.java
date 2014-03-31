@@ -42,8 +42,8 @@ public class HubsActor extends UntypedActor {
 		if(hubsDescriptor.isEmpty()) fillDescriptors();
 		if(message instanceof GetJavaScript) {
 			StringBuffer sb = new StringBuffer();
-			sb.append(views.js.hubs.render()).append("\n");
 			sb.append(hubsDescriptor.toJS());
+			sb.append(views.js.hubs.render()).append("\n");
 			getSender().tell(sb.toString(), getSelf());
 		}
 		if(message instanceof Describe) {
