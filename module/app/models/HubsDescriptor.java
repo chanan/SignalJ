@@ -170,17 +170,14 @@ public class HubsDescriptor {
 				sb.append(") {").append(CRLF);
 				sb.append("var j = {type: 'execute', hub: '").append(hub.getName()).append("', ");
 				sb.append("method: '").append(name).append("', ");
-				sb.append("paramCount: ").append(parameters.values().size());
-				sb.append(", returnType: '").append(returnType).append("'");
+				sb.append("returnType: '").append(returnType).append("', ");
+				sb.append("parameters: [");
 				for(Parameter p : parameters.values()) {
-					sb.append(", ").append("param_").append(p.index);
-					sb.append(": ").append(p.type.getSimpleName().toLowerCase()).append("_").append(p.index);
+					sb.append("{ value: ").append(p.type.getSimpleName().toLowerCase()).append("_").append(p.index);
+					sb.append(", type: '").append(p.type.getName()).append("'}");
+					if(p.index != parameters.values().size() - 1) sb.append(", ");
 				}
-				for(Parameter p : parameters.values()) {
-					sb.append(", ").append("paramType_").append(p.index);
-					sb.append(": '").append(p.type.getName()).append("'");
-				}
-				sb.append("};").append(CRLF);
+				sb.append("]};").append(CRLF);
 				sb.append("systemsend(j");
 				if(!returnType.toString().equalsIgnoreCase("void")) {
 					sb.append(", callback");

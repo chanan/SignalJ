@@ -25,7 +25,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
-//TODO Make params into an array instead of a flat object
 @Singleton
 public class HubsActor extends UntypedActor {
 	private final ActorRef signalJActor;
