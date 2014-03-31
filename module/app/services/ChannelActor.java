@@ -72,9 +72,8 @@ public class ChannelActor extends UntypedActor {
 	
 	private Class<?>[] getParamTypeList(JsonNode node) throws ClassNotFoundException {
 		final List<Class<?>> ret = new ArrayList<Class<?>>();
-		final int paramCount = node.get("paramCount").intValue();
-		for(int i = 0; i < paramCount; i++) {
-			final Class<?> clazz = getClassForName(node.get("paramType_" + i).textValue());
+		for(final JsonNode param : node.get("parameters")) {
+			final Class<?> clazz = getClassForName(param.get("type").textValue());
 			ret.add(clazz);
 		}
 		return ret.toArray(new Class<?>[0]);
@@ -103,13 +102,11 @@ public class ChannelActor extends UntypedActor {
 		}
 	}
 	
-	private Object[] getParams(JsonNode node, Class<?>[] params ) throws JsonParseException, JsonMappingException, IOException {
+	private Object[] getParams(JsonNode node, Class<?>[] params ) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
 		final List<Object> ret = new ArrayList<Object>();
-		final int paramCount = node.get("paramCount").intValue();
-		for(int i = 0; i < paramCount; i++) {
-			final JsonParser param = mapper.treeAsTokens(node.get("param_" + i));
-			final Class<?> clazz = params[i];
-			Object obj = mapper.readValue(param, clazz);
+		for(final JsonNode param : node.get("parameters")) {
+			final Class<?> clazz = getClassForName(param.get("type").textValue());
+			final Object obj = mapper.readValue(mapper.treeAsTokens(param.get("value")), clazz);
 			ret.add(obj);
 		}
 		return ret.toArray();

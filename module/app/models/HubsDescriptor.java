@@ -13,6 +13,7 @@ import java.util.Map;
 public class HubsDescriptor {
 	public final static String VERSION = "1.0";
 	public final Map<String, HubDescriptor> hubs = new HashMap<>();
+	private final static String CRLF = "\n";
 	
 	public HubDescriptor addDescriptor(String name) throws ClassNotFoundException {
 		final HubDescriptor hub = new HubDescriptor(name);
@@ -50,18 +51,29 @@ public class HubsDescriptor {
 		return sb.toString();
 	}
 	
+	public String toJS() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("//Hubs version: ").append(VERSION).append(CRLF);
+		for(final HubDescriptor hub : hubs.values()) {
+			sb.append(hub.toJS()).append(CRLF);
+		}
+		return sb.toString();
+	}
+	
 	public class HubDescriptor {
 		private final String name;
+		private final Class<? extends HubDescriptor> hub;
 		private final List<Procedure> procedures = new ArrayList<Procedure>();
 
+		@SuppressWarnings("unchecked")
 		public HubDescriptor(String name) throws ClassNotFoundException {
 			this.name = name;
+			hub = (Class<? extends HubDescriptor>) Class.forName(name);
 			init();
 		}
 		
 		@SuppressWarnings("unchecked")
 		private void init() throws ClassNotFoundException {
-			final Class<? extends HubDescriptor> hub = (Class<? extends HubDescriptor>) Class.forName(name);
 			for(final Method m : getAllMethods(hub, withModifier(Modifier.PUBLIC))) {
 				final Procedure procedure = new Procedure(m);
 				procedures.add(procedure);
@@ -79,6 +91,16 @@ public class HubsDescriptor {
 		@Override
 		public String toString() {
 			return "{\"name\": \"" + name + "\", \"procedures\": " + procedures + "}";
+		}
+		
+		String toJS() {
+			StringBuffer sb = new StringBuffer();
+			sb.append("//Start hub: " + name).append(CRLF);
+			for(Procedure proc : procedures) {
+				sb.append(proc.toJS(hub)).append(CRLF);
+			}
+			sb.append("//End hub: " + name).append(CRLF);
+			return sb.toString();
 		}
 		
 		class Procedure {
@@ -132,6 +154,36 @@ public class HubsDescriptor {
 					sb.append("]");
 				}
 				sb.append("}");
+				return sb.toString();
+			}
+			
+			String toJS(Class<? extends HubDescriptor> hub) {
+				StringBuffer sb = new StringBuffer();
+				sb.append("function ").append(hub.getSimpleName()).append("_").append(name).append("(");
+				for(Parameter p : parameters.values()) {
+					sb.append(p.type.getSimpleName().toLowerCase()).append("_").append(p.index);
+					if(p.index != parameters.values().size() - 1) sb.append(", ");
+				}
+				if(!returnType.toString().equalsIgnoreCase("void")) {
+					sb.append(", callback");
+				}
+				sb.append(") {").append(CRLF);
+				sb.append("var j = {type: 'execute', hub: '").append(hub.getName()).append("', ");
+				sb.append("method: '").append(name).append("', ");
+				sb.append("returnType: '").append(returnType).append("', ");
+				sb.append("parameters: [");
+				for(Parameter p : parameters.values()) {
+					sb.append("{ value: ").append(p.type.getSimpleName().toLowerCase()).append("_").append(p.index);
+					sb.append(", type: '").append(p.type.getName()).append("'}");
+					if(p.index != parameters.values().size() - 1) sb.append(", ");
+				}
+				sb.append("]};").append(CRLF);
+				sb.append("systemsend(j");
+				if(!returnType.toString().equalsIgnoreCase("void")) {
+					sb.append(", callback");
+				}
+				sb.append(");").append(CRLF);
+				sb.append("}").append(CRLF);
 				return sb.toString();
 			}
 		}

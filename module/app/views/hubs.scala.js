@@ -7,7 +7,7 @@ function getSocket() {
 var socket = getSocket();
 var uuid;
 var id = 0;
-var map = {};
+var callbacks = {};
 
 var receiveEvent = function(event) {
     var data = JSON.parse(event.data);
@@ -23,7 +23,7 @@ var receiveEvent = function(event) {
     	uuid = data.uuid;
     }
     if(data.type === "methodReturn") {
-    	var f = map[data.id];
+    	var f = callbacks[data.id];
     	if(f != undefined) f(data.returnValue);
     }
     console.log("Message from server: %O", data);
@@ -32,15 +32,15 @@ var receiveEvent = function(event) {
 socket.onmessage = receiveEvent;
 
 function hubs_describe(callback) {
-	if(callback != undefined) {
-		map[id + 1] = callback;
-	}
 	var j = {type: 'describe'};
-	systemsend(j);
+	systemsend(j, callback);
 } 
 
-function systemsend(message) {
+function systemsend(message, callback) {
 	id = id + 1;
+	if(callback != undefined) {
+		callbacks[id] = callback;
+	}
 	message.uuid = uuid;
 	message.id = '' + id;
 	var str = JSON.stringify(message);

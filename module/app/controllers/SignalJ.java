@@ -30,10 +30,6 @@ public class SignalJ extends Controller {
 		this.hubsActor = hubsActor;
 	}
 	
-	public Result js() {
-		return ok(views.js.playSockets.render());
-	}
-	
 	public Promise<Result> hubs() {
 		return Promise.wrap(ask(hubsActor, new HubsActor.GetJavaScript(), 1000)).map(new Function<Object, Result>(){
 			@Override
