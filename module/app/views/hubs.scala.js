@@ -27,7 +27,7 @@ var receiveEvent = function(event) {
     	if(f != undefined) f(data.returnValue);
     }
     if(data.type === "clientFunctionCall") {
-    	executeFunctionByName(data.function, window, data.data);
+    	executeFunctionByName(data.function, window, data.args);
     }
     console.log("Message from server: %O", data);
 };

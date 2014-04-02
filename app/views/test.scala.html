@@ -32,8 +32,19 @@ $(function() {
 	});
 });
 
-function myFirstClientFunction(data) {
-	console.log(data);
-	$('#push').html(data);
+function firstTestFucntion() {
+	console.log("Called from server!");
+}
+
+function firstTestFunctionWithParam(param) {
+	console.log("Called from server with param: " + param);
+}
+
+function twoParams(int1, int2) {
+	console.log(int1 + int2);
+}
+
+function complexObj(person) {
+	console.log("Person: %O", person);
 }
 </script>

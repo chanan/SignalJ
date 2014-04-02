@@ -14,6 +14,7 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -89,12 +90,19 @@ class UserActor extends UntypedActor {
 		}
 		if(message instanceof ClientFunctionCall) {
 			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
+			Logger.debug(clientFunctionCall.toString());
 			final ObjectNode event = Json.newObject();
 			event.put("type", "clientFunctionCall");
 			event.put("uuid", clientFunctionCall.caller.toString());
 			event.put("hub", clientFunctionCall.channelName);
-			event.put("function", clientFunctionCall.function);
-			event.put("data", clientFunctionCall.data);
+			event.put("function", clientFunctionCall.name);
+			//event.put("data", clientFunctionCall.args);
+			ArrayNode args = event.putArray("args");
+			if(clientFunctionCall.args != null) {
+				for(Object obj : clientFunctionCall.args) {
+					args.add(obj.toString());
+				}
+			}
 			out.write(event);
 			Logger.debug("ClientFunctionCall Value: " + event);
 		}
