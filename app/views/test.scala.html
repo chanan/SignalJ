@@ -11,6 +11,7 @@
 Result: <span id="result"></span>
 <br>
 <button id="btnDescribe">Log to console Describe</button>
+Message will be pushed from server: <span id="push"></span>
 <script type="text/javascript">
 $(function() {
 	$('#btnHello').click(function() {
@@ -30,4 +31,9 @@ $(function() {
 		});
 	});
 });
+
+function myFirstClientFunction(data) {
+	console.log(data);
+	$('#push').html(data);
+}
 </script>

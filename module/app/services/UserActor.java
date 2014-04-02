@@ -8,6 +8,7 @@ import play.libs.F.Callback;
 import play.libs.F.Callback0;
 import play.libs.Json;
 import play.mvc.WebSocket;
+import services.ChannelActor.ClientFunctionCall;
 import services.SignalJActor.Join;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
@@ -58,6 +59,7 @@ class UserActor extends UntypedActor {
 			channels.put(channelJoin.channelName, channelJoin.channel);
 		}
 		if(message instanceof Quit) {
+			//TODO Revisit this code, quit no longer quits all channels
 			for(final ActorRef channel : channels.values()) {
 				channel.tell(new ChannelActor.Quit(uuid), getSelf());
 			}
@@ -84,6 +86,17 @@ class UserActor extends UntypedActor {
 			event.put("returnType", methodReturn.returnType);
 			out.write(event);
 			Logger.debug("Return Value: " + event);
+		}
+		if(message instanceof ClientFunctionCall) {
+			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
+			final ObjectNode event = Json.newObject();
+			event.put("type", "clientFunctionCall");
+			event.put("uuid", clientFunctionCall.caller.toString());
+			event.put("hub", clientFunctionCall.channelName);
+			event.put("function", clientFunctionCall.function);
+			event.put("data", clientFunctionCall.data);
+			out.write(event);
+			Logger.debug("ClientFunctionCall Value: " + event);
 		}
 		if(message instanceof InternalMessage) {
 			final InternalMessage internalMessage = (InternalMessage) message;

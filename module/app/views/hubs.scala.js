@@ -26,6 +26,9 @@ var receiveEvent = function(event) {
     	var f = callbacks[data.id];
     	if(f != undefined) f(data.returnValue);
     }
+    if(data.type === "clientFunctionCall") {
+    	executeFunctionByName(data.function, window, data.data);
+    }
     console.log("Message from server: %O", data);
 };
 
@@ -46,4 +49,14 @@ function systemsend(message, callback) {
 	var str = JSON.stringify(message);
 	console.log("Message to server: %O", message);
 	socket.send(str);
+}
+
+function executeFunctionByName(functionName, context /*, args */) {
+	var args = [].slice.call(arguments).splice(2);
+	var namespaces = functionName.split(".");
+	var func = namespaces.pop();
+	for(var i = 0; i < namespaces.length; i++) {
+		context = context[namespaces[i]];
+	}
+	return context[func].apply(this, args);
 }
