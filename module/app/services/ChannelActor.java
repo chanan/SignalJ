@@ -1,4 +1,6 @@
 package services;
+import hubs.Hub;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -16,26 +18,33 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 
 @Singleton
 public class ChannelActor extends UntypedActor {
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
 	private final static ObjectMapper mapper = new ObjectMapper();
-	private Object instance; //TODO New one should be created everytime, also IoC?
+	private final ActorRef signalJActor;
 	private HubsDescriptor.HubDescriptor descriptor;
+	private Class<? extends Hub> clazz; 
 	
+	@Inject
+	public ChannelActor(@Named("SignalJActor") ActorRef signalJActor) {
+		this.signalJActor = signalJActor;
+	}
 
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof RegisterHub) {
+			//TODO: throw error is already registered
 			final RegisterHub registerHub = (RegisterHub) message;
 			descriptor = registerHub.descriptor;
-			instance = registerHub.hub.newInstance();
+			clazz = registerHub.hub;
 			Logger.debug("Registered channel: " + registerHub.hub.getName());
 		}
 		if(message instanceof ChannelJoin) {
@@ -49,14 +58,19 @@ public class ChannelActor extends UntypedActor {
 		}
 		if(message instanceof Execute) {
 			final Execute execute = (Execute) message;
+			final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
+			final String hub = execute.json.get("hub").textValue();
+			final Hub instance = (Hub)clazz.newInstance();
+			instance.setSignalJActor(signalJActor);
+			instance.setChannelActor(getSelf());
+			instance.setChannelName(hub);
+			instance.setCaller(uuid);
 			final String method = execute.json.get("method").textValue();
 			final Class<?>[] classes = getParamTypeList(execute.json);
 			final Method m = instance.getClass().getMethod(method, classes);
             final Object ret = m.invoke(instance, getParams(execute.json, classes));
             if(ret != null) {
-            	final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
             	final String id = execute.json.get("id").textValue();
-            	final String hub = execute.json.get("hub").textValue();
             	final String returnType = execute.json.get("returnType").textValue();
             	final ActorRef user = users.get(uuid);
             	user.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), getSelf());
@@ -66,6 +80,28 @@ public class ChannelActor extends UntypedActor {
 			final Send send = (Send) message;
 			for(final ActorRef user : users.values()) {
 				user.tell(new UserActor.Send(send.message), getSelf());
+			}
+		}
+		if(message instanceof ClientFunctionCall) {
+			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
+			switch(clientFunctionCall.sendType) {
+			case All:
+				for(final ActorRef user : users.values()) {
+					user.forward(message, getContext());
+				}
+				break;
+			case Caller:
+				users.get(clientFunctionCall.caller).forward(message, getContext());
+				break;
+			case Others:
+				for(final UUID uuid : users.keySet()) {
+					if(uuid.equals(clientFunctionCall.caller)) continue;
+					users.get(uuid).forward(message, getContext());
+				}
+				break;
+			default:
+				break;
+			
 			}
 		}
 	}
@@ -135,6 +171,29 @@ public class ChannelActor extends UntypedActor {
 		
 		public Send(String message) {
 			this.message = message;
+		}
+	}
+	
+	public static class ClientFunctionCall {
+		final String function;
+		final String data;
+		final SendType sendType;
+		final UUID caller;
+		final String channelName;
+		
+		public ClientFunctionCall(UUID caller, String channelName, SendType sendType, String function, String data) {
+			this.sendType = sendType;
+			this.function = function;
+			this.data = data;
+			this.caller = caller;
+			this.channelName = channelName;
+		}
+		
+		public enum SendType
+		{
+			All,
+			Others,
+			Caller
 		}
 	}
 }
