@@ -44,40 +44,26 @@ public abstract class Hub<T> {
 	
 	protected final class ClientsContext<T> {
 		private final T allSend;
-		//private final Sender allSend = new Sender(SendType.Others);
-		private final Sender othersSend = new Sender(SendType.Others);
-		private final Sender callerSend = new Sender(SendType.Caller);
-		private Class<T> clazz;
+		private final T othersSend;
+		private final T callerSend;
 		
 		@SuppressWarnings("unchecked")
 		ClientsContext(Class<T> clazz) {
-			this.clazz = clazz;
 			this.allSend = (T) new SenderProxy(SendType.All, clazz, channelActor, caller).createProxy();
+			this.othersSend = (T) new SenderProxy(SendType.Others, clazz, channelActor, caller).createProxy();
+			this.callerSend = (T) new SenderProxy(SendType.Caller, clazz, channelActor, caller).createProxy();
 		}
 		
 		public T all() {
 			return allSend;
 		}
 		
-		public Sender others() {
+		public T others() {
 			return othersSend;
 		}
 		
-		public Sender caller() {
+		public T caller() {
 			return callerSend;
-		}
-	}
-	
-	protected final class Sender {
-		private final SendType sendType;
-		
-		Sender(SendType sendType) {
-			this.sendType = sendType;
-		}
-		
-		public void SendMessage(String function, String message) {
-			//channelActor.tell(new ChannelActor.ClientFunctionCall(caller, channelName, sendType, function, message), channelActor);
-			Logger.debug(sendType + " - " + function + " " + message);
 		}
 	}
 }

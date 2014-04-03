@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import models.HubsDescriptor;
+import models.HubsDescriptor.HubDescriptor;
 import play.Logger;
 import services.ChannelActor.ClientFunctionCall.SendType;
 import services.ChannelsActor.ChannelJoin;
@@ -182,13 +183,15 @@ public class ChannelActor extends UntypedActor {
 		final Object[] args;
 		final SendType sendType;
 		final UUID caller;
+		final Method method;
 		
-		public ClientFunctionCall(String channelName, UUID caller, SendType sendType, String name, Object[] args) {
+		public ClientFunctionCall(Method method, String channelName, UUID caller, SendType sendType, String name, Object[] args) {
 			this.channelName = channelName;
 			this.caller = caller;
 			this.sendType = sendType;
 			this.name = name;
 			this.args = args;
+			this.method = method;
 		}
 
 		public enum SendType

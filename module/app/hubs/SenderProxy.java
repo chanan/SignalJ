@@ -5,10 +5,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.UUID;
 
-import akka.actor.ActorRef;
 import play.Logger;
 import services.ChannelActor;
 import services.ChannelActor.ClientFunctionCall.SendType;
+import akka.actor.ActorRef;
 
 class SenderProxy implements InvocationHandler {
 	private final SendType sendType;
@@ -25,9 +25,8 @@ class SenderProxy implements InvocationHandler {
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		Logger.debug(sendType + " - " + method.getName() + " " + args);
-				
-		channelActor.tell(new ChannelActor.ClientFunctionCall(clazz.getName(), caller, sendType, method.getName(), args), channelActor);
+		Logger.debug(sendType + " - " + method.getName() + " " + args);		
+		channelActor.tell(new ChannelActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args), channelActor);
 		return null;
 	}
 	
