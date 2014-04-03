@@ -10,7 +10,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import models.HubsDescriptor;
+import models.HubsDescriptor.HubDescriptor;
 import play.Logger;
+import services.ChannelActor.ClientFunctionCall.SendType;
 import services.ChannelsActor.ChannelJoin;
 import services.SignalJActor.Execute;
 import services.SignalJActor.RegisterHub;
@@ -30,7 +32,7 @@ public class ChannelActor extends UntypedActor {
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
 	private final static ObjectMapper mapper = new ObjectMapper();
 	private final ActorRef signalJActor;
-	private HubsDescriptor.HubDescriptor descriptor;
+	private HubsDescriptor.HubDescriptor hubDescriptor;
 	private Class<? extends Hub> clazz; 
 	
 	@Inject
@@ -43,7 +45,7 @@ public class ChannelActor extends UntypedActor {
 		if(message instanceof RegisterHub) {
 			//TODO: throw error is already registered
 			final RegisterHub registerHub = (RegisterHub) message;
-			descriptor = registerHub.descriptor;
+			hubDescriptor = registerHub.descriptor;
 			clazz = registerHub.hub;
 			Logger.debug("Registered channel: " + registerHub.hub.getName());
 		}
@@ -65,6 +67,7 @@ public class ChannelActor extends UntypedActor {
 			instance.setChannelActor(getSelf());
 			instance.setChannelName(hub);
 			instance.setCaller(uuid);
+			instance.SetHubDescriptor(hubDescriptor);
 			final String method = execute.json.get("method").textValue();
 			final Class<?>[] classes = getParamTypeList(execute.json);
 			final Method m = instance.getClass().getMethod(method, classes);
@@ -175,20 +178,22 @@ public class ChannelActor extends UntypedActor {
 	}
 	
 	public static class ClientFunctionCall {
-		final String function;
-		final String data;
+		final String channelName;
+		final String name;
+		final Object[] args;
 		final SendType sendType;
 		final UUID caller;
-		final String channelName;
+		final Method method;
 		
-		public ClientFunctionCall(UUID caller, String channelName, SendType sendType, String function, String data) {
-			this.sendType = sendType;
-			this.function = function;
-			this.data = data;
-			this.caller = caller;
+		public ClientFunctionCall(Method method, String channelName, UUID caller, SendType sendType, String name, Object[] args) {
 			this.channelName = channelName;
+			this.caller = caller;
+			this.sendType = sendType;
+			this.name = name;
+			this.args = args;
+			this.method = method;
 		}
-		
+
 		public enum SendType
 		{
 			All,

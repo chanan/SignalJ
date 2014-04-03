@@ -1,18 +1,22 @@
 package hubs;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.UUID;
 
+import models.HubsDescriptor.HubDescriptor;
 import play.Logger;
 import services.ChannelActor;
 import services.ChannelActor.ClientFunctionCall.SendType;
 import akka.actor.ActorRef;
 
-public abstract class Hub {
-	private final ClientsContext clientsContext = new ClientsContext();
+public abstract class Hub<T> {
 	private ActorRef signalJActor;
 	private ActorRef channelActor;
 	private String channelName;
 	private UUID caller;
+	private HubDescriptor hubDescriptor;
+	protected abstract Class<T> getInterface();
 	
 	public void setSignalJActor(ActorRef signalJActor) {
 		this.signalJActor = signalJActor;
@@ -30,38 +34,36 @@ public abstract class Hub {
 		this.caller = uuid;
 	}
 	
-	protected ClientsContext clients() {
-		return clientsContext;
+	public void SetHubDescriptor(HubDescriptor hubDescriptor) {
+		this.hubDescriptor = hubDescriptor;
 	}
 	
-	protected final class ClientsContext {
-		private final Sender allSend = new Sender(SendType.All);
-		private final Sender othersSend = new Sender(SendType.Others);
-		private final Sender callerSend = new Sender(SendType.Caller);
+	protected ClientsContext<T> clients() {
+		return new ClientsContext<T>(getInterface());
+	}
+	
+	protected final class ClientsContext<T> {
+		private final T allSend;
+		private final T othersSend;
+		private final T callerSend;
 		
-		public Sender all() {
+		@SuppressWarnings("unchecked")
+		ClientsContext(Class<T> clazz) {
+			this.allSend = (T) new SenderProxy(SendType.All, clazz, channelActor, caller).createProxy();
+			this.othersSend = (T) new SenderProxy(SendType.Others, clazz, channelActor, caller).createProxy();
+			this.callerSend = (T) new SenderProxy(SendType.Caller, clazz, channelActor, caller).createProxy();
+		}
+		
+		public T all() {
 			return allSend;
 		}
 		
-		public Sender others() {
+		public T others() {
 			return othersSend;
 		}
 		
-		public Sender caller() {
+		public T caller() {
 			return callerSend;
-		}
-	}
-	
-	protected final class Sender {
-		private final SendType sendType;
-		
-		Sender(SendType sendType) {
-			this.sendType = sendType;
-		}
-		
-		public void SendMessage(String function, String message) {
-			channelActor.tell(new ChannelActor.ClientFunctionCall(caller, channelName, sendType, function, message), channelActor);
-			Logger.debug(sendType + " - " + function + " " + message);
 		}
 	}
 }

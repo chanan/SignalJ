@@ -10,8 +10,9 @@
 <br>
 Result: <span id="result"></span>
 <br>
-<button id="btnDescribe">Log to console Describe</button>
-Message will be pushed from server: <span id="push"></span>
+<button id="btnDescribe">Log to console Describe</button><br>
+Message will be pushed from server 2 + 3 = <span id="push"></span><br>
+Person full name (Press first button): <span id="fullname"></span>
 <script type="text/javascript">
 $(function() {
 	$('#btnHello').click(function() {
@@ -32,8 +33,21 @@ $(function() {
 	});
 });
 
-function myFirstClientFunction(data) {
-	console.log(data);
-	$('#push').html(data);
+function firstTestFucntion() {
+	console.log("Called from server!");
+}
+
+function firstTestFunctionWithParam(param) {
+	console.log("Called from server with param: " + param);
+}
+
+function twoParams(int1, int2) {
+	console.log(int1 + int2);
+	$('#push').html(int1 + int2);
+}
+
+function complexObj(person) {
+	console.log("Person: %O", person);
+	$('#fullname').html(person.firstName + " " + person.lastName);
 }
 </script>

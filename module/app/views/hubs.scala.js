@@ -27,7 +27,7 @@ var receiveEvent = function(event) {
     	if(f != undefined) f(data.returnValue);
     }
     if(data.type === "clientFunctionCall") {
-    	executeFunctionByName(data.function, window, data.data);
+    	executeFunctionByName(data.function, window, data.args);
     }
     console.log("Message from server: %O", data);
 };
@@ -52,11 +52,19 @@ function systemsend(message, callback) {
 }
 
 function executeFunctionByName(functionName, context /*, args */) {
+	var vals = new Array();
+	var k = 0;
 	var args = [].slice.call(arguments).splice(2);
+	for(var i = 0; i < args.length; i++) {
+		for(var j = 0; j < args[i].length; j++) {
+			vals[k] = args[i][j].value;
+			k++;
+		}
+	}
 	var namespaces = functionName.split(".");
 	var func = namespaces.pop();
 	for(var i = 0; i < namespaces.length; i++) {
 		context = context[namespaces[i]];
 	}
-	return context[func].apply(this, args);
+	return context[func].apply(this, vals);
 }

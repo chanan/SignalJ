@@ -1,12 +1,14 @@
 package hubs;
+import models.Person;
 import play.Logger;
 
-public class HelloWorld extends Hub {
+public class HelloWorld extends Hub<FirstTestPage> {
 	public void SayHello() {
 		Logger.debug("A client made me say hello!");
-		this.clients().all().SendMessage("myFirstClientFunction", "Hello from server to all clients!");
-		this.clients().others().SendMessage("myFirstClientFunction", "Hello from server to other clients!");
-		this.clients().caller().SendMessage("myFirstClientFunction", "Hello from server to caller!");
+		clients().all().firstTestFucntion();
+		clients().others().firstTestFunctionWithParam("Hi");
+		clients().caller().twoParams(2, 3);
+		clients().all().complexObj(new Person("John", "Smith"));
 	}
 	
 	public void SaySomethingANumberOfTimes(String something, int number) {
@@ -17,5 +19,10 @@ public class HelloWorld extends Hub {
 	
 	public int Add(int a, int b) {
 		return a + b;
+	}
+
+	@Override
+	protected Class<FirstTestPage> getInterface() {
+		return FirstTestPage.class;
 	}
 }

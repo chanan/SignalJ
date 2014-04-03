@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import models.ClientFunctionCallMessage;
 import play.Logger;
 import play.libs.F.Callback;
 import play.libs.F.Callback0;
@@ -14,6 +15,7 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -89,14 +91,34 @@ class UserActor extends UntypedActor {
 		}
 		if(message instanceof ClientFunctionCall) {
 			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
-			final ObjectNode event = Json.newObject();
-			event.put("type", "clientFunctionCall");
-			event.put("uuid", clientFunctionCall.caller.toString());
-			event.put("hub", clientFunctionCall.channelName);
-			event.put("function", clientFunctionCall.function);
-			event.put("data", clientFunctionCall.data);
-			out.write(event);
-			Logger.debug("ClientFunctionCall Value: " + event);
+			Logger.debug(clientFunctionCall.toString());
+//			final ObjectNode event = Json.newObject();
+//			event.put("type", "clientFunctionCall");
+//			event.put("uuid", clientFunctionCall.caller.toString());
+//			event.put("hub", clientFunctionCall.channelName);
+//			event.put("function", clientFunctionCall.name);
+//			ArrayNode args = event.putArray("args");
+//			if(clientFunctionCall.args != null) {
+//				int i = 0;
+//				for(Object obj : clientFunctionCall.args) {
+//					Class<?> types[] = clientFunctionCall.method.getParameterTypes();
+//					writeArg(args, obj, types[i]);
+//					i++;
+//				}
+//			}
+			final ClientFunctionCallMessage json = new ClientFunctionCallMessage(clientFunctionCall.caller, clientFunctionCall.channelName, clientFunctionCall.name);
+			if(clientFunctionCall.args != null) {
+				int i = 0;
+				for(Object obj : clientFunctionCall.args) {
+					//Class<?> types[] = clientFunctionCall.method.getParameterTypes();
+					//writeArg(args, obj, types[i]);
+					json.addParameter("param_" + i , obj);
+					i++;
+				}
+			}
+			JsonNode j = Json.toJson(json);
+			out.write(j);
+			Logger.debug("ClientFunctionCall Value: " + j);
 		}
 		if(message instanceof InternalMessage) {
 			final InternalMessage internalMessage = (InternalMessage) message;
@@ -117,6 +139,48 @@ class UserActor extends UntypedActor {
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("describe")) {
 				signalJActor.tell(new SignalJActor.Describe(internalMessage.json, getSelf()), getSelf());
 			}
+		}
+	}
+	
+	private void writeArg(ArrayNode args, Object obj, Class<?> clazz) throws ClassNotFoundException {
+		String className = clazz.getName();
+		if(clazz.isPrimitive()) {
+			writePrimtiveArg(args, obj, className);
+		}
+		else
+		{
+			Json.toJson(obj);
+		}
+	}
+	
+	private void writePrimtiveArg(ArrayNode args, Object obj, String className) {
+		switch (className.toLowerCase()) {
+			case "byte":
+				args.add((int) obj);
+				break;
+			case "short":
+				args.add((int) obj);
+				break;
+			case "int":
+				args.add((int) obj);
+				break;
+			case "long":
+				args.add((long) obj);
+				break;
+			case "float":
+				args.add((float) obj);
+				break;
+			case "double":
+				args.add((double) obj);
+				break;
+			case "char":
+				args.add(obj.toString());
+				break;
+			case "boolean":
+				args.add((boolean) obj);
+				break;
+			default:
+				args.add(obj.toString());
 		}
 	}
 	
