@@ -12,6 +12,8 @@ public class HelloWorld extends Hub<FirstTestPage> {
 		clients().all.complexObj(new Person("John", "Smith"));
 		//Test client(s) by sending to self:
 		clients().client(getConnectionId()).calledFromClient(getConnectionId());
+		//Test all except by NOT sending to self:
+		clients().allExcept(getConnectionId()).notCalledFromClient(getConnectionId());
 	}
 	
 	public void SaySomethingANumberOfTimes(String something, int number) {

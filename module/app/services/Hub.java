@@ -51,8 +51,14 @@ public abstract class Hub<T> {
 		}
 		
 		@SuppressWarnings("unchecked")
-		public S client(UUID... uuids) {
-			return (S) new SenderProxy(SendType.Clients, clazz, channelActor, uuid, uuids).createProxy();
+		public S client(UUID... connectionIds) {
+			return (S) new SenderProxy(SendType.Clients, clazz, channelActor, uuid, connectionIds, (UUID[])null).createProxy();
+		}
+		
+		@SuppressWarnings("unchecked")
+		public S allExcept(UUID... connectionIds) {
+			S proxy = (S) new SenderProxy(SendType.AllExcept, clazz, channelActor, uuid, (UUID[])null, connectionIds).createProxy();
+			return proxy;
 		}
 	}
 	
@@ -61,28 +67,32 @@ public abstract class Hub<T> {
 		private final Class<?> clazz;
 		private final ActorRef channelActor;
 		private final UUID caller;
-		private UUID clients[];
+		private final UUID[] clients;
+		private final UUID[] allExcept;
 
 		public SenderProxy(SendType sendType, Class<?> clazz, ActorRef channelActor, UUID caller) {
 			this.sendType = sendType;
 			this.clazz = clazz;
 			this.channelActor = channelActor;
 			this.caller = caller;
+			this.clients = null;
+			this.allExcept = null;
 		}
 		
-		public SenderProxy(SendType sendType, Class<?> clazz, ActorRef channelActor, UUID caller, UUID... clients) {
+		public SenderProxy(SendType sendType, Class<?> clazz, ActorRef channelActor, UUID caller, UUID[] clients, UUID[] allExcept) {
 			this.sendType = sendType;
 			this.clazz = clazz;
 			this.channelActor = channelActor;
 			this.caller = caller;
 			this.clients = clients;
+			this.allExcept = allExcept;
 		}
 
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			Logger.debug(sendType + " - " + method.getName() + " " + args);
 			Logger.debug("channelActor: " + channelActor);
-			channelActor.tell(new ChannelActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args, clients), channelActor);
+			channelActor.tell(new ChannelActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args, clients, allExcept), channelActor);
 			return null;
 		}
 		

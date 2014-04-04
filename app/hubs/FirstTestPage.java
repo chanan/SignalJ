@@ -9,4 +9,5 @@ public interface FirstTestPage {
 	public void twoParams(int int1, int int2);
 	public void complexObj(Person person);
 	public void calledFromClient(UUID connectionId);
+	public void notCalledFromClient(UUID connectionId);
 }
