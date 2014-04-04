@@ -6,14 +6,11 @@ import java.util.UUID;
 import play.Logger;
 import services.SignalJActor.Join;
 import services.SignalJActor.Quit;
-import services.SignalJActor.Send;
-import services.SignalJActor.SendToAll;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import akkaGuice.PropsContext;
 
 import com.google.inject.Singleton;
-
 
 //TODO Had to remove this, make this work one day!
 @Singleton
@@ -36,28 +33,11 @@ public class UsersActor extends UntypedActor {
 			user.tell(new UserActor.Quit(), getSelf());
 			Logger.debug(quit.uuid + " logged off");
 		}
-		if(message instanceof SendToAll) {
-			final SendToAll sendToAll = (SendToAll) message;
-			for(final ActorRef user : users.values()) {
-				user.tell(new UserActor.Send(sendToAll.message), getSelf());
-			}
-		}
-		if(message instanceof Send) {
-			final Send send = (Send) message;
-			final ActorRef user = users.get(send.uuid);
-			user.tell(new UserActor.Send(send.message), getSelf());
-		}
 		if (message instanceof GetUser) {
 			final GetUser getUser = (GetUser) message;
 			final ActorRef user = users.get(getUser.uuid);
 			getSender().tell(user, getSelf());
 		}
-		
-//		if(message instanceof ChannelJoin) {
-//			final ChannelJoin channelJoin = (ChannelJoin) message;
-//			final ActorRef user = users.get(channelJoin.uuid);
-//			user.tell(new UserActor.ChannelJoin(channelJoin.channelName, channel), getSelf());	
-//		}
 	}
 	
 	public static class GetUser{

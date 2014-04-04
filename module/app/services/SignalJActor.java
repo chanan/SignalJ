@@ -1,6 +1,4 @@
 package services;
-import hubs.Hub;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -19,14 +17,14 @@ import com.google.inject.name.Named;
 
 @Singleton
 public class SignalJActor extends UntypedActor  {
-	private final ActorRef usersActor;
+	//private final ActorRef usersActor;
 	private final ActorRef channelsActor;
 	private final ActorRef hubsActor;
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
 	
 	@Inject
 	public SignalJActor(@Named("HubsActor") ActorRef hubsActor) {
-		this.usersActor = getContext().actorOf(PropsContext.get(UsersActor.class), "users");
+		//this.usersActor = getContext().actorOf(PropsContext.get(UsersActor.class), "users");
 		this.channelsActor = getContext().actorOf(PropsContext.get(ChannelsActor.class), "channels");
 		this.hubsActor = hubsActor;
 	}
@@ -46,17 +44,6 @@ public class SignalJActor extends UntypedActor  {
 			final ActorRef user = users.remove(quit.uuid);
 			user.tell(new UserActor.Quit(), getSelf());
 			Logger.debug(quit.uuid + " logged off");
-		}
-		if(message instanceof SendToAll) {
-			final SendToAll sendToAll = (SendToAll) message;
-			for(final ActorRef user : users.values()) {
-				user.tell(new UserActor.Send(sendToAll.message), getSelf());
-			}
-		}
-		if(message instanceof Send) {
-			final Send send = (Send) message;
-			final ActorRef user = users.get(send.uuid);
-			user.tell(new UserActor.Send(send.message), getSelf());
 		}
 		if(message instanceof SendToChannel) {
 			channelsActor.forward(message, getContext());

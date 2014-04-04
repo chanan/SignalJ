@@ -1,6 +1,7 @@
 package hubs;
 import models.Person;
 import play.Logger;
+import services.Hub;
 
 public class HelloWorld extends Hub<FirstTestPage> {
 	public void SayHello() {

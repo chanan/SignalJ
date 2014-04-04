@@ -1,6 +1,4 @@
 package services;
-import hubs.Hub;
-
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -10,9 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import models.HubsDescriptor;
-import models.HubsDescriptor.HubDescriptor;
 import play.Logger;
-import services.ChannelActor.ClientFunctionCall.SendType;
 import services.ChannelsActor.ChannelJoin;
 import services.SignalJActor.Execute;
 import services.SignalJActor.RegisterHub;
@@ -62,10 +58,8 @@ public class ChannelActor extends UntypedActor {
 			final Execute execute = (Execute) message;
 			final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
 			final String hub = execute.json.get("hub").textValue();
-			final Hub instance = (Hub)clazz.newInstance();
-			instance.setSignalJActor(signalJActor);
+			final Hub<?> instance = (Hub<?>) clazz.newInstance();
 			instance.setChannelActor(getSelf());
-			instance.setChannelName(hub);
 			instance.setCaller(uuid);
 			instance.SetHubDescriptor(hubDescriptor);
 			final String method = execute.json.get("method").textValue();
@@ -78,12 +72,6 @@ public class ChannelActor extends UntypedActor {
             	final ActorRef user = users.get(uuid);
             	user.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), getSelf());
             }
-		}
-		if(message instanceof Send) {
-			final Send send = (Send) message;
-			for(final ActorRef user : users.values()) {
-				user.tell(new UserActor.Send(send.message), getSelf());
-			}
 		}
 		if(message instanceof ClientFunctionCall) {
 			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;

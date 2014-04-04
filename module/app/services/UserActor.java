@@ -3,7 +3,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import models.ClientFunctionCallMessage;
 import play.Logger;
 import play.libs.F.Callback;
 import play.libs.F.Callback0;
@@ -15,7 +14,6 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -26,7 +24,6 @@ class UserActor extends UntypedActor {
     private WebSocket.In<JsonNode> in;
     private final ActorRef signalJActor;
     private final Map<String, ActorRef> channels = new HashMap<String, ActorRef>();
-    
     
     @Inject
     public UserActor(@Named("SignalJActor") ActorRef signalJActor) {
@@ -67,56 +64,24 @@ class UserActor extends UntypedActor {
 			}
 			getContext().stop(getSelf());
 		}
-		if(message instanceof Send) {
-			final Send send = (Send) message;
-			final ObjectNode event = Json.newObject();
-			event.put("uuid", uuid.toString());
-			event.put("type", "message");
-			event.put("message", send.message);
-			out.write(event);
-			Logger.debug(uuid + ": " + send.message);
-		}
 		if(message instanceof MethodReturn) {
 			final MethodReturn methodReturn = (MethodReturn) message;
-			final ObjectNode event = Json.newObject();
-			event.put("type", "methodReturn");
-			event.put("uuid", methodReturn.uuid.toString());
-			event.put("id", methodReturn.id);
-			event.put("returnValue", methodReturn.returnValue.toString());
-			event.put("hub", methodReturn.hub);
-			event.put("method", methodReturn.method);
-			event.put("returnType", methodReturn.returnType);
-			out.write(event);
-			Logger.debug("Return Value: " + event);
+			final models.Messages.MethodReturn json = new models.Messages.MethodReturn(methodReturn.uuid, methodReturn.id, methodReturn.hub, methodReturn.method, methodReturn.returnType, methodReturn.returnValue);
+			final JsonNode j = Json.toJson(json);
+			out.write(j);
+			Logger.debug("Return Value: " + j);
 		}
 		if(message instanceof ClientFunctionCall) {
 			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
-			Logger.debug(clientFunctionCall.toString());
-//			final ObjectNode event = Json.newObject();
-//			event.put("type", "clientFunctionCall");
-//			event.put("uuid", clientFunctionCall.caller.toString());
-//			event.put("hub", clientFunctionCall.channelName);
-//			event.put("function", clientFunctionCall.name);
-//			ArrayNode args = event.putArray("args");
-//			if(clientFunctionCall.args != null) {
-//				int i = 0;
-//				for(Object obj : clientFunctionCall.args) {
-//					Class<?> types[] = clientFunctionCall.method.getParameterTypes();
-//					writeArg(args, obj, types[i]);
-//					i++;
-//				}
-//			}
-			final ClientFunctionCallMessage json = new ClientFunctionCallMessage(clientFunctionCall.caller, clientFunctionCall.channelName, clientFunctionCall.name);
+			final models.Messages.ClientFunctionCall json = new models.Messages.ClientFunctionCall(clientFunctionCall.caller, clientFunctionCall.channelName, clientFunctionCall.name);
 			if(clientFunctionCall.args != null) {
 				int i = 0;
-				for(Object obj : clientFunctionCall.args) {
-					//Class<?> types[] = clientFunctionCall.method.getParameterTypes();
-					//writeArg(args, obj, types[i]);
-					json.addParameter("param_" + i , obj);
+				for(final Object obj : clientFunctionCall.args) {
+					json.addParameter("param_" + i , obj); //TODO put real name from hubDescriptor
 					i++;
 				}
 			}
-			JsonNode j = Json.toJson(json);
+			final JsonNode j = Json.toJson(json);
 			out.write(j);
 			Logger.debug("ClientFunctionCall Value: " + j);
 		}
@@ -139,56 +104,6 @@ class UserActor extends UntypedActor {
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("describe")) {
 				signalJActor.tell(new SignalJActor.Describe(internalMessage.json, getSelf()), getSelf());
 			}
-		}
-	}
-	
-	private void writeArg(ArrayNode args, Object obj, Class<?> clazz) throws ClassNotFoundException {
-		String className = clazz.getName();
-		if(clazz.isPrimitive()) {
-			writePrimtiveArg(args, obj, className);
-		}
-		else
-		{
-			Json.toJson(obj);
-		}
-	}
-	
-	private void writePrimtiveArg(ArrayNode args, Object obj, String className) {
-		switch (className.toLowerCase()) {
-			case "byte":
-				args.add((int) obj);
-				break;
-			case "short":
-				args.add((int) obj);
-				break;
-			case "int":
-				args.add((int) obj);
-				break;
-			case "long":
-				args.add((long) obj);
-				break;
-			case "float":
-				args.add((float) obj);
-				break;
-			case "double":
-				args.add((double) obj);
-				break;
-			case "char":
-				args.add(obj.toString());
-				break;
-			case "boolean":
-				args.add((boolean) obj);
-				break;
-			default:
-				args.add(obj.toString());
-		}
-	}
-	
-	public static class Send {
-		final String message;
-		
-		public Send(String message) {
-			this.message = message;
 		}
 	}
 	
