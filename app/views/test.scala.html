@@ -49,4 +49,7 @@ function complexObj(person) {
 	console.log("Person: %O", person);
 	$('#fullname').html(person.firstName + " " + person.lastName);
 }
+function calledFromClient(connectionId) {
+	console.log("This was called directly to this connection: " + connectionId)
+}
 </script>

@@ -1,5 +1,5 @@
 package models;
-import static org.reflections.ReflectionUtils.getAllMethods;
+import static org.reflections.ReflectionUtils.getMethods;
 import static org.reflections.ReflectionUtils.withModifier;
 
 import java.lang.reflect.Method;
@@ -74,7 +74,7 @@ public class HubsDescriptor {
 		
 		@SuppressWarnings("unchecked")
 		private void init() throws ClassNotFoundException {
-			for(final Method m : getAllMethods(hub, withModifier(Modifier.PUBLIC))) {
+			for(final Method m : getMethods(hub, withModifier(Modifier.PUBLIC))) {
 				final Procedure procedure = new Procedure(m);
 				procedures.add(procedure);
 			}

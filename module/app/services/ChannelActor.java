@@ -90,6 +90,11 @@ public class ChannelActor extends UntypedActor {
 					users.get(uuid).forward(message, getContext());
 				}
 				break;
+			case Clients:
+				for(final UUID uuid : clientFunctionCall.clients) {
+					users.get(uuid).forward(message, getContext());
+				}
+				break;
 			default:
 				break;
 			
@@ -172,21 +177,24 @@ public class ChannelActor extends UntypedActor {
 		final SendType sendType;
 		final UUID caller;
 		final Method method;
+		final UUID[] clients;
 		
-		public ClientFunctionCall(Method method, String channelName, UUID caller, SendType sendType, String name, Object[] args) {
+		public ClientFunctionCall(Method method, String channelName, UUID caller, SendType sendType, String name, Object[] args, UUID... clients) {
 			this.channelName = channelName;
 			this.caller = caller;
 			this.sendType = sendType;
 			this.name = name;
 			this.args = args;
 			this.method = method;
+			this.clients = clients;
 		}
 
 		public enum SendType
 		{
 			All,
 			Others,
-			Caller
+			Caller,
+			Clients
 		}
 	}
 }

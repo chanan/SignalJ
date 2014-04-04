@@ -11,16 +11,21 @@ import akka.actor.ActorRef;
 
 public abstract class Hub<T> {
 	private ActorRef channelActor;
-	private UUID caller;
+	private UUID uuid;
 	private HubDescriptor hubDescriptor;
 	protected abstract Class<T> getInterface();
+	//protected ClientsContext<T> clients;
 
 	void setChannelActor(ActorRef channelActor) {
 		this.channelActor = channelActor;
 	}
 	
 	void setCaller(UUID uuid) {
-		this.caller = uuid;
+		this.uuid = uuid;
+	}
+	
+	public UUID getConnectionId() {
+		return uuid;
 	}
 	
 	void SetHubDescriptor(HubDescriptor hubDescriptor) {
@@ -32,27 +37,22 @@ public abstract class Hub<T> {
 	}
 	
 	protected final class ClientsContext<S> {
-		private final S allSend;
-		private final S othersSend;
-		private final S callerSend;
+		public final S all;
+		public final S others;
+		public final S caller;
+		private final Class<S> clazz;
 		
 		@SuppressWarnings("unchecked")
 		ClientsContext(Class<S> clazz) {
-			this.allSend = (S) new SenderProxy(SendType.All, clazz, channelActor, caller).createProxy();
-			this.othersSend = (S) new SenderProxy(SendType.Others, clazz, channelActor, caller).createProxy();
-			this.callerSend = (S) new SenderProxy(SendType.Caller, clazz, channelActor, caller).createProxy();
+			this.clazz = clazz;
+			this.all = (S) new SenderProxy(SendType.All, clazz, channelActor, uuid).createProxy();
+			this.others = (S) new SenderProxy(SendType.Others, clazz, channelActor, uuid).createProxy();
+			this.caller = (S) new SenderProxy(SendType.Caller, clazz, channelActor, uuid).createProxy();
 		}
 		
-		public S all() {
-			return allSend;
-		}
-		
-		public S others() {
-			return othersSend;
-		}
-		
-		public S caller() {
-			return callerSend;
+		@SuppressWarnings("unchecked")
+		public S client(UUID... uuids) {
+			return (S) new SenderProxy(SendType.Clients, clazz, channelActor, uuid, uuids).createProxy();
 		}
 	}
 	
@@ -61,6 +61,7 @@ public abstract class Hub<T> {
 		private final Class<?> clazz;
 		private final ActorRef channelActor;
 		private final UUID caller;
+		private UUID clients[];
 
 		public SenderProxy(SendType sendType, Class<?> clazz, ActorRef channelActor, UUID caller) {
 			this.sendType = sendType;
@@ -68,11 +69,20 @@ public abstract class Hub<T> {
 			this.channelActor = channelActor;
 			this.caller = caller;
 		}
+		
+		public SenderProxy(SendType sendType, Class<?> clazz, ActorRef channelActor, UUID caller, UUID... clients) {
+			this.sendType = sendType;
+			this.clazz = clazz;
+			this.channelActor = channelActor;
+			this.caller = caller;
+			this.clients = clients;
+		}
 
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			Logger.debug(sendType + " - " + method.getName() + " " + args);		
-			channelActor.tell(new ChannelActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args), channelActor);
+			Logger.debug(sendType + " - " + method.getName() + " " + args);
+			Logger.debug("channelActor: " + channelActor);
+			channelActor.tell(new ChannelActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args, clients), channelActor);
 			return null;
 		}
 		

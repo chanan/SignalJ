@@ -1,4 +1,6 @@
 package hubs;
+import java.util.UUID;
+
 import models.Person;
 
 public interface FirstTestPage {
@@ -6,4 +8,5 @@ public interface FirstTestPage {
 	public void firstTestFunctionWithParam(String param);
 	public void twoParams(int int1, int int2);
 	public void complexObj(Person person);
+	public void calledFromClient(UUID connectionId);
 }
