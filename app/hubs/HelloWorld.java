@@ -6,10 +6,14 @@ import services.Hub;
 public class HelloWorld extends Hub<FirstTestPage> {
 	public void SayHello() {
 		Logger.debug("A client made me say hello!");
-		clients().all().firstTestFucntion();
-		clients().others().firstTestFunctionWithParam("Hi");
-		clients().caller().twoParams(2, 3);
-		clients().all().complexObj(new Person("John", "Smith"));
+		clients().all.firstTestFucntion();
+		clients().others.firstTestFunctionWithParam("Hi");
+		clients().caller.twoParams(2, 3);
+		clients().all.complexObj(new Person("John", "Smith"));
+		//Test client(s) by sending to self:
+		clients().client(getConnectionId()).calledFromClient(getConnectionId());
+		//Test all except by NOT sending to self:
+		clients().allExcept(getConnectionId()).notCalledFromClient(getConnectionId());
 	}
 	
 	public void SaySomethingANumberOfTimes(String something, int number) {

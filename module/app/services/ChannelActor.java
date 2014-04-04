@@ -2,6 +2,7 @@ package services;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,18 @@ public class ChannelActor extends UntypedActor {
 					users.get(uuid).forward(message, getContext());
 				}
 				break;
+			case Clients:
+				for(final UUID uuid : clientFunctionCall.clients) {
+					users.get(uuid).forward(message, getContext());
+				}
+				break;
+			case AllExcept:
+				final List<UUID> allExcept = Arrays.asList(clientFunctionCall.allExcept);
+				for(final UUID uuid : users.keySet()) {
+					if(allExcept.contains(uuid)) continue;
+					users.get(uuid).forward(message, getContext());
+				}
+				break;
 			default:
 				break;
 			
@@ -172,21 +185,27 @@ public class ChannelActor extends UntypedActor {
 		final SendType sendType;
 		final UUID caller;
 		final Method method;
+		final UUID[] clients;
+		final UUID[] allExcept;
 		
-		public ClientFunctionCall(Method method, String channelName, UUID caller, SendType sendType, String name, Object[] args) {
+		public ClientFunctionCall(Method method, String channelName, UUID caller, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept) {
 			this.channelName = channelName;
 			this.caller = caller;
 			this.sendType = sendType;
 			this.name = name;
 			this.args = args;
 			this.method = method;
+			this.clients = clients;
+			this.allExcept = allExcept;
 		}
 
 		public enum SendType
 		{
 			All,
 			Others,
-			Caller
+			Caller,
+			Clients, 
+			AllExcept
 		}
 	}
 }
