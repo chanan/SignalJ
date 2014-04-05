@@ -60,6 +60,10 @@ public class HubsDescriptor {
 		return sb.toString();
 	}
 	
+	private String lowerCaseFirstChar(String className) {
+		return Character.toLowerCase(className.charAt(0)) + className.substring(1);
+	}
+	
 	public class HubDescriptor {
 		private final String name;
 		private final Class<? extends HubDescriptor> hub;
@@ -67,11 +71,12 @@ public class HubsDescriptor {
 
 		@SuppressWarnings("unchecked")
 		public HubDescriptor(String name) throws ClassNotFoundException {
-			this.name = name;
 			hub = (Class<? extends HubDescriptor>) Class.forName(name);
+			//this.name = hub.getPackage().getName() + "." + lowerCaseFirstChar(hub.getSimpleName());
+			this.name = name;
 			init();
 		}
-		
+
 		@SuppressWarnings("unchecked")
 		private void init() throws ClassNotFoundException {
 			for(final Method m : getMethods(hub, withModifier(Modifier.PUBLIC))) {
@@ -159,7 +164,7 @@ public class HubsDescriptor {
 			
 			String toJS(Class<? extends HubDescriptor> hub) {
 				StringBuffer sb = new StringBuffer();
-				sb.append("function ").append(hub.getSimpleName()).append("_").append(name).append("(");
+				sb.append("function ").append(lowerCaseFirstChar(hub.getSimpleName())).append("_").append(name).append("(");
 				for(Parameter p : parameters.values()) {
 					sb.append(p.type.getSimpleName().toLowerCase()).append("_").append(p.index);
 					if(p.index != parameters.values().size() - 1) sb.append(", ");

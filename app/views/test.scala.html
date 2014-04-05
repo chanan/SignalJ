@@ -17,13 +17,13 @@ Person full name (Press first button): <span id="fullname"></span><br>
 <script type="text/javascript">
 $(function() {
 	$('#btnHello').click(function() {
-		HelloWorld_sayHello();
+		helloWorld_sayHello();
 	});
 	$('#btnHello2').click(function() {
-		HelloWorld_saySomethingANumberOfTimes("hello", 2);
+		helloWorld_saySomethingANumberOfTimes("hello", 2);
 	});
 	$('#btnAdd').click(function() {
-		HelloWorld_add(1, 2, function(data) {
+		helloWorld_add(1, 2, function(data) {
 			$('#result').html(data);
 		});
 	});
@@ -33,16 +33,16 @@ $(function() {
 		});
 	});
 	$('#joinGroup').click(function() {
-		HelloWorld_joinGroup("test");
+		helloWorld_joinGroup("test");
 	});
 	$('#leaveGroup').click(function() {
-		HelloWorld_leaveGroup("test");
+		helloWorld_leaveGroup("test");
 	});
 	$('#talkToGroup').click(function() {
-		HelloWorld_talkToGroup("test", "Hi!");
+		helloWorld_talkToGroup("test", "Hi!");
 	});
 	$('#talkToGroupOtherThanMe').click(function() {
-		HelloWorld_talkToGroupOtherThanMe("test", "Hi!");
+		helloWorld_talkToGroupOtherThanMe("test", "Hi!");
 	});
 });
 
