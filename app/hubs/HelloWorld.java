@@ -4,7 +4,7 @@ import play.Logger;
 import services.Hub;
 
 public class HelloWorld extends Hub<FirstTestPage> {
-	public void SayHello() {
+	public void sayHello() {
 		Logger.debug("A client made me say hello!");
 		clients().all.firstTestFucntion();
 		clients().others.firstTestFunctionWithParam("Hi");
@@ -16,14 +16,26 @@ public class HelloWorld extends Hub<FirstTestPage> {
 		clients().allExcept(getConnectionId()).notCalledFromClient(getConnectionId());
 	}
 	
-	public void SaySomethingANumberOfTimes(String something, int number) {
+	public void saySomethingANumberOfTimes(String something, int number) {
 		for(int i = 0; i < number; i++) {
 			Logger.debug("The client said: " + something);
 		}
 	}
 	
-	public int Add(int a, int b) {
+	public int add(int a, int b) {
 		return a + b;
+	}
+	
+	public void joinGroup(String group) {
+		groups().add(getConnectionId(), group);
+	}
+	
+	public void leaveGroup(String group) {
+		groups().remove(getConnectionId(), group);
+	}
+	
+	public void talkToGroup(String group, String message) {
+		clients().group(group).sendToGroup(message);
 	}
 
 	@Override

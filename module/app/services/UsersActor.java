@@ -14,7 +14,7 @@ import com.google.inject.Singleton;
 
 //TODO Had to remove this, make this work one day!
 @Singleton
-public class UsersActor extends UntypedActor {
+class UsersActor extends UntypedActor {
 	//TODO: Make this a supervisor
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>(); //TODO: Is this needed or can we do everything with actor selection?
 

@@ -10,4 +10,5 @@ public interface FirstTestPage {
 	public void complexObj(Person person);
 	public void calledFromClient(UUID connectionId);
 	public void notCalledFromClient(UUID connectionId);
+	public void sendToGroup(String message);
 }

@@ -57,23 +57,6 @@ public class SignalJActor extends UntypedActor  {
 		if(message instanceof Describe) {
 			hubsActor.forward(message, getContext());
 		}
-//		if(message instanceof ChannelJoin) {
-//			final ChannelJoin channelJoin = (ChannelJoin) message;
-//			final ActorRef user = users.get(channelJoin.uuid); 
-//			channelsActor.tell(new ChannelsActor.ChannelJoin(channelJoin.channelName, channelJoin.uuid, user), getSelf());
-//			
-//			//channelsActor.tell(new ChannelsActor.ChannelJoin(channelJoin.channelName, channelJoin.uuid, user), sender);
-////			Promise.wrap(ask(usersActor, new UsersActor.GetUser(channelJoin.uuid), 5000)).onRedeem(new Callback<Object>() {
-////
-////				@Override
-////				public void invoke(Object arg0) throws Throwable {
-////					ActorRef user = (ActorRef) arg0;
-////					channelsActor.tell(new ChannelsActor.ChannelJoin(channelJoin.channelName, channelJoin.uuid, user), sender);
-////				}
-////			});
-//			
-//			
-//		}
 	}
 	
 	public static class Join {

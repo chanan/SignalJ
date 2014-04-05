@@ -11,7 +11,7 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import akkaGuice.PropsContext;
 
-public class ChannelsActor extends UntypedActor {
+class ChannelsActor extends UntypedActor {
 	private final Map<String, ActorRef> channels = new HashMap<>();
 	private final Map<String, HubsDescriptor.HubDescriptor> descriptors = new HashMap<>();
 

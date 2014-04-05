@@ -11,17 +11,18 @@ Result: <span id="result"></span>
 <br>
 <button id="btnDescribe">Log to console Describe</button><br>
 Message will be pushed from server 2 + 3 = <span id="push"></span><br>
-Person full name (Press first button): <span id="fullname"></span>
+Person full name (Press first button): <span id="fullname"></span><br>
+<button id="joinGroup">Join "test" group</button> <button id="leaveGroup">Leave "test" group</button> <button id="talkToGroup">Say hello to group</button>
 <script type="text/javascript">
 $(function() {
 	$('#btnHello').click(function() {
-		HelloWorld_SayHello();
+		HelloWorld_sayHello();
 	});
 	$('#btnHello2').click(function() {
-		HelloWorld_SaySomethingANumberOfTimes("hello", 2);
+		HelloWorld_saySomethingANumberOfTimes("hello", 2);
 	});
 	$('#btnAdd').click(function() {
-		HelloWorld_Add(1, 2, function(data) {
+		HelloWorld_add(1, 2, function(data) {
 			$('#result').html(data);
 		});
 	});
@@ -29,6 +30,15 @@ $(function() {
 		hubs_describe(function(data) {
 			console.log("Describe: %O", data);
 		});
+	});
+	$('#joinGroup').click(function() {
+		HelloWorld_joinGroup("test");
+	});
+	$('#leaveGroup').click(function() {
+		HelloWorld_leaveGroup("test");
+	});
+	$('#talkToGroup').click(function() {
+		HelloWorld_talkToGroup("test", "Hi!");
 	});
 });
 
@@ -54,5 +64,8 @@ function calledFromClient(connectionId) {
 }
 function notCalledFromClient(connectionId) {
 	console.log("This was NOT sent to: " + connectionId)
+}
+function sendToGroup(message) {
+	console.log("This was sent to the group: " + message);
 }
 </script>

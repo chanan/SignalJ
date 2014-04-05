@@ -15,6 +15,7 @@ import services.SignalJActor.Execute;
 import services.SignalJActor.RegisterHub;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
+import akkaGuice.PropsContext;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -25,8 +26,9 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 @Singleton
-public class ChannelActor extends UntypedActor {
+class ChannelActor extends UntypedActor {
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
+	private final Map<String, List<UUID>> groups = new HashMap<String, List<UUID>>();
 	private final static ObjectMapper mapper = new ObjectMapper();
 	private final ActorRef signalJActor;
 	private HubsDescriptor.HubDescriptor hubDescriptor;
@@ -103,10 +105,36 @@ public class ChannelActor extends UntypedActor {
 					users.get(uuid).forward(message, getContext());
 				}
 				break;
+			case Group:
+				if(groups.containsKey(clientFunctionCall.groupName)) {
+					for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
+						users.get(uuid).forward(message, getContext());
+					}
+				}
 			default:
 				break;
 			
 			}
+		}
+		if(message instanceof GroupJoin) {
+			final GroupJoin groupJoin = (GroupJoin) message;
+			if(!groups.containsKey(groupJoin.groupname)) {
+				groups.put(groupJoin.groupname, new ArrayList<UUID>());
+			}
+			final List<UUID> uuids = groups.get(groupJoin.groupname);
+			if(!uuids.contains(groupJoin.uuid)) {
+				uuids.add(groupJoin.uuid);
+			}
+			Logger.debug(groupJoin.uuid + " joined group: " + groupJoin.groupname);
+		}
+		if(message instanceof GroupLeave) {
+			final GroupLeave groupLeave = (GroupLeave) message;
+			if(groups.containsKey(groupLeave.groupname)) {
+				final List<UUID> uuids = groups.get(groupLeave.groupname);
+				uuids.remove(groupLeave.uuid);
+				if(uuids.isEmpty()) groups.remove(groupLeave.groupname);
+			}
+			Logger.debug(groupLeave.uuid + " left group: " + groupLeave.groupname);
 		}
 	}
 	
@@ -178,6 +206,7 @@ public class ChannelActor extends UntypedActor {
 		}
 	}
 	
+	//TODO maybe use inheritance to make this more sane
 	public static class ClientFunctionCall {
 		final String channelName;
 		final String name;
@@ -187,8 +216,9 @@ public class ChannelActor extends UntypedActor {
 		final Method method;
 		final UUID[] clients;
 		final UUID[] allExcept;
+		final String groupName;
 		
-		public ClientFunctionCall(Method method, String channelName, UUID caller, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept) {
+		public ClientFunctionCall(Method method, String channelName, UUID caller, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName) {
 			this.channelName = channelName;
 			this.caller = caller;
 			this.sendType = sendType;
@@ -197,6 +227,7 @@ public class ChannelActor extends UntypedActor {
 			this.method = method;
 			this.clients = clients;
 			this.allExcept = allExcept;
+			this.groupName = groupName;
 		}
 
 		public enum SendType
@@ -205,7 +236,28 @@ public class ChannelActor extends UntypedActor {
 			Others,
 			Caller,
 			Clients, 
-			AllExcept
+			AllExcept, 
+			Group
+		}
+	}
+	
+	public static class GroupJoin {
+		final String groupname;
+		final UUID uuid;
+		
+		public GroupJoin(String groupname, UUID uuid) {
+			this.groupname = groupname;
+			this.uuid = uuid;
+		}
+	}
+	
+	public static class GroupLeave {
+		final String groupname;
+		final UUID uuid;
+		
+		public GroupLeave(String groupname, UUID uuid) {
+			this.groupname = groupname;
+			this.uuid = uuid;
 		}
 	}
 }
