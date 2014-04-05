@@ -15,7 +15,6 @@ import services.SignalJActor.Execute;
 import services.SignalJActor.RegisterHub;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akkaGuice.PropsContext;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -32,7 +31,7 @@ class ChannelActor extends UntypedActor {
 	private final static ObjectMapper mapper = new ObjectMapper();
 	private final ActorRef signalJActor;
 	private HubsDescriptor.HubDescriptor hubDescriptor;
-	private Class<? extends Hub> clazz; 
+	private Class<? extends Hub<?>> clazz; 
 	
 	@Inject
 	public ChannelActor(@Named("SignalJActor") ActorRef signalJActor) {
@@ -111,6 +110,16 @@ class ChannelActor extends UntypedActor {
 						users.get(uuid).forward(message, getContext());
 					}
 				}
+				break;
+			case InGroupExcept:
+				final List<UUID> inGroupExcept = Arrays.asList(clientFunctionCall.allExcept);
+				if(groups.containsKey(clientFunctionCall.groupName)) {
+					for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
+						if(inGroupExcept.contains(uuid)) continue;
+						users.get(uuid).forward(message, getContext());
+					}
+				}
+			break;
 			default:
 				break;
 			
@@ -237,7 +246,8 @@ class ChannelActor extends UntypedActor {
 			Caller,
 			Clients, 
 			AllExcept, 
-			Group
+			Group, 
+			InGroupExcept
 		}
 	}
 	

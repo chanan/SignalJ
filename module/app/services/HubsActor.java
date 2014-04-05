@@ -57,6 +57,7 @@ public class HubsActor extends UntypedActor {
 	}
 	
 	//TODO All this code can be moved to live inside hubsDescriptor
+	@SuppressWarnings("unchecked")
 	private void fillDescriptors() throws ClassNotFoundException {
 		final ConfigurationBuilder configBuilder = build("hubs");
 		final Reflections reflections = new Reflections(configBuilder.setScanners(new SubTypesScanner()));
@@ -64,7 +65,7 @@ public class HubsActor extends UntypedActor {
 		for(final Class<? extends Hub> hub : hubs) {
 			Logger.debug("Hub found: " + hub.getName());
 			HubDescriptor descriptor = hubsDescriptor.addDescriptor(hub.getName());
-			signalJActor.tell(new SignalJActor.RegisterHub(hub, descriptor), getSelf());
+			signalJActor.tell(new SignalJActor.RegisterHub((Class<? extends Hub<?>>) hub, descriptor), getSelf());
 		}
 	}
 

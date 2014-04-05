@@ -117,10 +117,10 @@ public class SignalJActor extends UntypedActor  {
 	}
 	
 	public static class RegisterHub {
-		final Class<? extends Hub> hub;
+		final Class<? extends Hub<?>> hub;
 		final HubsDescriptor.HubDescriptor descriptor;
 		
-		public RegisterHub(Class<? extends Hub> hub, HubsDescriptor.HubDescriptor descriptor) {
+		public RegisterHub(Class<? extends Hub<?>> hub, HubsDescriptor.HubDescriptor descriptor) {
 			this.hub = hub;
 			this.descriptor = descriptor;
 		}

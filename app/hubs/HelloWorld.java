@@ -37,6 +37,10 @@ public class HelloWorld extends Hub<FirstTestPage> {
 	public void talkToGroup(String group, String message) {
 		clients().group(group).sendToGroup(message);
 	}
+	
+	public void talkToGroupOtherThanMe(String group, String message) {
+		clients().group(group, getConnectionId()).sendToGroup(message);
+	}
 
 	@Override
 	protected Class<FirstTestPage> getInterface() {

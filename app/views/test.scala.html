@@ -12,7 +12,8 @@ Result: <span id="result"></span>
 <button id="btnDescribe">Log to console Describe</button><br>
 Message will be pushed from server 2 + 3 = <span id="push"></span><br>
 Person full name (Press first button): <span id="fullname"></span><br>
-<button id="joinGroup">Join "test" group</button> <button id="leaveGroup">Leave "test" group</button> <button id="talkToGroup">Say hello to group</button>
+<button id="joinGroup">Join "test" group</button> <button id="leaveGroup">Leave "test" group</button><br>
+<button id="talkToGroup">Say hello to group</button> <button id="talkToGroupOtherThanMe">Say hello to group other than me</button>
 <script type="text/javascript">
 $(function() {
 	$('#btnHello').click(function() {
@@ -39,6 +40,9 @@ $(function() {
 	});
 	$('#talkToGroup').click(function() {
 		HelloWorld_talkToGroup("test", "Hi!");
+	});
+	$('#talkToGroupOtherThanMe').click(function() {
+		HelloWorld_talkToGroupOtherThanMe("test", "Hi!");
 	});
 });
 

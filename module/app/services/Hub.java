@@ -77,6 +77,15 @@ public abstract class Hub<T> {
 		public S group(String groupName) {
 			return (S) new SenderProxy(SendType.Group, clazz, channelActor, uuid, (UUID[])null, (UUID[])null, groupName).createProxy();
 		}
+		
+		@SuppressWarnings("unchecked")
+		public S group(String groupName, UUID... connectionIds) {
+			return (S) new SenderProxy(SendType.InGroupExcept, clazz, channelActor, uuid, (UUID[])null, connectionIds, groupName).createProxy();
+		}
+		
+		public S inGroupExcept(String groupName, UUID... connectionIds) {
+			return group(groupName, connectionIds);
+		}
 	}
 	
 	//TODO: Fix this API it is bad (Fix ClientFunctionCall as well)
