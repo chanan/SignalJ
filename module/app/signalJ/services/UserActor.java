@@ -1,4 +1,4 @@
-package services;
+package signalJ.services;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -8,28 +8,20 @@ import play.libs.F.Callback;
 import play.libs.F.Callback0;
 import play.libs.Json;
 import play.mvc.WebSocket;
-import services.ChannelActor.ClientFunctionCall;
-import services.SignalJActor.Join;
+import signalJ.services.ChannelActor.ClientFunctionCall;
+import signalJ.services.SignalJActor.Join;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 class UserActor extends UntypedActor {
 	private UUID uuid;
 	private WebSocket.Out<JsonNode> out;
     private WebSocket.In<JsonNode> in;
-    private final ActorRef signalJActor;
+    private final ActorRef signalJActor = ActorLocator.getSignalJActor();
     private final Map<String, ActorRef> channels = new HashMap<String, ActorRef>();
     
-    @Inject
-    public UserActor(@Named("SignalJActor") ActorRef signalJActor) {
-    	this.signalJActor = signalJActor;
-    }
-
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof Join) {
@@ -66,14 +58,14 @@ class UserActor extends UntypedActor {
 		}
 		if(message instanceof MethodReturn) {
 			final MethodReturn methodReturn = (MethodReturn) message;
-			final models.Messages.MethodReturn json = new models.Messages.MethodReturn(methodReturn.uuid, methodReturn.id, methodReturn.hub, methodReturn.method, methodReturn.returnType, methodReturn.returnValue);
+			final signalJ.models.Messages.MethodReturn json = new signalJ.models.Messages.MethodReturn(methodReturn.uuid, methodReturn.id, methodReturn.hub, methodReturn.method, methodReturn.returnType, methodReturn.returnValue);
 			final JsonNode j = Json.toJson(json);
 			out.write(j);
 			Logger.debug("Return Value: " + j);
 		}
 		if(message instanceof ClientFunctionCall) {
 			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
-			final models.Messages.ClientFunctionCall json = new models.Messages.ClientFunctionCall(clientFunctionCall.caller, clientFunctionCall.channelName, clientFunctionCall.name);
+			final signalJ.models.Messages.ClientFunctionCall json = new signalJ.models.Messages.ClientFunctionCall(clientFunctionCall.caller, clientFunctionCall.channelName, clientFunctionCall.name);
 			if(clientFunctionCall.args != null) {
 				int i = 0;
 				for(final Object obj : clientFunctionCall.args) {

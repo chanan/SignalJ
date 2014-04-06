@@ -1,4 +1,4 @@
-package services;
+package signalJ.services;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -8,11 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import models.HubsDescriptor;
 import play.Logger;
-import services.ChannelsActor.ChannelJoin;
-import services.SignalJActor.Execute;
-import services.SignalJActor.RegisterHub;
+import signalJ.GlobalHost;
+import signalJ.models.HubsDescriptor;
+import signalJ.services.ChannelsActor.ChannelJoin;
+import signalJ.services.SignalJActor.Execute;
+import signalJ.services.SignalJActor.RegisterHub;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
@@ -20,23 +21,14 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
-@Singleton
 class ChannelActor extends UntypedActor {
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
 	private final Map<String, List<UUID>> groups = new HashMap<String, List<UUID>>();
 	private final static ObjectMapper mapper = new ObjectMapper();
-	private final ActorRef signalJActor;
+	private final ActorRef signalJActor = ActorLocator.getSignalJActor();
 	private HubsDescriptor.HubDescriptor hubDescriptor;
 	private Class<? extends Hub<?>> clazz; 
-	
-	@Inject
-	public ChannelActor(@Named("SignalJActor") ActorRef signalJActor) {
-		this.signalJActor = signalJActor;
-	}
 
 	@Override
 	public void onReceive(Object message) throws Exception {
@@ -60,7 +52,7 @@ class ChannelActor extends UntypedActor {
 			final Execute execute = (Execute) message;
 			final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
 			final String hub = execute.json.get("hub").textValue();
-			final Hub<?> instance = (Hub<?>) clazz.newInstance();
+			final Hub<?> instance = GlobalHost.getDependencyResolver().getHubInstance(hub);
 			instance.setChannelActor(getSelf());
 			instance.setCaller(uuid);
 			instance.SetHubDescriptor(hubDescriptor);

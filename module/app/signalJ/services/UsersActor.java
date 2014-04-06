@@ -1,19 +1,15 @@
-package services;
+package signalJ.services;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import play.Logger;
-import services.SignalJActor.Join;
-import services.SignalJActor.Quit;
+import signalJ.services.SignalJActor.Join;
+import signalJ.services.SignalJActor.Quit;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akkaGuice.PropsContext;
-
-import com.google.inject.Singleton;
 
 //TODO Had to remove this, make this work one day!
-@Singleton
 class UsersActor extends UntypedActor {
 	//TODO: Make this a supervisor
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>(); //TODO: Is this needed or can we do everything with actor selection?
@@ -22,7 +18,7 @@ class UsersActor extends UntypedActor {
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof Join) {
 			final Join join = (Join) message;
-			final ActorRef user = getContext().actorOf(PropsContext.get(UserActor.class), join.uuid.toString());
+			final ActorRef user = ActorLocator.getUserActor(getContext(), join.uuid.toString());
 			users.put(join.uuid, user);
 			user.tell(join, getSelf());
 			Logger.debug(join.uuid + " logged on");

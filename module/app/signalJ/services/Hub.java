@@ -1,12 +1,12 @@
-package services;
+package signalJ.services;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.UUID;
 
-import models.HubsDescriptor.HubDescriptor;
 import play.Logger;
-import services.ChannelActor.ClientFunctionCall.SendType;
+import signalJ.models.HubsDescriptor.HubDescriptor;
+import signalJ.services.ChannelActor.ClientFunctionCall.SendType;
 import akka.actor.ActorRef;
 
 public abstract class Hub<T> {
@@ -121,7 +121,6 @@ public abstract class Hub<T> {
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			Logger.debug(sendType + " - " + method.getName() + " " + args);
-			Logger.debug("channelActor: " + channelActor);
 			channelActor.tell(new ChannelActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args, clients, allExcept, groupName), channelActor);
 			return null;
 		}

@@ -1,14 +1,6 @@
-package services;
-import static org.reflections.ReflectionUtils.getAllMethods;
-import static org.reflections.ReflectionUtils.withModifier;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+package signalJ.services;
 import java.util.Set;
 import java.util.UUID;
-
-import models.HubsDescriptor;
-import models.HubsDescriptor.HubDescriptor;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
@@ -16,23 +8,15 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import play.Logger;
-import services.SignalJActor.Describe;
+import signalJ.models.HubsDescriptor;
+import signalJ.models.HubsDescriptor.HubDescriptor;
+import signalJ.services.SignalJActor.Describe;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-
-@Singleton
-public class HubsActor extends UntypedActor {
-	private final ActorRef signalJActor;
+class HubsActor extends UntypedActor {
+	private final ActorRef signalJActor = ActorLocator.getSignalJActor();
 	private final HubsDescriptor hubsDescriptor = new HubsDescriptor();
-	
-	@Inject
-	public HubsActor(@Named("SignalJActor") ActorRef signalJActor) {
-		this.signalJActor = signalJActor;
-	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -41,7 +25,7 @@ public class HubsActor extends UntypedActor {
 		if(message instanceof GetJavaScript) {
 			StringBuffer sb = new StringBuffer();
 			sb.append(hubsDescriptor.toJS());
-			sb.append(views.js.hubs.render()).append("\n");
+			sb.append(signalJ.views.js.hubs.render()).append("\n");
 			getSender().tell(sb.toString(), getSelf());
 		}
 		if(message instanceof Describe) {

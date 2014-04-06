@@ -1,13 +1,23 @@
 package hubs;
 import models.Person;
 import play.Logger;
-import services.Hub;
+import services.StringService;
+import signalJ.services.Hub;
+
+import com.google.inject.Inject;
 
 public class HelloWorld extends Hub<FirstTestPage> {
+	private StringService service;
+	
+	@Inject
+	public HelloWorld(StringService service) {
+		this.service = service;
+	}
+	
 	public void sayHello() {
 		Logger.debug("A client made me say hello!");
 		clients().all.firstTestFucntion();
-		clients().others.firstTestFunctionWithParam("Hi");
+		clients().others.firstTestFunctionWithParam(service.capitalize("Hello there!"));
 		clients().caller.twoParams(2, 3);
 		clients().all.complexObj(new Person("John", "Smith"));
 		//Test client(s) by sending to self:

@@ -1,15 +1,14 @@
-package services;
+package signalJ.services;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import models.HubsDescriptor;
-import services.SignalJActor.Execute;
-import services.SignalJActor.RegisterHub;
-import services.SignalJActor.SendToChannel;
+import signalJ.models.HubsDescriptor;
+import signalJ.services.SignalJActor.Execute;
+import signalJ.services.SignalJActor.RegisterHub;
+import signalJ.services.SignalJActor.SendToChannel;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akkaGuice.PropsContext;
 
 class ChannelsActor extends UntypedActor {
 	private final Map<String, ActorRef> channels = new HashMap<>();
@@ -21,7 +20,7 @@ class ChannelsActor extends UntypedActor {
 			final RegisterHub registerHub = (RegisterHub) message;
 			final String channelName = registerHub.hub.getName();
 			if(!channels.containsKey(channelName)) {
-				ActorRef channel = getContext().actorOf(PropsContext.get(ChannelActor.class), channelName);
+				ActorRef channel = ActorLocator.getChannelActor(getContext(), channelName);
 				channel.tell(registerHub, getSelf());
 				channels.put(channelName, channel);
 				descriptors.put(channelName, registerHub.descriptor);

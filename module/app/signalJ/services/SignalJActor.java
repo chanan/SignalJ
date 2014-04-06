@@ -1,39 +1,27 @@
-package services;
+package signalJ.services;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import models.HubsDescriptor;
 import play.Logger;
 import play.mvc.WebSocket;
+import signalJ.models.HubsDescriptor;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akkaGuice.PropsContext;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
-@Singleton
-public class SignalJActor extends UntypedActor  {
+class SignalJActor extends UntypedActor  {
 	//private final ActorRef usersActor;
-	private final ActorRef channelsActor;
-	private final ActorRef hubsActor;
+	private final ActorRef channelsActor = ActorLocator.getChannelsActor(getContext());
+	private final ActorRef hubsActor = ActorLocator.getHubsActor();
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
-	
-	@Inject
-	public SignalJActor(@Named("HubsActor") ActorRef hubsActor) {
-		//this.usersActor = getContext().actorOf(PropsContext.get(UsersActor.class), "users");
-		this.channelsActor = getContext().actorOf(PropsContext.get(ChannelsActor.class), "channels");
-		this.hubsActor = hubsActor;
-	}
 	
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof Join) {
 			final Join join = (Join) message;
-			final ActorRef user = getContext().actorOf(PropsContext.get(UserActor.class), join.uuid.toString());
+			final ActorRef user = ActorLocator.getUserActor(getContext(), join.uuid.toString());
 			users.put(join.uuid, user);
 			user.tell(join, getSelf());
 			channelsActor.tell(new ChannelsActor.ChannelJoin(join.uuid, user), getSelf());

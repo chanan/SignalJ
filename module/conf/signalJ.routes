@@ -1,0 +1,2 @@
+GET			/signalJ/Join						signalJ.services.SignalJ.join()
+GET			/js/hubs.js							signalJ.services.SignalJ.hubs()

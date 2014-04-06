@@ -3,7 +3,8 @@ name := "SignalJSample"
 version := "1.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
-  cache
+  cache,
+  "com.google.inject" % "guice" % "3.0"
 )     
 
 play.Project.playJavaSettings

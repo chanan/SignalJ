@@ -1,4 +1,4 @@
-package models;
+package signalJ.models;
 import static org.reflections.ReflectionUtils.getMethods;
 import static org.reflections.ReflectionUtils.withModifier;
 

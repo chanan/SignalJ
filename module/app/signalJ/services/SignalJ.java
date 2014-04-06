@@ -1,36 +1,26 @@
-package controllers;
+package signalJ.services;
+import static akka.pattern.Patterns.ask;
+
 import java.util.UUID;
 
 import play.Logger;
-import play.libs.Json;
+import play.libs.F.Function;
 import play.libs.F.Promise;
+import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.WebSocket;
-import services.HubsActor;
-import services.SignalJActor;
-import services.SignalJActor.Join;
+import signalJ.services.SignalJActor.Join;
 import akka.actor.ActorRef;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-
-import static akka.pattern.Patterns.ask;
-import play.libs.F.Function;
 
 public class SignalJ extends Controller {
-	private final ActorRef signalJActor;
-	private final ActorRef hubsActor;
+	private final static ActorRef signalJActor = ActorLocator.getSignalJActor();
+	private final static ActorRef hubsActor = ActorLocator.getHubsActor();
 	
-	@Inject
-	public SignalJ(@Named("SignalJActor") ActorRef signalJActor, @Named("HubsActor") ActorRef hubsActor) {
-		this.signalJActor = signalJActor;
-		this.hubsActor = hubsActor;
-	}
-	
-	public Promise<Result> hubs() {
+	public static Promise<Result> hubs() {
 		return Promise.wrap(ask(hubsActor, new HubsActor.GetJavaScript(), 1000)).map(new Function<Object, Result>(){
 			@Override
 			public Result apply(Object response) throws Throwable {
@@ -39,7 +29,7 @@ public class SignalJ extends Controller {
 		});
 	}
 	
-	public WebSocket<JsonNode> join() {
+	public static WebSocket<JsonNode> join() {
 		return new WebSocket<JsonNode>() {
             public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out){
                 try {
@@ -53,7 +43,8 @@ public class SignalJ extends Controller {
         };
 	}
 	
-	private void sendUUID(WebSocket.Out<JsonNode> out, UUID uuid) {
+	//TODO: Convert to serialization
+	private static void sendUUID(WebSocket.Out<JsonNode> out, UUID uuid) {
 		final ObjectNode event = Json.newObject();
 		event.put("uuid", uuid.toString());
 		event.put("type", "init");

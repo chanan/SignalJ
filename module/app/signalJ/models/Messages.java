@@ -1,4 +1,4 @@
-package models;
+package signalJ.models;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
