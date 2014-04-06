@@ -1,4 +1,6 @@
-This is your new Play application
+SignalJ PlayFramework Port
 =====================================
 
-This file will be packaged with your application, when using `play dist`.
+PlayFramework module that borrows ideas from SignalR and implements those ideas using Akka actors.
+
+More info to come soon.
