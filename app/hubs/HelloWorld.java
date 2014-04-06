@@ -50,6 +50,7 @@ public class HelloWorld extends Hub<FirstTestPage> {
 	
 	public void talkToGroupOtherThanMe(String group, String message) {
 		clients().group(group, getConnectionId()).sendToGroup(message);
+		clients().othersInGroup(group).sendToGroup("Another way: " + message);
 	}
 
 	@Override

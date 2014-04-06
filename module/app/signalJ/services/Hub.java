@@ -2,6 +2,8 @@ package signalJ.services;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import play.Logger;
@@ -85,6 +87,13 @@ public abstract class Hub<T> {
 		
 		public S inGroupExcept(String groupName, UUID... connectionIds) {
 			return group(groupName, connectionIds);
+		}
+		
+		@SuppressWarnings("unchecked")
+		public S othersInGroup(String groupName) {
+			UUID[] uuids = new UUID[1];
+			uuids[0] = getConnectionId();
+			return (S) new SenderProxy(SendType.InGroupExcept, clazz, channelActor, uuid, (UUID[])null, uuids, groupName).createProxy();
 		}
 	}
 	
