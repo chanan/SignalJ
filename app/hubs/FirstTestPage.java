@@ -11,4 +11,5 @@ public interface FirstTestPage {
 	public void calledFromClient(UUID connectionId);
 	public void notCalledFromClient(UUID connectionId);
 	public void sendToGroup(String message);
+	public void thisWillBeCalledFromOutsideTheHub(String message);
 }
