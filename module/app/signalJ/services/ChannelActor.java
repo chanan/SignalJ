@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 class ChannelActor extends UntypedActor {
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
-	private final Map<String, List<UUID>> groups = new HashMap<String, List<UUID>>();
 	private final static ObjectMapper mapper = new ObjectMapper();
 	private final ActorRef signalJActor = ActorLocator.getSignalJActor();
 	private HubsDescriptor.HubDescriptor hubDescriptor;
@@ -97,45 +96,15 @@ class ChannelActor extends UntypedActor {
 				}
 				break;
 			case Group:
-				if(groups.containsKey(clientFunctionCall.groupName)) {
-					for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
-						users.get(uuid).forward(message, getContext());
-					}
-				}
+				signalJActor.forward(message, getContext());
 				break;
 			case InGroupExcept:
-				final List<UUID> inGroupExcept = Arrays.asList(clientFunctionCall.allExcept);
-				if(groups.containsKey(clientFunctionCall.groupName)) {
-					for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
-						if(inGroupExcept.contains(uuid)) continue;
-						users.get(uuid).forward(message, getContext());
-					}
-				}
-			break;
+				signalJActor.forward(message, getContext());
+				break;
 			default:
 				break;
 			
 			}
-		}
-		if(message instanceof GroupJoin) {
-			final GroupJoin groupJoin = (GroupJoin) message;
-			if(!groups.containsKey(groupJoin.groupname)) {
-				groups.put(groupJoin.groupname, new ArrayList<UUID>());
-			}
-			final List<UUID> uuids = groups.get(groupJoin.groupname);
-			if(!uuids.contains(groupJoin.uuid)) {
-				uuids.add(groupJoin.uuid);
-			}
-			Logger.debug(groupJoin.uuid + " joined group: " + groupJoin.groupname);
-		}
-		if(message instanceof GroupLeave) {
-			final GroupLeave groupLeave = (GroupLeave) message;
-			if(groups.containsKey(groupLeave.groupname)) {
-				final List<UUID> uuids = groups.get(groupLeave.groupname);
-				uuids.remove(groupLeave.uuid);
-				if(uuids.isEmpty()) groups.remove(groupLeave.groupname);
-			}
-			Logger.debug(groupLeave.uuid + " left group: " + groupLeave.groupname);
 		}
 	}
 	
@@ -240,26 +209,6 @@ class ChannelActor extends UntypedActor {
 			AllExcept, 
 			Group, 
 			InGroupExcept
-		}
-	}
-	
-	public static class GroupJoin {
-		final String groupname;
-		final UUID uuid;
-		
-		public GroupJoin(String groupname, UUID uuid) {
-			this.groupname = groupname;
-			this.uuid = uuid;
-		}
-	}
-	
-	public static class GroupLeave {
-		final String groupname;
-		final UUID uuid;
-		
-		public GroupLeave(String groupname, UUID uuid) {
-			this.groupname = groupname;
-			this.uuid = uuid;
 		}
 	}
 }

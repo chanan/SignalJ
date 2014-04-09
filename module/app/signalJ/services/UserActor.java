@@ -26,7 +26,6 @@ class UserActor extends UntypedActor {
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof Join) {
 			final Join join = (Join) message;
-			if(uuid == null) new IllegalArgumentException("Join cannot be called twice!");
 			this.uuid = join.uuid;
 			this.out = join.out;
 			this.in = join.in;

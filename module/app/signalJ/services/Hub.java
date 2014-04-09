@@ -37,12 +37,13 @@ public abstract class Hub<T> implements HubContext<T> {
 	}
 	
 	protected final class GroupsContext {
+		private final ActorRef signalJActor = ActorLocator.getSignalJActor();
 		public void add(UUID connectionId, String groupName) {
-			channelActor.tell(new ChannelActor.GroupJoin(groupName, connectionId), channelActor);
+			signalJActor.tell(new SignalJActor.GroupJoin(groupName, connectionId), channelActor);
 		}
 		
 		public void remove(UUID connectionId, String groupName) {
-			channelActor.tell(new ChannelActor.GroupLeave(groupName, connectionId), channelActor);
+			signalJActor.tell(new SignalJActor.GroupLeave(groupName, connectionId), channelActor);
 		}
 	}
 }

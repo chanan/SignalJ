@@ -1,11 +1,15 @@
 package signalJ.services;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import play.Logger;
 import play.mvc.WebSocket;
 import signalJ.models.HubsDescriptor;
+import signalJ.services.ChannelActor.ClientFunctionCall;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
@@ -13,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 class SignalJActor extends UntypedActor  {
 	//private final ActorRef usersActor;
+	private final Map<String, List<UUID>> groups = new HashMap<String, List<UUID>>();
 	private final ActorRef channelsActor = ActorLocator.getChannelsActor(getContext());
 	private final ActorRef hubsActor = ActorLocator.getHubsActor();
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
@@ -44,6 +49,50 @@ class SignalJActor extends UntypedActor  {
 		}
 		if(message instanceof Describe) {
 			hubsActor.forward(message, getContext());
+		}
+		if(message instanceof GroupJoin) {
+			final GroupJoin groupJoin = (GroupJoin) message;
+			if(!groups.containsKey(groupJoin.groupname)) {
+				groups.put(groupJoin.groupname, new ArrayList<UUID>());
+			}
+			final List<UUID> uuids = groups.get(groupJoin.groupname);
+			if(!uuids.contains(groupJoin.uuid)) {
+				uuids.add(groupJoin.uuid);
+			}
+			Logger.debug(groupJoin.uuid + " joined group: " + groupJoin.groupname);
+		}
+		if(message instanceof GroupLeave) {
+			final GroupLeave groupLeave = (GroupLeave) message;
+			if(groups.containsKey(groupLeave.groupname)) {
+				final List<UUID> uuids = groups.get(groupLeave.groupname);
+				uuids.remove(groupLeave.uuid);
+				if(uuids.isEmpty()) groups.remove(groupLeave.groupname);
+			}
+			Logger.debug(groupLeave.uuid + " left group: " + groupLeave.groupname);
+		}
+		if(message instanceof ClientFunctionCall) {
+			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
+			switch(clientFunctionCall.sendType) {
+				case Group:
+					if(groups.containsKey(clientFunctionCall.groupName)) {
+						Logger.debug(groups.get(clientFunctionCall.groupName).toString());
+						for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
+							users.get(uuid).forward(message, getContext());
+						}
+					}
+					break;
+				case InGroupExcept:
+					final List<UUID> inGroupExcept = Arrays.asList(clientFunctionCall.allExcept);
+					if(groups.containsKey(clientFunctionCall.groupName)) {
+						for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
+							if(inGroupExcept.contains(uuid)) continue;
+							users.get(uuid).forward(message, getContext());
+						}
+					}
+				break;
+				default:
+					break;
+			}
 		}
 	}
 	
@@ -129,6 +178,26 @@ class SignalJActor extends UntypedActor  {
 		public Describe(JsonNode json, ActorRef user) {
 			this.json = json;
 			this.user = user;
+		}
+	}
+	
+	public static class GroupJoin {
+		final String groupname;
+		final UUID uuid;
+		
+		public GroupJoin(String groupname, UUID uuid) {
+			this.groupname = groupname;
+			this.uuid = uuid;
+		}
+	}
+	
+	public static class GroupLeave {
+		final String groupname;
+		final UUID uuid;
+		
+		public GroupLeave(String groupname, UUID uuid) {
+			this.groupname = groupname;
+			this.uuid = uuid;
 		}
 	}
 }

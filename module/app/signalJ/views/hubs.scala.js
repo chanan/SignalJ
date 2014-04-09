@@ -11,7 +11,7 @@ var callbacks = {};
 
 var receiveEvent = function(event) {
     var data = JSON.parse(event.data);
-    uuid = data.uuid;
+    if (uuid == null) uuid = data.uuid;
     
     // Handle errors
     if(data.error) {
