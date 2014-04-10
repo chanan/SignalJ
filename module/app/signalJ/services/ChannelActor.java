@@ -52,9 +52,8 @@ class ChannelActor extends UntypedActor {
 			final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
 			final String hub = execute.json.get("hub").textValue();
 			final Hub<?> instance = GlobalHost.getDependencyResolver().getHubInstance(hub);
-			instance.setChannelActor(getSelf());
-			instance.setCaller(uuid);
-			instance.SetHubDescriptor(hubDescriptor);
+			instance.setConnectionId(uuid);
+			instance.setHubClassName(hub);
 			final String method = execute.json.get("method").textValue();
 			final Class<?>[] classes = getParamTypeList(execute.json);
 			final Method m = instance.getClass().getMethod(method, classes);

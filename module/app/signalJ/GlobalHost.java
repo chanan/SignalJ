@@ -1,7 +1,6 @@
 package signalJ;
-
+import signalJ.services.Hub;
 import signalJ.services.HubContext;
-
 
 public class GlobalHost {
 	private final static DependencyResolver _defaultDependencyResolver = new DefaultDependencyResolver();
@@ -15,14 +14,19 @@ public class GlobalHost {
 		_dependencyResolver = dependencyResolver;
 	}
 	
-	//TODO: Needs channelActor.
 	@SuppressWarnings("unchecked")
 	public static<TInterface> HubContext<TInterface> getHub(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-		return (HubContext<TInterface>)getDependencyResolver().getHubInstance(className);
+		return (HubContext<TInterface>)getInstance(className);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public static<TInterface> HubContext<TInterface> getHub(Class<?> clazz) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-		return (HubContext<TInterface>)getDependencyResolver().getHubInstance(clazz.getName());
+		return (HubContext<TInterface>)getInstance(clazz.getName());
+	}
+	
+	private static Hub<?> getInstance(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+		final Hub<?> hub = getDependencyResolver().getHubInstance(className);
+		hub.setHubClassName(className);
+		return hub;
 	}
 }

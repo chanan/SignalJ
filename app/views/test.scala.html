@@ -72,4 +72,7 @@ function notCalledFromClient(connectionId) {
 function sendToGroup(message) {
 	console.log("This was sent to the group: " + message);
 }
+function thisWillBeCalledFromOutsideTheHub(message) {
+	console.log("This was sent from out side the hub to all clients: " + message);
+}
 </script>

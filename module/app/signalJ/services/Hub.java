@@ -1,20 +1,12 @@
 package signalJ.services;
 import java.util.UUID;
 
-import signalJ.models.HubsDescriptor.HubDescriptor;
-import akka.actor.ActorRef;
-
 public abstract class Hub<T> implements HubContext<T> {
-	private ActorRef channelActor;
 	private UUID uuid;
-	private HubDescriptor hubDescriptor;
+	private String className = null;
 	protected abstract Class<T> getInterface();
-
-	void setChannelActor(ActorRef channelActor) {
-		this.channelActor = channelActor;
-	}
 	
-	void setCaller(UUID uuid) {
+	void setConnectionId(UUID uuid) {
 		this.uuid = uuid;
 	}
 	
@@ -22,28 +14,17 @@ public abstract class Hub<T> implements HubContext<T> {
 		return uuid;
 	}
 	
-	void SetHubDescriptor(HubDescriptor hubDescriptor) {
-		this.hubDescriptor = hubDescriptor;
+	public void setHubClassName(String className) {
+		if(this.className == null) this.className = className;
 	}
 	
 	@Override
 	public ClientsContext<T> clients() {
-		return new ClientsContext<T>(getInterface(), channelActor, getConnectionId());
+		return new ClientsContext<T>(getInterface(), className ,getConnectionId());
 	}
 	
 	@Override
 	public GroupsContext groups() {
 		return new GroupsContext();
-	}
-	
-	protected final class GroupsContext {
-		private final ActorRef signalJActor = ActorLocator.getSignalJActor();
-		public void add(UUID connectionId, String groupName) {
-			signalJActor.tell(new SignalJActor.GroupJoin(groupName, connectionId), channelActor);
-		}
-		
-		public void remove(UUID connectionId, String groupName) {
-			signalJActor.tell(new SignalJActor.GroupLeave(groupName, connectionId), channelActor);
-		}
 	}
 }

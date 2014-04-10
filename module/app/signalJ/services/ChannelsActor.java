@@ -10,7 +10,7 @@ import signalJ.services.SignalJActor.SendToChannel;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
-class ChannelsActor extends UntypedActor {
+public class ChannelsActor extends UntypedActor {
 	private final Map<String, ActorRef> channels = new HashMap<>();
 	private final Map<String, HubsDescriptor.HubDescriptor> descriptors = new HashMap<>();
 
@@ -42,6 +42,11 @@ class ChannelsActor extends UntypedActor {
 			final ActorRef channel = channels.get(execute.json.get("hub").textValue());
 			channel.tell(execute, getSelf());
 		}
+		if(message instanceof GetChannel) {
+			final GetChannel getChannel = (GetChannel) message;
+			final ActorRef channel = channels.get(getChannel.channelName);
+			getSender().tell(channel, getSelf());
+		}
 	}
 	
 	public static class ChannelJoin {
@@ -51,6 +56,14 @@ class ChannelsActor extends UntypedActor {
 		public ChannelJoin(UUID uuid, ActorRef user) {
 			this.uuid = uuid;
 			this.user = user;
+		}
+	}
+	
+	public static class GetChannel {
+		final String channelName;
+		
+		public GetChannel(String channelName) {
+			this.channelName = channelName;
 		}
 	}
 }
