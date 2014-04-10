@@ -68,3 +68,13 @@ function executeFunctionByName(functionName, context /*, args */) {
 	}
 	return context[func].apply(this, vals);
 }
+
+function groupAdd(group) {
+	var j = {type: 'groupAdd', group: group};
+	systemsend(j);
+}
+
+function groupRemove(group) {
+	var j = {type: 'groupRemove', group: group};
+	systemsend(j);
+}

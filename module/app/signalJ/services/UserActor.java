@@ -95,6 +95,14 @@ class UserActor extends UntypedActor {
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("describe")) {
 				signalJActor.tell(new SignalJActor.Describe(internalMessage.json, getSelf()), getSelf());
 			}
+			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("groupAdd")) {
+				signalJActor.tell(new SignalJActor.GroupJoin(internalMessage.json.get("group").textValue(),
+						UUID.fromString(internalMessage.json.get("uuid").textValue())), getSelf());
+			}
+			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("groupRemove")) {
+				signalJActor.tell(new SignalJActor.GroupLeave(internalMessage.json.get("group").textValue(),
+						UUID.fromString(internalMessage.json.get("uuid").textValue())), getSelf());
+			}
 		}
 	}
 	
