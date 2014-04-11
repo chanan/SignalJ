@@ -44,6 +44,7 @@ class ChannelActor extends UntypedActor {
 		}
 		if(message instanceof Quit) {
 			final Quit quit = (Quit) message;
+			Logger.debug("Quit: " +  quit.uuid + " " + hubDescriptor.getName());
 			users.remove(quit.uuid);
 			if(users.isEmpty()) getContext().stop(getSelf());
 		}

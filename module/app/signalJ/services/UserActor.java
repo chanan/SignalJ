@@ -20,7 +20,6 @@ class UserActor extends UntypedActor {
 	private WebSocket.Out<JsonNode> out;
     private WebSocket.In<JsonNode> in;
     private final ActorRef signalJActor = ActorLocator.getSignalJActor();
-    private final Map<String, ActorRef> channels = new HashMap<String, ActorRef>();
     
 	@Override
 	public void onReceive(Object message) throws Exception {
@@ -43,17 +42,6 @@ class UserActor extends UntypedActor {
 					self.tell(new InternalMessage(json), self);
 				}
 			});
-		}
-		if(message instanceof ChannelJoin) {
-			final ChannelJoin channelJoin = (ChannelJoin) message;
-			channels.put(channelJoin.channelName, channelJoin.channel);
-		}
-		if(message instanceof Quit) {
-			//TODO Revisit this code, quit no longer quits all channels
-			for(final ActorRef channel : channels.values()) {
-				channel.tell(new ChannelActor.Quit(uuid), getSelf());
-			}
-			getContext().stop(getSelf());
 		}
 		if(message instanceof MethodReturn) {
 			final MethodReturn methodReturn = (MethodReturn) message;
