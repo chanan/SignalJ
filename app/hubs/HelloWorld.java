@@ -16,7 +16,7 @@ public class HelloWorld extends Hub<FirstTestPage> {
 	
 	public void sayHello() {
 		Logger.debug("A client made me say hello!");
-		clients().all.firstTestFucntion();
+		clients().all.firstTestFunction();
 		clients().others.firstTestFunctionWithParam(service.capitalize("Hello there!"));
 		clients().caller.twoParams(2, 3);
 		clients().all.complexObj(new Person("John", "Smith"));

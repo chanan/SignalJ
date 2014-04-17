@@ -1,29 +1,23 @@
 package signalJ.services;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import play.Logger;
-import signalJ.GlobalHost;
-import signalJ.models.HubsDescriptor;
-import signalJ.services.ChannelsActor.ChannelJoin;
-import signalJ.services.SignalJActor.Execute;
-import signalJ.services.SignalJActor.RegisterHub;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import play.Logger;
+import signalJ.GlobalHost;
+import signalJ.models.HubsDescriptor;
+import signalJ.services.SignalJActor.Execute;
+import signalJ.services.SignalJActor.RegisterHub;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 class ChannelActor extends UntypedActor {
-	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
 	private final static ObjectMapper mapper = new ObjectMapper();
 	private final ActorRef signalJActor = ActorLocator.getSignalJActor();
 	private HubsDescriptor.HubDescriptor hubDescriptor;
@@ -37,16 +31,6 @@ class ChannelActor extends UntypedActor {
 			hubDescriptor = registerHub.descriptor;
 			clazz = registerHub.hub;
 			Logger.debug("Registered channel: " + registerHub.hub.getName());
-		}
-		if(message instanceof ChannelJoin) {
-			final ChannelJoin channelJoin = (ChannelJoin) message;
-			users.put(channelJoin.uuid, channelJoin.user);
-		}
-		if(message instanceof Quit) {
-			final Quit quit = (Quit) message;
-			Logger.debug("Quit: " +  quit.uuid + " " + hubDescriptor.getName());
-			users.remove(quit.uuid);
-			if(users.isEmpty()) getContext().stop(getSelf());
 		}
 		if(message instanceof Execute) {
 			final Execute execute = (Execute) message;
@@ -62,49 +46,11 @@ class ChannelActor extends UntypedActor {
             if(ret != null) {
             	final String id = execute.json.get("id").textValue();
             	final String returnType = execute.json.get("returnType").textValue();
-            	final ActorRef user = users.get(uuid);
-            	user.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), getSelf());
+                signalJActor.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), getSelf());
             }
 		}
 		if(message instanceof ClientFunctionCall) {
-			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
-			switch(clientFunctionCall.sendType) {
-			case All:
-				for(final ActorRef user : users.values()) {
-					user.forward(message, getContext());
-				}
-				break;
-			case Caller:
-				users.get(clientFunctionCall.caller).forward(message, getContext());
-				break;
-			case Others:
-				for(final UUID uuid : users.keySet()) {
-					if(uuid.equals(clientFunctionCall.caller)) continue;
-					users.get(uuid).forward(message, getContext());
-				}
-				break;
-			case Clients:
-				for(final UUID uuid : clientFunctionCall.clients) {
-					users.get(uuid).forward(message, getContext());
-				}
-				break;
-			case AllExcept:
-				final List<UUID> allExcept = Arrays.asList(clientFunctionCall.allExcept);
-				for(final UUID uuid : users.keySet()) {
-					if(allExcept.contains(uuid)) continue;
-					users.get(uuid).forward(message, getContext());
-				}
-				break;
-			case Group:
-				signalJActor.forward(message, getContext());
-				break;
-			case InGroupExcept:
-				signalJActor.forward(message, getContext());
-				break;
-			default:
-				break;
-			
-			}
+			signalJActor.forward(message, getContext());
 		}
 	}
 	

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import akka.actor.Props;
 import play.Logger;
 import play.libs.Akka;
 import play.mvc.WebSocket;
@@ -21,7 +22,8 @@ class SignalJActor extends UntypedActor  {
 	//private final ActorRef usersActor;
 	private final Map<String, List<UUID>> groups = new HashMap<String, List<UUID>>();
 	private final Map<UUID, List<String>> usersInGroup = new HashMap<UUID, List<String>>();
-	private final ActorRef channelsActor = ActorLocator.getChannelsActor(getContext());
+	private final ActorRef channelsActor = getContext().actorOf(Props.create(ChannelsActor.class), "channels");
+    private final ActorRef usersActor = getContext().actorOf(Props.create(UsersActor.class), "users");
 	private final ActorRef hubsActor = ActorLocator.getHubsActor();
 	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
 	
@@ -29,10 +31,11 @@ class SignalJActor extends UntypedActor  {
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof Join) {
 			final Join join = (Join) message;
-			final ActorRef user = ActorLocator.getUserActor(getContext(), join.uuid.toString());
-			users.put(join.uuid, user);
-			user.tell(join, getSelf());
-			channelsActor.tell(new ChannelsActor.ChannelJoin(join.uuid, user), getSelf());
+			//final ActorRef user = ActorLocator.getUserActor(getContext(), join.uuid.toString());
+			//users.put(join.uuid, user);
+			//user.tell(join, getSelf());
+			//channelsActor.tell(new ChannelsActor.ChannelJoin(join.uuid, user), getSelf());
+            usersActor.forward(message, getContext());
 			Logger.debug(join.uuid + " logged on");
 		}
 		if(message instanceof Quit) {
@@ -93,11 +96,29 @@ class SignalJActor extends UntypedActor  {
 		if(message instanceof ClientFunctionCall) {
 			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
 			switch(clientFunctionCall.sendType) {
-				case Group:
+
+                case All:
+                case Others:
+                case Caller:
+                case Clients:
+                case AllExcept:
+                    usersActor.forward(message, getContext());
+                    break;
+                case Group:
 					if(groups.containsKey(clientFunctionCall.groupName)) {
 						Logger.debug(groups.get(clientFunctionCall.groupName).toString());
 						for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
-							users.get(uuid).forward(message, getContext());
+                            usersActor.forward(new ClientFunctionCall(
+                                    clientFunctionCall.method,
+                                    clientFunctionCall.channelName,
+                                    uuid,
+                                    clientFunctionCall.sendType,
+                                    clientFunctionCall.name,
+                                    clientFunctionCall.args,
+                                    clientFunctionCall.clients,
+                                    clientFunctionCall.allExcept,
+                                    clientFunctionCall.groupName
+                            ), getContext());
 						}
 					}
 					break;
@@ -106,7 +127,17 @@ class SignalJActor extends UntypedActor  {
 					if(groups.containsKey(clientFunctionCall.groupName)) {
 						for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
 							if(inGroupExcept.contains(uuid)) continue;
-							users.get(uuid).forward(message, getContext());
+                            usersActor.forward(new ClientFunctionCall(
+                                    clientFunctionCall.method,
+                                    clientFunctionCall.channelName,
+                                    uuid,
+                                    clientFunctionCall.sendType,
+                                    clientFunctionCall.name,
+                                    clientFunctionCall.args,
+                                    clientFunctionCall.clients,
+                                    clientFunctionCall.allExcept,
+                                    clientFunctionCall.groupName
+                            ), getContext());
 						}
 					}
 				break;
@@ -114,6 +145,9 @@ class SignalJActor extends UntypedActor  {
 					break;
 			}
 		}
+        if(message instanceof UserActor.MethodReturn) {
+            usersActor.forward(message, getContext());
+        }
 	}
 
 	private void leaveGroup(final UUID uuid, final String group) {
