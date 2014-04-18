@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import akka.actor.Props;
 import play.Logger;
 import play.libs.Akka;
 import play.mvc.WebSocket;
@@ -18,37 +19,22 @@ import akka.actor.UntypedActor;
 import com.fasterxml.jackson.databind.JsonNode;
 
 class SignalJActor extends UntypedActor  {
-	//private final ActorRef usersActor;
-	private final Map<String, List<UUID>> groups = new HashMap<String, List<UUID>>();
-	private final Map<UUID, List<String>> usersInGroup = new HashMap<UUID, List<String>>();
-	private final ActorRef channelsActor = ActorLocator.getChannelsActor(getContext());
+
+	private final ActorRef channelsActor = getContext().actorOf(Props.create(ChannelsActor.class), "channels");
+    private final ActorRef usersActor = getContext().actorOf(Props.create(UsersActor.class), "users");
 	private final ActorRef hubsActor = ActorLocator.getHubsActor();
-	private final Map<UUID, ActorRef> users = new HashMap<UUID, ActorRef>();
+    private final ActorRef groupsActor = getContext().actorOf(Props.create(GroupsActor.class), "groups");
 	
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof Join) {
 			final Join join = (Join) message;
-			final ActorRef user = ActorLocator.getUserActor(getContext(), join.uuid.toString());
-			users.put(join.uuid, user);
-			user.tell(join, getSelf());
-			channelsActor.tell(new ChannelsActor.ChannelJoin(join.uuid, user), getSelf());
+            usersActor.forward(message, getContext());
 			Logger.debug(join.uuid + " logged on");
 		}
 		if(message instanceof Quit) {
-			final Quit quit = (Quit) message;
-			final ActorRef user = users.remove(quit.uuid);
-			user.tell(new UserActor.Quit(), getSelf());
-			final ActorSelection channels = Akka.system().actorSelection("/user/signalJ/channels/*");
-			channels.tell(new ChannelActor.Quit(quit.uuid), ActorRef.noSender());
-			if(usersInGroup.containsKey(quit.uuid)) {
-				final List<String> userGroups = usersInGroup.get(quit.uuid);
-				for(String group : userGroups) {
-					leaveGroup(quit.uuid, group);
-				}
-				usersInGroup.remove(quit.uuid);
-			}
-			Logger.debug(quit.uuid + " logged off");
+            usersActor.forward(message, getContext());
+            groupsActor.forward(message, getContext());
 		}
 		if(message instanceof SendToChannel) {
 			channelsActor.forward(message, getContext());
@@ -63,65 +49,33 @@ class SignalJActor extends UntypedActor  {
 			hubsActor.forward(message, getContext());
 		}
 		if(message instanceof GroupJoin) {
-			final GroupJoin groupJoin = (GroupJoin) message;
-			if(!groups.containsKey(groupJoin.groupname)) {
-				groups.put(groupJoin.groupname, new ArrayList<UUID>());
-			}
-			final List<UUID> uuids = groups.get(groupJoin.groupname);
-			if(!uuids.contains(groupJoin.uuid)) {
-				uuids.add(groupJoin.uuid);
-			}
-			if(!usersInGroup.containsKey(groupJoin.uuid)) {
-				usersInGroup.put(groupJoin.uuid, new ArrayList<String>());
-			}
-			final List<String> userGroups = usersInGroup.get(groupJoin.uuid);
-			if(!userGroups.contains(groupJoin.groupname)) {
-				userGroups.add(groupJoin.groupname);
-			}
-			Logger.debug(groupJoin.uuid + " joined group: " + groupJoin.groupname);
+			groupsActor.forward(message, getContext());
 		}
 		if(message instanceof GroupLeave) {
-			final GroupLeave groupLeave = (GroupLeave) message;
-			leaveGroup(groupLeave.uuid, groupLeave.groupname);
-			if(usersInGroup.containsKey(groupLeave.uuid)) {
-				final List<String> userGroups = usersInGroup.get(groupLeave.uuid);
-				userGroups.remove(groupLeave.groupname);
-				if(userGroups.isEmpty()) usersInGroup.remove(groupLeave.uuid);
-			}
-			Logger.debug(groupLeave.uuid + " left group: " + groupLeave.groupname);
+            groupsActor.forward(message, getContext());
 		}
 		if(message instanceof ClientFunctionCall) {
 			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
 			switch(clientFunctionCall.sendType) {
-				case Group:
-					if(groups.containsKey(clientFunctionCall.groupName)) {
-						Logger.debug(groups.get(clientFunctionCall.groupName).toString());
-						for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
-							users.get(uuid).forward(message, getContext());
-						}
-					}
-					break;
+
+                case All:
+                case Others:
+                case Caller:
+                case Clients:
+                case AllExcept:
+                    usersActor.forward(message, getContext());
+                    break;
+                case Group:
 				case InGroupExcept:
-					final List<UUID> inGroupExcept = Arrays.asList(clientFunctionCall.allExcept);
-					if(groups.containsKey(clientFunctionCall.groupName)) {
-						for(final UUID uuid: groups.get(clientFunctionCall.groupName)) {
-							if(inGroupExcept.contains(uuid)) continue;
-							users.get(uuid).forward(message, getContext());
-						}
-					}
+					groupsActor.forward(message, getContext());
 				break;
 				default:
 					break;
 			}
 		}
-	}
-
-	private void leaveGroup(final UUID uuid, final String group) {
-		if(groups.containsKey(group)) {
-			final List<UUID> uuids = groups.get(group);
-			uuids.remove(uuid);
-			if(uuids.isEmpty()) groups.remove(group);
-		}
+        if(message instanceof UserActor.MethodReturn) {
+            usersActor.forward(message, getContext());
+        }
 	}
 	
 	public static class Join {
