@@ -26,7 +26,6 @@ class ChannelActor extends UntypedActor {
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof RegisterHub) {
-			//TODO: throw error is already registered
 			final RegisterHub registerHub = (RegisterHub) message;
 			hubDescriptor = registerHub.descriptor;
 			clazz = registerHub.hub;
@@ -48,9 +47,6 @@ class ChannelActor extends UntypedActor {
             	final String returnType = execute.json.get("returnType").textValue();
                 signalJActor.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), getSelf());
             }
-		}
-		if(message instanceof ClientFunctionCall) {
-			signalJActor.forward(message, getContext());
 		}
 	}
 	
@@ -103,14 +99,6 @@ class ChannelActor extends UntypedActor {
 		public Join(UUID uuid, ActorRef user) {
 			this.uuid = uuid;
 			this.user = user;
-		}
-	}
-	
-	public static class Quit {
-		final UUID uuid;
-
-	public Quit(UUID uuid) {
-			this.uuid = uuid;
 		}
 	}
 	

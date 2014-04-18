@@ -112,20 +112,6 @@ class UserActor extends UntypedActor {
 		}
 	}
 	
-	public static class ChannelJoin {
-		final String channelName;
-		final ActorRef channel;
-		
-		public ChannelJoin(String channelName, ActorRef channel) {
-			this.channelName = channelName;
-			this.channel = channel;
-		}
-	}
-	
-	public static class Quit {
-		
-	}
-	
 	private static class InternalMessage {
 		final JsonNode json;
 		

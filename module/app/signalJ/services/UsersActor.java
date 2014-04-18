@@ -1,5 +1,6 @@
 package signalJ.services;
 import akka.actor.ActorRef;
+import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import play.Logger;
@@ -21,10 +22,10 @@ class UsersActor extends UntypedActor {
 			user.forward(join, getContext());
 		}
 		if(message instanceof Quit) {
-			/*final Quit quit = (Quit) message;
-			final ActorRef user = users.remove(quit.uuid);
-			user.tell(new UserActor.Quit(), getSelf());
-			Logger.debug(quit.uuid + " logged off");*/
+			final Quit quit = (Quit) message;
+            final ActorRef user = getUser(quit.uuid);
+            user.tell(PoisonPill.getInstance(), getSelf());
+			Logger.debug(quit.uuid + " logged off");
 		}
 		if (message instanceof GetUser) {
 			/*final GetUser getUser = (GetUser) message;

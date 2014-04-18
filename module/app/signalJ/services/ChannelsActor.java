@@ -45,6 +45,12 @@ public class ChannelsActor extends UntypedActor {
 			final ActorRef channel = getChannel(getChannel.channelName);
 			getSender().tell(channel, getSelf());
 		}
+/*        if(message instanceof SignalJActor.Quit) {
+            final SignalJActor.Quit quit = (SignalJActor.Quit) message;
+            for(final ActorRef channel : getContext().getChildren()) {
+                channel.forward(message, getContext());
+            }
+        }*/
 	}
 
     private ActorRef getChannel(String channelName) {
