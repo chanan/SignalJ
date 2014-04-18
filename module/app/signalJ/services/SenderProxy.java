@@ -5,9 +5,8 @@ import java.lang.reflect.Proxy;
 import java.util.UUID;
 
 import play.Logger;
-import signalJ.services.ChannelActor.ClientFunctionCall.SendType;
+import signalJ.services.HubActor.ClientFunctionCall.SendType;
 import akka.actor.ActorRef;
-import akka.actor.ActorSelection;
 
 class SenderProxy implements InvocationHandler {
 	private final SendType sendType;
@@ -38,7 +37,7 @@ class SenderProxy implements InvocationHandler {
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		Logger.debug(sendType + " - " + method.getName() + " " + argsToString(args));
-		ActorLocator.getSignalJActor().tell(new ChannelActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args, clients, allExcept, groupName), ActorRef.noSender());
+		ActorLocator.getSignalJActor().tell(new HubActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args, clients, allExcept, groupName), ActorRef.noSender());
 		return null;
 	}
 

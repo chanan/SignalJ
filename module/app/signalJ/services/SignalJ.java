@@ -18,10 +18,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class SignalJ extends Controller {
 	private final static ActorRef signalJActor = ActorLocator.getSignalJActor();
-	private final static ActorRef hubsActor = ActorLocator.getHubsActor();
 	
 	public static Promise<Result> hubs() {
-		return Promise.wrap(ask(hubsActor, new HubsActor.GetJavaScript(), 1000)).map(new Function<Object, Result>(){
+		return Promise.wrap(ask(signalJActor, new HubsActor.GetJavaScript(), 1000)).map(new Function<Object, Result>(){
 			@Override
 			public Result apply(Object response) throws Throwable {
 				return ok(response.toString());

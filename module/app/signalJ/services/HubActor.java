@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-class ChannelActor extends UntypedActor {
+class HubActor extends UntypedActor {
 	private final static ObjectMapper mapper = new ObjectMapper();
 	private final ActorRef signalJActor = ActorLocator.getSignalJActor();
 	private HubsDescriptor.HubDescriptor hubDescriptor;
@@ -29,7 +29,7 @@ class ChannelActor extends UntypedActor {
 			final RegisterHub registerHub = (RegisterHub) message;
 			hubDescriptor = registerHub.descriptor;
 			clazz = registerHub.hub;
-			Logger.debug("Registered channel: " + registerHub.hub.getName());
+			Logger.debug("Registered hub actor: " + registerHub.hub.getName());
 		}
 		if(message instanceof Execute) {
 			final Execute execute = (Execute) message;
@@ -112,7 +112,7 @@ class ChannelActor extends UntypedActor {
 	
 	//TODO maybe use inheritance to make this more sane
 	public static class ClientFunctionCall {
-		final String channelName;
+		final String hubName;
 		final String name;
 		final Object[] args;
 		final SendType sendType;
@@ -122,8 +122,8 @@ class ChannelActor extends UntypedActor {
 		final UUID[] allExcept;
 		final String groupName;
 		
-		public ClientFunctionCall(Method method, String channelName, UUID caller, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName) {
-			this.channelName = channelName;
+		public ClientFunctionCall(Method method, String hubName, UUID caller, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName) {
+			this.hubName = hubName;
 			this.caller = caller;
 			this.sendType = sendType;
 			this.name = name;

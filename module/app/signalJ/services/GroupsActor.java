@@ -52,8 +52,8 @@ public class GroupsActor extends UntypedActor {
                 usersInGroup.remove(quit.uuid);
             }
         }
-        if(message instanceof ChannelActor.ClientFunctionCall) {
-            final ChannelActor.ClientFunctionCall clientFunctionCall = (ChannelActor.ClientFunctionCall) message;
+        if(message instanceof HubActor.ClientFunctionCall) {
+            final HubActor.ClientFunctionCall clientFunctionCall = (HubActor.ClientFunctionCall) message;
             switch (clientFunctionCall.sendType) {
                 case All:
                 case Others:
@@ -63,11 +63,11 @@ public class GroupsActor extends UntypedActor {
                     throw new IllegalStateException("Only Groups should be handled by the Group Actor. SendType: " + clientFunctionCall.sendType);
                 case Group:
                     if(groups.containsKey(clientFunctionCall.groupName)) {
-                        ActorLocator.getSignalJActor().forward(new ChannelActor.ClientFunctionCall(
+                        ActorLocator.getSignalJActor().forward(new HubActor.ClientFunctionCall(
                                 clientFunctionCall.method,
-                                clientFunctionCall.channelName,
+                                clientFunctionCall.hubName,
                                 null,
-                                ChannelActor.ClientFunctionCall.SendType.Clients,
+                                HubActor.ClientFunctionCall.SendType.Clients,
                                 clientFunctionCall.name,
                                 clientFunctionCall.args,
                                 groups.get(clientFunctionCall.groupName).toArray(new UUID[0]),
@@ -83,11 +83,11 @@ public class GroupsActor extends UntypedActor {
                         for(final UUID uuid : groups.get(clientFunctionCall.groupName)) {
                             if(!inGroupExcept.contains(uuid)) sendTo.add(uuid);
                         }
-                        ActorLocator.getSignalJActor().forward(new ChannelActor.ClientFunctionCall(
+                        ActorLocator.getSignalJActor().forward(new HubActor.ClientFunctionCall(
                                 clientFunctionCall.method,
-                                clientFunctionCall.channelName,
+                                clientFunctionCall.hubName,
                                 null,
-                                ChannelActor.ClientFunctionCall.SendType.Clients,
+                                HubActor.ClientFunctionCall.SendType.Clients,
                                 clientFunctionCall.name,
                                 clientFunctionCall.args,
                                 sendTo.toArray(new UUID[0]),

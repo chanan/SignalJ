@@ -6,12 +6,8 @@ import akka.actor.Props;
 
 public class ActorLocator {
 	private final static ActorRef signalJActor = Akka.system().actorOf(Props.create(SignalJActor.class), "signalJ");
-	private final static ActorRef hubsActor = Akka.system().actorOf(Props.create(HubsActor.class), "hubs");
 	
 	public static ActorRef getSignalJActor() {
 		return signalJActor;
-	}
-	public static ActorRef getHubsActor() {
-		return hubsActor;
 	}
 }

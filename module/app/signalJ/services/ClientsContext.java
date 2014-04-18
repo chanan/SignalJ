@@ -1,9 +1,7 @@
 package signalJ.services;
 import java.util.UUID;
 
-import play.libs.Akka;
-import signalJ.services.ChannelActor.ClientFunctionCall.SendType;
-import akka.actor.ActorSelection;
+import signalJ.services.HubActor.ClientFunctionCall.SendType;
 
 public class ClientsContext<S> {
 	public final S all;

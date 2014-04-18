@@ -1,6 +1,4 @@
 package signalJ.services;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import play.Logger;
@@ -8,7 +6,7 @@ import play.libs.F.Callback;
 import play.libs.F.Callback0;
 import play.libs.Json;
 import play.mvc.WebSocket;
-import signalJ.services.ChannelActor.ClientFunctionCall;
+import signalJ.services.HubActor.ClientFunctionCall;
 import signalJ.services.SignalJActor.Join;
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
@@ -52,7 +50,7 @@ class UserActor extends UntypedActor {
 		}
 		if(message instanceof ClientFunctionCall) {
 			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
-			final signalJ.models.Messages.ClientFunctionCall json = new signalJ.models.Messages.ClientFunctionCall(clientFunctionCall.caller, clientFunctionCall.channelName, clientFunctionCall.name);
+			final signalJ.models.Messages.ClientFunctionCall json = new signalJ.models.Messages.ClientFunctionCall(clientFunctionCall.caller, clientFunctionCall.hubName, clientFunctionCall.name);
 			if(clientFunctionCall.args != null) {
 				int i = 0;
 				for(final Object obj : clientFunctionCall.args) {
@@ -66,17 +64,17 @@ class UserActor extends UntypedActor {
 		}
 		if(message instanceof InternalMessage) {
 			final InternalMessage internalMessage = (InternalMessage) message;
-			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("ChannelJoin")) {
-				signalJActor.tell(new SignalJActor.ChannelJoin(internalMessage.json.get("channel").textValue(), 
+			/*if(internalMessage.json.get("type").textValue().equalsIgnoreCase("HubJoin")) {
+				signalJActor.tell(new SignalJActor.HubJoin(internalMessage.json.get("channel").textValue(),
 						UUID.fromString(internalMessage.json.get("uuid").textValue())), getSelf());
 			}
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToAll")) {
 				signalJActor.tell(new SignalJActor.SendToAll(internalMessage.json.get("message").textValue()), getSelf());
 			}
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToChannel")) {
-				signalJActor.tell(new SignalJActor.SendToChannel(internalMessage.json.get("channel").textValue(),
+				signalJActor.tell(new SignalJActor.SendToHub(internalMessage.json.get("channel").textValue(),
 						internalMessage.json.get("message").textValue()), getSelf());
-			}
+			}*/
 			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("execute")) {
 				signalJActor.tell(new SignalJActor.Execute(internalMessage.json), getSelf());
 			}

@@ -12,8 +12,10 @@ import java.util.Map;
 
 public class HubsDescriptor {
 	public final static String VERSION = "1.0";
-	public final Map<String, HubDescriptor> hubs = new HashMap<>();
+	private final Map<String, HubDescriptor> hubs = new HashMap<>();
 	private final static String CRLF = "\n";
+    private String js;
+    private String toString;
 	
 	public HubDescriptor addDescriptor(String name) throws ClassNotFoundException {
 		final HubDescriptor hub = new HubDescriptor(name);
@@ -39,7 +41,8 @@ public class HubsDescriptor {
 	
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
+        if(toString != null) return toString;
+        StringBuilder sb = new StringBuilder();
 		sb.append("{\"version\": \"").append(VERSION).append("\", \"hubs\": [");
 		int i = 0;
 		for(final HubDescriptor hub : hubs.values()) {
@@ -48,16 +51,19 @@ public class HubsDescriptor {
 			if(i < hubs.size()) sb.append(", ");
 		}
 		sb.append("]}");
-		return sb.toString();
+        toString = sb.toString();
+		return toString;
 	}
 	
 	public String toJS() {
-		StringBuffer sb = new StringBuffer();
+        if(js != null) return js;
+		StringBuilder sb = new StringBuilder();
 		sb.append("//Hubs version: ").append(VERSION).append(CRLF);
 		for(final HubDescriptor hub : hubs.values()) {
 			sb.append(hub.toJS()).append(CRLF);
 		}
-		return sb.toString();
+        js = sb.toString();
+		return js;
 	}
 	
 	private String lowerCaseFirstChar(String className) {
@@ -99,7 +105,7 @@ public class HubsDescriptor {
 		}
 		
 		String toJS() {
-			StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
 			sb.append("//Start hub: " + name).append(CRLF);
 			for(Procedure proc : procedures) {
 				sb.append(proc.toJS(hub)).append(CRLF);
@@ -146,7 +152,7 @@ public class HubsDescriptor {
 
 			@Override
 			public String toString() {
-				StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
 				sb.append("{\"name\": \"").append(name).append("\", \"returnType\": \"").append(returnType).append("\"");
 				if (!parameters.isEmpty()) {
 					sb.append(", \"parameters\": [");
@@ -163,7 +169,7 @@ public class HubsDescriptor {
 			}
 			
 			String toJS(Class<? extends HubDescriptor> hub) {
-				StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
 				sb.append("function ").append(lowerCaseFirstChar(hub.getSimpleName())).append("_").append(name).append("(");
 				for(Parameter p : parameters.values()) {
 					sb.append(p.type.getSimpleName().toLowerCase()).append("_").append(p.index);

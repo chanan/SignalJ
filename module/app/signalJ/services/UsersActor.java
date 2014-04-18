@@ -28,17 +28,17 @@ class UsersActor extends UntypedActor {
 			Logger.debug(quit.uuid + " logged off");
 		}
 		if (message instanceof GetUser) {
-			/*final GetUser getUser = (GetUser) message;
-			final ActorRef user = users.get(getUser.uuid);
-			getSender().tell(user, getSelf());*/
+			final GetUser getUser = (GetUser) message;
+			final ActorRef user =  getUser(getUser.uuid);
+			getSender().tell(user, getSelf());
 		}
         if(message instanceof UserActor.MethodReturn) {
             final UserActor.MethodReturn methodReturn = (UserActor.MethodReturn) message;
             final ActorRef user = getUser(methodReturn.uuid);
             user.forward(message, getContext());
         }
-        if(message instanceof ChannelActor.ClientFunctionCall) {
-            final ChannelActor.ClientFunctionCall clientFunctionCall = (ChannelActor.ClientFunctionCall) message;
+        if(message instanceof HubActor.ClientFunctionCall) {
+            final HubActor.ClientFunctionCall clientFunctionCall = (HubActor.ClientFunctionCall) message;
             switch (clientFunctionCall.sendType) {
                 case All:
                     for (final ActorRef user : getContext().getChildren()) {

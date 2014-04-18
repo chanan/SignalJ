@@ -1,28 +1,19 @@
 package signalJ.services;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
+import akka.actor.ActorRef;
 import akka.actor.Props;
+import akka.actor.UntypedActor;
+import com.fasterxml.jackson.databind.JsonNode;
 import play.Logger;
-import play.libs.Akka;
 import play.mvc.WebSocket;
 import signalJ.models.HubsDescriptor;
-import signalJ.services.ChannelActor.ClientFunctionCall;
-import akka.actor.ActorRef;
-import akka.actor.ActorSelection;
-import akka.actor.UntypedActor;
+import signalJ.services.HubActor.ClientFunctionCall;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.UUID;
 
 class SignalJActor extends UntypedActor  {
-
-	private final ActorRef channelsActor = getContext().actorOf(Props.create(ChannelsActor.class), "channels");
     private final ActorRef usersActor = getContext().actorOf(Props.create(UsersActor.class), "users");
-	private final ActorRef hubsActor = ActorLocator.getHubsActor();
+	private final ActorRef hubsActor = getContext().actorOf(Props.create(HubsActor.class), "hubs");
     private final ActorRef groupsActor = getContext().actorOf(Props.create(GroupsActor.class), "groups");
 	
 	@Override
@@ -36,14 +27,14 @@ class SignalJActor extends UntypedActor  {
             usersActor.forward(message, getContext());
             groupsActor.forward(message, getContext());
 		}
-		if(message instanceof SendToChannel) {
-			channelsActor.forward(message, getContext());
+		if(message instanceof SendToHub) {
+            hubsActor.forward(message, getContext());
 		}
 		if(message instanceof RegisterHub) {
-			channelsActor.forward(message, getContext());
+            hubsActor.forward(message, getContext());
 		}
 		if(message instanceof Execute) {
-			channelsActor.forward(message, getContext());
+            hubsActor.forward(message, getContext());
 		}
 		if(message instanceof Describe) {
 			hubsActor.forward(message, getContext());
@@ -76,6 +67,9 @@ class SignalJActor extends UntypedActor  {
         if(message instanceof UserActor.MethodReturn) {
             usersActor.forward(message, getContext());
         }
+        if(message instanceof HubsActor.GetJavaScript) {
+            hubsActor.forward(message, getContext());
+        }
 	}
 	
 	public static class Join {
@@ -89,12 +83,12 @@ class SignalJActor extends UntypedActor  {
         }
     }
 	
-	public static class ChannelJoin {
-		final String channelName;
+	public static class HubJoin {
+		final String hubName;
 		final UUID uuid;
 		
-		public ChannelJoin(String channelName, UUID uuid) {
-			this.channelName = channelName;
+		public HubJoin(String hubName, UUID uuid) {
+			this.hubName = hubName;
 			this.uuid = uuid;
 		}
 	}
@@ -125,12 +119,12 @@ class SignalJActor extends UntypedActor  {
 		}
 	}
 	
-	public static class SendToChannel {
-		final String channel;
+	public static class SendToHub {
+		final String hubName;
 		final String message;
 		
-		public SendToChannel(String channel, String message) {
-			this.channel = channel;
+		public SendToHub(String hubName, String message) {
+			this.hubName = hubName;
 			this.message = message;
 		}
 	}
