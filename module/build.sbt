@@ -1,11 +1,10 @@
 name := "SignalJ"
 
-version := "0.1.0-SNAPSHOT"
+version := "0.1.0"
 
 organization := "signalJ"
 
 libraryDependencies ++= Seq(
-	cache,
 	"org.reflections" % "reflections" % "0.9.9-RC1"
 )
 

@@ -7,6 +7,12 @@ GET     /                           controllers.Application.index()
 GET		/test						controllers.Application.test()
 GET		/sendToHub					controllers.Application.sendToHub()
 
+# Chat
+GET     /chat                                controllers.Chat.index()
+GET     /chat/room                            controllers.Chat.chatRoom(username: String ?= null)
+
+#Websocket: GET     /chat/room/chat                       controllers.Chat.chat(username)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)
 

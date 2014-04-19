@@ -1,0 +1,100 @@
+@(username: String)
+
+@chatmain(username) {
+
+    <div class="page-header">
+        <h1>Welcome to the chat room <small>You are chatting as @username</small></h1>
+    </div>
+
+    <div id="onError" class="alert-message error">
+        <p>
+            <strong>Oops!</strong> <span></span>
+        </p>
+    </div>
+
+    <div id="onChat" class="row">
+        <div class="span10" id="main">
+            <div id="messages">
+            </div>
+            <textarea id="talk"></textarea>
+        </div>
+        <div class="span4">
+            <h2>Members</h2>
+            <ul id="members">
+            </ul>
+        </div>
+    </div>
+
+<script type="text/javascript" charset="utf-8" src="/js/hubs.js"></script>
+
+<script type="text/javascript">
+//Callback from SignalJ (The syntax of the callback will change to a promise in a near version of SignalJ
+function oninit() {
+    $("#onChat").show();
+    chat_joinChat('@username');
+}
+
+function messageToRoom(chatMessage) {
+    console.log("Message: %O", chatMessage);
+    // Create the message element
+    var el = $('<div class="message"><span></span><p></p></div>');
+    $("span", el).text(chatMessage.username);
+    $("p", el).text(chatMessage.message);
+    $(el).addClass("talk");
+    $('#messages').append(el);
+
+    // Update the members list
+    // Note: This is done again in userList, there is no real reason to do this twice. Just for demo purposes.
+    if(chatMessage.members != null){
+        $("#members").html('');
+        $(chatMessage.members).each(function() {
+            var li = document.createElement('li');
+            li.textContent = this;
+            $("#members").append(li);
+        });
+    }
+}
+
+function userJoined(username) {
+    var el = $('<div class="message"><span></span><p></p></div>');
+    $("span", el).text(username);
+    $("p", el).text("has joined the room");
+    $(el).addClass("join");
+    $('#messages').append(el);
+}
+
+function userList(members) {
+    $("#members").html('');
+    $(members).each(function() {
+        var li = document.createElement('li');
+        li.textContent = this;
+        $("#members").append(li);
+    });
+}
+
+var sendMessage = function() {
+    chat_talkToRoom('@username', $("#talk").val());
+    //Unlike the original example, we are going to update the local screen right away.
+    //Why? Just to show send message to "others" instead of "all".
+    //This could be extended to show a pending icon which will get removed with a response from the server
+    var el = $('<div class="message"><span></span><p></p></div>');
+    $("span", el).text('@username');
+    $("p", el).text($("#talk").val());
+    $(el).addClass('talk');
+    $(el).addClass('me');
+    $('#messages').append(el);
+    $("#talk").val('');
+}
+
+var handleReturnKey = function(e) {
+    if(e.charCode == 13 || e.keyCode == 13) {
+        e.preventDefault();
+        sendMessage();
+    }
+}
+
+$("#talk").keypress(handleReturnKey);
+
+</script>
+
+}

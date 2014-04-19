@@ -1,9 +1,8 @@
 name := "SignalJSample"
 
-version := "1.0-SNAPSHOT"
+version := "1.0"
 
 libraryDependencies ++= Seq(
-  cache,
   "com.google.inject" % "guice" % "3.0"
 )     
 
