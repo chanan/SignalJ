@@ -16,9 +16,12 @@ public class HubsDescriptor {
 	private final static String CRLF = "\n";
     private String js;
     private String toString;
+    private ClassLoader classLoader;
 	
 	public HubDescriptor addDescriptor(String name) throws ClassNotFoundException {
-		final HubDescriptor hub = new HubDescriptor(name);
+		HubDescriptor hub;
+        if(classLoader != null) hub = new HubDescriptor(name, this.classLoader);
+        else hub = new HubDescriptor(name);
 		hubs.put(name, hub);
 		return hub;
 	}
@@ -30,6 +33,10 @@ public class HubsDescriptor {
 	public HubDescriptor getDescriptor(String name) {
 		return hubs.get(name);
 	}
+
+    public void setClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
+    }
 	
 	public boolean isEmpty() {
 		return hubs.isEmpty();
@@ -78,10 +85,15 @@ public class HubsDescriptor {
 		@SuppressWarnings("unchecked")
 		public HubDescriptor(String name) throws ClassNotFoundException {
 			hub = (Class<? extends HubDescriptor>) Class.forName(name);
-			//this.name = hub.getPackage().getName() + "." + lowerCaseFirstChar(hub.getSimpleName());
 			this.name = name;
 			init();
 		}
+
+        public HubDescriptor(String name, ClassLoader classLoader) throws ClassNotFoundException {
+            hub = (Class<? extends HubDescriptor>) Class.forName(name, true, classLoader);
+            this.name = name;
+            init();
+        }
 
 		@SuppressWarnings("unchecked")
 		private void init() throws ClassNotFoundException {

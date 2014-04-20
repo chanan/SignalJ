@@ -34,4 +34,8 @@ public class GlobalHost {
     static void setClassLoader(ClassLoader classLoader) {
         _classLoader = classLoader;
     }
+
+    public static ClassLoader getClassLoader() {
+        return _classLoader;
+    }
 }

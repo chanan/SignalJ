@@ -7,6 +7,7 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import play.Logger;
+import signalJ.GlobalHost;
 import signalJ.models.HubsDescriptor;
 import signalJ.models.HubsDescriptor.HubDescriptor;
 import signalJ.services.SignalJActor.Describe;
@@ -59,12 +60,13 @@ class HubsActor extends UntypedActor {
 
 	@SuppressWarnings("unchecked")
 	private void fillDescriptors() throws ClassNotFoundException {
+        hubsDescriptor.setClassLoader(GlobalHost.getClassLoader());
 		final ConfigurationBuilder configBuilder = build("hubs");
 		final Reflections reflections = new Reflections(configBuilder.setScanners(new SubTypesScanner()));
-		Set<Class<? extends Hub>> hubs = reflections.getSubTypesOf(Hub.class);
+		final Set<Class<? extends Hub>> hubs = reflections.getSubTypesOf(Hub.class);
 		for(final Class<? extends Hub> hub : hubs) {
 			Logger.debug("Hub found: " + hub.getName());
-			HubDescriptor descriptor = hubsDescriptor.addDescriptor(hub.getName());
+			final HubDescriptor descriptor = hubsDescriptor.addDescriptor(hub.getName());
             final ActorRef channel = getHub(hub.getName());
             channel.tell(new SignalJActor.RegisterHub((Class<? extends Hub<?>>) hub, descriptor), getSelf());
 		}
