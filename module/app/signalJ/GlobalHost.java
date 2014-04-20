@@ -5,6 +5,7 @@ import signalJ.services.HubContext;
 public class GlobalHost {
 	private final static DependencyResolver _defaultDependencyResolver = new DefaultDependencyResolver();
 	private static DependencyResolver _dependencyResolver;
+    private static ClassLoader _classLoader;
 
 	public static DependencyResolver getDependencyResolver() {
 		return _dependencyResolver != null ? _dependencyResolver : _defaultDependencyResolver;
@@ -25,8 +26,12 @@ public class GlobalHost {
 	}
 	
 	private static Hub<?> getInstance(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-		final Hub<?> hub = getDependencyResolver().getHubInstance(className);
+		final Hub<?> hub = getDependencyResolver().getHubInstance(className, _classLoader);
 		hub.setHubClassName(className);
 		return hub;
 	}
+
+    static void setClassLoader(ClassLoader classLoader) {
+        _classLoader = classLoader;
+    }
 }

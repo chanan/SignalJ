@@ -35,7 +35,7 @@ class HubActor extends UntypedActor {
 			final Execute execute = (Execute) message;
 			final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
 			final String hub = execute.json.get("hub").textValue();
-			final Hub<?> instance = GlobalHost.getDependencyResolver().getHubInstance(hub);
+			final Hub<?> instance = (Hub<?>)GlobalHost.getHub(hub);//   .getDependencyResolver().getHubInstance(hub, _classLoader);
 			instance.setConnectionId(uuid);
 			instance.setHubClassName(hub);
 			final String method = execute.json.get("method").textValue();

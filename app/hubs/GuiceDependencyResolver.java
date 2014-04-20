@@ -12,8 +12,8 @@ public class GuiceDependencyResolver implements DependencyResolver {
 	}
 
 	@Override
-	public Hub<?> getHubInstance(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-		Class<?> clazz = Class.forName(className);
+	public Hub<?> getHubInstance(String className, ClassLoader _classLoader) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+		Class<?> clazz = Class.forName(className, true, _classLoader);
 		return (Hub<?>) injector.getInstance(clazz);
 	}
 }
