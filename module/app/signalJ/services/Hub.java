@@ -1,10 +1,14 @@
 package signalJ.services;
+import akka.actor.ActorRef;
+
 import java.util.UUID;
 
 public abstract class Hub<T> implements HubContext<T> {
 	private UUID uuid;
 	private String className = null;
-	protected abstract Class<T> getInterface();
+    private ActorRef signalJActor;
+
+    protected abstract Class<T> getInterface();
 	
 	void setConnectionId(UUID uuid) {
 		this.uuid = uuid;
@@ -20,11 +24,15 @@ public abstract class Hub<T> implements HubContext<T> {
 	
 	@Override
 	public ClientsContext<T> clients() {
-		return new ClientsContext<T>(getInterface(), className ,getConnectionId());
+		return new ClientsContext<T>(getInterface(), className ,getConnectionId(), signalJActor);
 	}
 	
 	@Override
 	public GroupsContext groups() {
-		return new GroupsContext();
+		return new GroupsContext(signalJActor);
 	}
+
+    public void setSignalJActor(ActorRef signalJActor) {
+        this.signalJActor = signalJActor;
+    }
 }

@@ -1,7 +1,9 @@
 package signalJ.services;
 
+import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import play.Logger;
+import signalJ.SignalJPlugin;
 
 import java.util.*;
 
@@ -11,6 +13,7 @@ import java.util.*;
 public class GroupsActor extends UntypedActor {
     private final Map<String, List<UUID>> groups = new HashMap<>();
     private final Map<UUID, List<String>> usersInGroup = new HashMap<>();
+    private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
 
     @Override
     public void onReceive(Object message) throws Exception {
@@ -63,7 +66,7 @@ public class GroupsActor extends UntypedActor {
                     throw new IllegalStateException("Only Groups should be handled by the Group Actor. SendType: " + clientFunctionCall.sendType);
                 case Group:
                     if(groups.containsKey(clientFunctionCall.groupName)) {
-                        ActorLocator.getSignalJActor().forward(new HubActor.ClientFunctionCall(
+                        signalJActor.forward(new HubActor.ClientFunctionCall(
                                 clientFunctionCall.method,
                                 clientFunctionCall.hubName,
                                 null,
@@ -83,7 +86,7 @@ public class GroupsActor extends UntypedActor {
                         for(final UUID uuid : groups.get(clientFunctionCall.groupName)) {
                             if(!inGroupExcept.contains(uuid)) sendTo.add(uuid);
                         }
-                        ActorLocator.getSignalJActor().forward(new HubActor.ClientFunctionCall(
+                        signalJActor.forward(new HubActor.ClientFunctionCall(
                                 clientFunctionCall.method,
                                 clientFunctionCall.hubName,
                                 null,

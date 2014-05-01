@@ -21,13 +21,14 @@ Add the following to your build.sbt:
 
 ```
 resolvers += "release repository" at "http://chanan.github.io/maven-repo/releases/"
+
 resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"
 ```
 
 Add to your libraryDependencies:
 
 ```
-"signalJ" %% "signalj" % "0.1.2"
+"signalJ" %% "signalj" % "0.1.4"
 ```
 
 Instructions

@@ -1,4 +1,5 @@
 package signalJ.services;
+
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -7,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import play.Logger;
 import signalJ.GlobalHost;
+import signalJ.SignalJPlugin;
 import signalJ.models.HubsDescriptor;
 import signalJ.services.SignalJActor.Execute;
 import signalJ.services.SignalJActor.RegisterHub;
@@ -19,11 +21,11 @@ import java.util.UUID;
 
 class HubActor extends UntypedActor {
 	private final static ObjectMapper mapper = new ObjectMapper();
-	private final ActorRef signalJActor = ActorLocator.getSignalJActor();
+	private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
 	private HubsDescriptor.HubDescriptor hubDescriptor;
-	private Class<? extends Hub<?>> clazz; 
+	private Class<? extends Hub<?>> clazz;
 
-	@Override
+    @Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof RegisterHub) {
 			final RegisterHub registerHub = (RegisterHub) message;

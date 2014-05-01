@@ -1,11 +1,17 @@
 package signalJ.services;
-import java.util.UUID;
 
 import akka.actor.ActorRef;
 
+import java.util.UUID;
+
 public class GroupsContext {
-	private final ActorRef signalJActor = ActorLocator.getSignalJActor();
-	public void add(UUID connectionId, String groupName) {
+	private final ActorRef signalJActor;
+
+    public GroupsContext(ActorRef signalJActor) {
+        this.signalJActor = signalJActor;
+    }
+
+    public void add(UUID connectionId, String groupName) {
 		signalJActor.tell(new SignalJActor.GroupJoin(groupName, connectionId), ActorRef.noSender());
 	}
 	

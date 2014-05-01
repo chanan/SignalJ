@@ -1,12 +1,13 @@
 package signalJ.services;
+
+import akka.actor.ActorRef;
+import play.Logger;
+import signalJ.services.HubActor.ClientFunctionCall.SendType;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.UUID;
-
-import play.Logger;
-import signalJ.services.HubActor.ClientFunctionCall.SendType;
-import akka.actor.ActorRef;
 
 class SenderProxy implements InvocationHandler {
 	private final SendType sendType;
@@ -15,29 +16,32 @@ class SenderProxy implements InvocationHandler {
 	private final UUID[] clients;
 	private final UUID[] allExcept;
 	private final String groupName;
+    private final ActorRef signalJActor;
 
-	public SenderProxy(SendType sendType, Class<?> clazz, UUID caller) {
+	public SenderProxy(ActorRef signalJActor, SendType sendType, Class<?> clazz, UUID caller) {
 		this.sendType = sendType;
 		this.clazz = clazz;
 		this.caller = caller;
 		this.clients = null;
 		this.allExcept = null;
 		this.groupName = null;
+        this.signalJActor = signalJActor;
 	}
 	
-	public SenderProxy(SendType sendType, Class<?> clazz, UUID caller, UUID[] clients, UUID[] allExcept, String groupName) {
+	public SenderProxy(ActorRef signalJActor, SendType sendType, Class<?> clazz, UUID caller, UUID[] clients, UUID[] allExcept, String groupName) {
 		this.sendType = sendType;
 		this.clazz = clazz;
 		this.caller = caller;
 		this.clients = clients;
 		this.allExcept = allExcept;
 		this.groupName = groupName;
+        this.signalJActor = signalJActor;
 	}
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		Logger.debug(sendType + " - " + method.getName() + " " + argsToString(args));
-		ActorLocator.getSignalJActor().tell(new HubActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args, clients, allExcept, groupName), ActorRef.noSender());
+        signalJActor.tell(new HubActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args, clients, allExcept, groupName), ActorRef.noSender());
 		return null;
 	}
 

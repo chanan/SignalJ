@@ -11,11 +11,11 @@ import signalJ.services.HubActor.ClientFunctionCall;
 
 import java.util.UUID;
 
-class SignalJActor extends UntypedActor  {
+public class SignalJActor extends UntypedActor  {
     private final ActorRef usersActor = getContext().actorOf(Props.create(UsersActor.class), "users");
 	private final ActorRef hubsActor = getContext().actorOf(Props.create(HubsActor.class), "hubs");
     private final ActorRef groupsActor = getContext().actorOf(Props.create(GroupsActor.class), "groups");
-	
+
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof Join) {

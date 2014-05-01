@@ -1,25 +1,26 @@
 package signalJ.services;
-import java.util.UUID;
 
+import akka.actor.ActorRef;
+import akka.actor.UntypedActor;
+import com.fasterxml.jackson.databind.JsonNode;
 import play.Logger;
 import play.libs.F.Callback;
 import play.libs.F.Callback0;
 import play.libs.Json;
 import play.mvc.WebSocket;
+import signalJ.SignalJPlugin;
 import signalJ.services.HubActor.ClientFunctionCall;
 import signalJ.services.SignalJActor.Join;
-import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.UUID;
 
 class UserActor extends UntypedActor {
 	private UUID uuid;
 	private WebSocket.Out<JsonNode> out;
     private WebSocket.In<JsonNode> in;
-    private final ActorRef signalJActor = ActorLocator.getSignalJActor();
-    
-	@Override
+    private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
+
+    @Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof Join) {
 			final Join join = (Join) message;

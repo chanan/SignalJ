@@ -1,7 +1,7 @@
 import hubs.GuiceDependencyResolver;
 import play.Application;
 import play.GlobalSettings;
-import signalJ.GlobalHost;
+import signalJ.*;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
