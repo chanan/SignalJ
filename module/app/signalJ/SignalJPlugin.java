@@ -9,9 +9,6 @@ import play.Plugin;
 import play.libs.Akka;
 import signalJ.services.SignalJActor;
 
-/**
- * Created by Chanan on 4/20/2014.
- */
 public class SignalJPlugin extends Plugin {
     private final Application application;
     private ActorRef signalJActor;
@@ -31,7 +28,6 @@ public class SignalJPlugin extends Plugin {
         } catch (Exception e) {
             Logger.error("Error on constructor", e);
         }
-        Logger.debug("here");
     }
 
     @Override

@@ -1,8 +1,9 @@
 package signalJ.services;
 
+import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.actor.UntypedActor;
+import akka.japi.pf.ReceiveBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import play.Logger;
 import play.mvc.WebSocket;
@@ -11,66 +12,58 @@ import signalJ.services.HubActor.ClientFunctionCall;
 
 import java.util.UUID;
 
-public class SignalJActor extends UntypedActor  {
-    private final ActorRef usersActor = getContext().actorOf(Props.create(UsersActor.class), "users");
-	private final ActorRef hubsActor = getContext().actorOf(Props.create(HubsActor.class), "hubs");
-    private final ActorRef groupsActor = getContext().actorOf(Props.create(GroupsActor.class), "groups");
+public class SignalJActor extends AbstractActor {
+    private final ActorRef usersActor = context().actorOf(Props.create(UsersActor.class), "users");
+	private final ActorRef hubsActor = context().actorOf(Props.create(HubsActor.class), "hubs");
+    private final ActorRef groupsActor = context().actorOf(Props.create(GroupsActor.class), "groups");
 
-	@Override
-	public void onReceive(Object message) throws Exception {
-		if(message instanceof Join) {
-			final Join join = (Join) message;
-            usersActor.forward(message, getContext());
-			Logger.debug(join.uuid + " logged on");
-		}
-		if(message instanceof Quit) {
-            usersActor.forward(message, getContext());
-            groupsActor.forward(message, getContext());
-		}
-		if(message instanceof SendToHub) {
-            hubsActor.forward(message, getContext());
-		}
-		if(message instanceof RegisterHub) {
-            hubsActor.forward(message, getContext());
-		}
-		if(message instanceof Execute) {
-            hubsActor.forward(message, getContext());
-		}
-		if(message instanceof Describe) {
-			hubsActor.forward(message, getContext());
-		}
-		if(message instanceof GroupJoin) {
-			groupsActor.forward(message, getContext());
-		}
-		if(message instanceof GroupLeave) {
-            groupsActor.forward(message, getContext());
-		}
-		if(message instanceof ClientFunctionCall) {
-			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
-			switch(clientFunctionCall.sendType) {
-
-                case All:
-                case Others:
-                case Caller:
-                case Clients:
-                case AllExcept:
-                    usersActor.forward(message, getContext());
-                    break;
-                case Group:
-				case InGroupExcept:
-					groupsActor.forward(message, getContext());
-				break;
-				default:
-					break;
-			}
-		}
-        if(message instanceof UserActor.MethodReturn) {
-            usersActor.forward(message, getContext());
-        }
-        if(message instanceof HubsActor.GetJavaScript) {
-            hubsActor.forward(message, getContext());
-        }
-	}
+    public SignalJActor() {
+        receive(ReceiveBuilder.match(
+                Join.class, join -> {
+                    usersActor.forward(join, context());
+                    Logger.debug(join.uuid + " logged on");
+                }
+        ).match(
+                Quit.class, quit -> {
+                    usersActor.forward(quit, context());
+                    groupsActor.forward(quit, context());
+                }
+        ).match(
+                SendToHub.class, sendToHub -> hubsActor.forward(sendToHub, context())
+        ).match(
+                RegisterHub.class, registerHub -> hubsActor.forward(registerHub, context())
+        ).match(
+                Execute.class, execute -> hubsActor.forward(execute, context())
+        ).match(
+                Describe.class, describe -> hubsActor.forward(describe, context())
+        ).match(
+                GroupJoin.class, groupJoin -> groupsActor.forward(groupJoin, context())
+        ).match(
+                GroupLeave.class, groupLeave -> groupsActor.forward(groupLeave, context())
+        ).match(
+                ClientFunctionCall.class, clientFunctionCall -> {
+                    switch (clientFunctionCall.sendType) {
+                        case All:
+                        case Others:
+                        case Caller:
+                        case Clients:
+                        case AllExcept:
+                            usersActor.forward(clientFunctionCall, context());
+                            break;
+                        case Group:
+                        case InGroupExcept:
+                            groupsActor.forward(clientFunctionCall, context());
+                            break;
+                        default:
+                            break;
+                    }
+                }
+        ).match(
+                UserActor.MethodReturn.class, methodReturn -> usersActor.forward(methodReturn, context())
+        ).match(
+                HubsActor.GetJavaScript.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
+        ).build());
+    }
 	
 	public static class Join {
 		public final UUID uuid = UUID.randomUUID();

@@ -1,8 +1,9 @@
 package signalJ.services;
 
+import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.actor.UntypedActor;
+import akka.japi.pf.ReceiveBuilder;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ClasspathHelper;
@@ -13,51 +14,53 @@ import signalJ.models.HubsDescriptor;
 import signalJ.models.HubsDescriptor.HubDescriptor;
 import signalJ.services.SignalJActor.Describe;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-class HubsActor extends UntypedActor {
+class HubsActor extends AbstractActor {
 	private final HubsDescriptor hubsDescriptor = new HubsDescriptor();
     private String js;
 
-	@Override
-	public void onReceive(Object message) throws Exception {
-		if(hubsDescriptor.isEmpty()) fillDescriptors();
-		if(message instanceof GetJavaScript) {
-			getSender().tell(js, getSelf());
-		}
-		if(message instanceof Describe) {
-			final Describe describe = (Describe) message;
-			final UUID uuid = UUID.fromString(describe.json.get("uuid").textValue());
-        	final String id = describe.json.get("id").textValue();
-        	final String hub = "system";
-        	final String returnType = "json";
-        	final String method = "describe";
-        	final String returnValue = hubsDescriptor.toString();
-			describe.user.tell(new UserActor.MethodReturn(uuid, id, returnValue, hub, method, returnType), getSelf());
-		}
-        if(message instanceof HubJoin) {
-            final HubJoin hubJoin = (HubJoin) message;
-            for(final ActorRef hub : getContext().getChildren()) {
-                hub.tell(hubJoin, getSelf());
-            }
+    HubsActor() {
+        try {
+            fillDescriptors();
+        } catch (Exception e) {
+            Logger.error("Error creating hub descriptor", e);
         }
-        if(message instanceof SignalJActor.SendToHub) {
-            final SignalJActor.SendToHub sendToHub = (SignalJActor.SendToHub) message;
-            final ActorRef hub = getHub(sendToHub.hubName);
-            hub.tell(new HubActor.Send(sendToHub.message), getSelf());
-        }
-        if(message instanceof SignalJActor.Execute) {
-            final SignalJActor.Execute execute = (SignalJActor.Execute) message;
-            final ActorRef hub = getHub(execute.json.get("hub").textValue());
-            hub.forward(message, getContext());
-        }
-        if(message instanceof GetHub) {
-            final GetHub getHub = (GetHub) message;
-            final ActorRef hub = getHub(getHub.hubName);
-            getSender().tell(hub, getSelf());
-        }
-	}
+        receive(
+                ReceiveBuilder.match(
+                        GetJavaScript.class, request ->  sender().tell(js, self())
+                ).match(
+                        Describe.class, describe -> {
+                            final UUID uuid = UUID.fromString(describe.json.get("uuid").textValue());
+                            final String id = describe.json.get("id").textValue();
+                            final String hub = "system";
+                            final String returnType = "json";
+                            final String method = "describe";
+                            final String returnValue = hubsDescriptor.toString();
+                            describe.user.tell(new UserActor.MethodReturn(uuid, id, returnValue, hub, method, returnType), self());
+                        }
+                ).match(
+                        HubJoin.class, hubJoin -> getContext().getChildren().forEach(hub -> hub.tell(hubJoin, self()))
+                ).match(
+                        SignalJActor.SendToHub.class, sendToHub -> {
+                            final ActorRef hub = getHub(sendToHub.hubName);
+                            hub.tell(new HubActor.Send(sendToHub.message), self());
+                        }
+                ).match(
+                        SignalJActor.Execute.class, execute -> {
+                            final ActorRef hub = getHub(execute.json.get("hub").textValue());
+                            hub.forward(execute, getContext());
+                        }
+                ).match(
+                        GetHub.class, getHub -> {
+                            final ActorRef hub = getHub(getHub.hubName);
+                            sender().tell(hub, self());
+                        }
+                ).build()
+        );
+    }
 
 	@SuppressWarnings("unchecked")
 	private void fillDescriptors() throws ClassNotFoundException {
@@ -69,7 +72,7 @@ class HubsActor extends UntypedActor {
 			Logger.debug("Hub found: " + hub.getName());
 			final HubDescriptor descriptor = hubsDescriptor.addDescriptor(hub.getName());
             final ActorRef channel = getHub(hub.getName());
-            channel.tell(new SignalJActor.RegisterHub((Class<? extends Hub<?>>) hub, descriptor), getSelf());
+            channel.tell(new SignalJActor.RegisterHub((Class<? extends Hub<?>>) hub, descriptor), self());
 		}
         js = hubsDescriptor.toJS() + signalJ.views.js.hubs.render() + "\n";
 	}
@@ -87,9 +90,7 @@ class HubsActor extends UntypedActor {
 	}
 
     private ActorRef getHub(String hubName) {
-        final ActorRef hub = getContext().getChild(hubName);
-        if(hub != null) return hub;
-        return getContext().actorOf(Props.create(HubActor.class), hubName);
+        return Optional.ofNullable(getContext().getChild(hubName)).orElseGet(() -> context().actorOf(Props.create(HubActor.class), hubName));
     }
 
     public static class HubJoin {

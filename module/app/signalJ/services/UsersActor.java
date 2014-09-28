@@ -1,92 +1,82 @@
 package signalJ.services;
 
-import akka.actor.ActorRef;
-import akka.actor.PoisonPill;
-import akka.actor.Props;
-import akka.actor.UntypedActor;
+import akka.actor.*;
+import akka.japi.pf.ReceiveBuilder;
 import play.Logger;
 import signalJ.services.SignalJActor.Join;
 import signalJ.services.SignalJActor.Quit;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
-class UsersActor extends UntypedActor {
+class UsersActor extends AbstractActor {
 	//TODO: Make this a supervisor
 
-	@Override
-	public void onReceive(Object message) throws Exception {
-		if(message instanceof Join) {
-			final Join join = (Join) message;
-			final ActorRef user = getUser(join.uuid);
-			user.forward(join, getContext());
-		}
-		if(message instanceof Quit) {
-			final Quit quit = (Quit) message;
-            final ActorRef user = getUser(quit.uuid);
-            user.tell(PoisonPill.getInstance(), getSelf());
-			Logger.debug(quit.uuid + " logged off");
-		}
-		if (message instanceof GetUser) {
-			final GetUser getUser = (GetUser) message;
-			final ActorRef user =  getUser(getUser.uuid);
-			getSender().tell(user, getSelf());
-		}
-        if(message instanceof UserActor.MethodReturn) {
-            final UserActor.MethodReturn methodReturn = (UserActor.MethodReturn) message;
-            final ActorRef user = getUser(methodReturn.uuid);
-            user.forward(message, getContext());
-        }
-        if(message instanceof HubActor.ClientFunctionCall) {
-            final HubActor.ClientFunctionCall clientFunctionCall = (HubActor.ClientFunctionCall) message;
-            switch (clientFunctionCall.sendType) {
-                case All:
-                    for (final ActorRef user : getContext().getChildren()) {
-                        user.forward(message, getContext());
-                    }
-                    break;
-                case Caller:
-                case Group:
-                case InGroupExcept:
-                    getContext().getChild(clientFunctionCall.caller.toString()).forward(message, getContext());
-                    break;
-                case Others:
-                    final ActorRef caller = getContext().getChild(clientFunctionCall.caller.toString());
-                    for (final ActorRef user : getContext().getChildren()) {
-                        if (user.equals(caller)) continue;
-                        user.forward(message, getContext());
-                    }
-                    break;
-                case Clients:
-                    for (final UUID uuid : clientFunctionCall.clients) {
-                        final ActorRef user = getContext().getChild(uuid.toString());
-                        user.forward(message, getContext());
-                    }
-                    break;
-                case AllExcept:
-                    final List<ActorRef> allExcept = getUsers(clientFunctionCall.allExcept);
-                    for (final ActorRef user : getContext().getChildren()) {
-                        if (allExcept.contains(user)) continue;
-                        user.forward(message, getContext());
-                    }
-                    break;
-            }
-        }
-	}
+    UsersActor() {
+        receive(
+                ReceiveBuilder.match(
+                        Join.class, join -> {
+                            final ActorRef user = getUser(join.uuid);
+                            user.forward(join, context());
+                        }
+                ).match(
+                        Quit.class, quit -> {
+                            final ActorRef user = getUser(quit.uuid);
+                            user.tell(PoisonPill.getInstance(), self());
+                            Logger.debug(quit.uuid + " logged off");
+                        }
+                ).match(
+                        GetUser.class, getUser -> {
+                            final ActorRef user =  getUser(getUser.uuid);
+                            sender().tell(user, self());
+                        }
+                ).match(
+                        UserActor.MethodReturn.class, methodReturn -> {
+                            final ActorRef user = getUser(methodReturn.uuid);
+                            user.forward(methodReturn, context());
+                        }
+                ).match(
+                        HubActor.ClientFunctionCall.class, clientFunctionCall -> {
+                            switch (clientFunctionCall.sendType) {
+                                case All:
+                                    getContext().getChildren().forEach(user -> user.forward(clientFunctionCall, context()));
+                                    break;
+                                case Caller:
+                                case Group:
+                                case InGroupExcept:
+                                    getContext().getChild(clientFunctionCall.caller.toString()).forward(clientFunctionCall, context());
+                                    break;
+                                case Others:
+                                    final ActorRef caller = getContext().getChild(clientFunctionCall.caller.toString());
+                                    getContext().getChildren().forEach(user -> {
+                                        if (!user.equals(caller)) user.forward(clientFunctionCall, context());
+                                    });
+                                    break;
+                                case Clients:
+                                    Arrays.asList(clientFunctionCall.clients).forEach(uuid -> {
+                                        final ActorRef user = getContext().getChild(uuid.toString());
+                                        user.forward(clientFunctionCall, getContext());
+                                    });
+                                    break;
+                                case AllExcept:
+                                    final List<ActorRef> allExcept = getUsers(clientFunctionCall.allExcept);
+                                    getContext().getChildren().forEach(user -> {
+                                        if (!allExcept.contains(user)) user.forward(clientFunctionCall, context());
+                                    });
+                                    break;
+                            }
+                        }
+                ).build()
+        );
+    }
 
     private List<ActorRef> getUsers(UUID[] uuids) {
-        final List<ActorRef> actors = new ArrayList<>();
-        for(final UUID uuid : uuids) {
-            actors.add(getContext().getChild(uuid.toString()));
-        }
-        return actors;
+        return Arrays.asList(uuids).stream().map(uuid -> getContext().getChild(uuid.toString())).collect(Collectors.toList());
     }
 
     private ActorRef getUser(UUID uuid) {
-        final ActorRef user = getContext().getChild(uuid.toString());
-        if(user != null) return user;
-        return getContext().actorOf(Props.create(UserActor.class), uuid.toString());
+        return Optional.ofNullable(getContext().getChild(uuid.toString())).orElseGet(() -> context().actorOf(Props.create(UserActor.class), uuid.toString()));
     }
 	
 	public static class GetUser{

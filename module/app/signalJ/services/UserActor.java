@@ -1,7 +1,8 @@
 package signalJ.services;
 
+import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
+import akka.japi.pf.ReceiveBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import play.Logger;
 import play.libs.F.Callback;
@@ -14,84 +15,86 @@ import signalJ.services.SignalJActor.Join;
 
 import java.util.UUID;
 
-class UserActor extends UntypedActor {
+class UserActor extends AbstractActor {
 	private UUID uuid;
 	private WebSocket.Out<JsonNode> out;
     private WebSocket.In<JsonNode> in;
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
 
-    @Override
-	public void onReceive(Object message) throws Exception {
-		if(message instanceof Join) {
-			final Join join = (Join) message;
-			this.uuid = join.uuid;
-			this.out = join.out;
-			this.in = join.in;
-			
-			final ActorRef self = getSelf();
-			in.onClose(new Callback0() {
-				public void invoke() {
-					signalJActor.tell(new SignalJActor.Quit(uuid), self);
-	            }
-			});
-			in.onMessage(new Callback<JsonNode>() {
-				@Override
-				public void invoke(JsonNode json) throws Throwable {
-					Logger.debug("Message from user: " + json);
-					self.tell(new InternalMessage(json), self);
-				}
-			});
-		}
-		if(message instanceof MethodReturn) {
-			final MethodReturn methodReturn = (MethodReturn) message;
-			final signalJ.models.Messages.MethodReturn json = new signalJ.models.Messages.MethodReturn(methodReturn.uuid, methodReturn.id, methodReturn.hub, methodReturn.method, methodReturn.returnType, methodReturn.returnValue);
-			final JsonNode j = Json.toJson(json);
-			out.write(j);
-			Logger.debug("Return Value: " + j);
-		}
-		if(message instanceof ClientFunctionCall) {
-			final ClientFunctionCall clientFunctionCall = (ClientFunctionCall) message;
-			final signalJ.models.Messages.ClientFunctionCall json = new signalJ.models.Messages.ClientFunctionCall(clientFunctionCall.caller, clientFunctionCall.hubName, clientFunctionCall.name);
-			if(clientFunctionCall.args != null) {
-				int i = 0;
-				for(final Object obj : clientFunctionCall.args) {
-					json.addParameter("param_" + i , obj); //TODO put real name from hubDescriptor
-					i++;
-				}
-			}
-			final JsonNode j = Json.toJson(json);
-			out.write(j);
-			Logger.debug("ClientFunctionCall Value: " + j);
-		}
-		if(message instanceof InternalMessage) {
-			final InternalMessage internalMessage = (InternalMessage) message;
-			/*if(internalMessage.json.get("type").textValue().equalsIgnoreCase("HubJoin")) {
-				signalJActor.tell(new SignalJActor.HubJoin(internalMessage.json.get("channel").textValue(),
-						UUID.fromString(internalMessage.json.get("uuid").textValue())), getSelf());
-			}
-			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToAll")) {
-				signalJActor.tell(new SignalJActor.SendToAll(internalMessage.json.get("message").textValue()), getSelf());
-			}
-			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToChannel")) {
-				signalJActor.tell(new SignalJActor.SendToHub(internalMessage.json.get("channel").textValue(),
-						internalMessage.json.get("message").textValue()), getSelf());
-			}*/
-			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("execute")) {
-				signalJActor.tell(new SignalJActor.Execute(internalMessage.json), getSelf());
-			}
-			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("describe")) {
-				signalJActor.tell(new SignalJActor.Describe(internalMessage.json, getSelf()), getSelf());
-			}
-			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("groupAdd")) {
-				signalJActor.tell(new SignalJActor.GroupJoin(internalMessage.json.get("group").textValue(),
-						UUID.fromString(internalMessage.json.get("uuid").textValue())), getSelf());
-			}
-			if(internalMessage.json.get("type").textValue().equalsIgnoreCase("groupRemove")) {
-				signalJActor.tell(new SignalJActor.GroupLeave(internalMessage.json.get("group").textValue(),
-						UUID.fromString(internalMessage.json.get("uuid").textValue())), getSelf());
-			}
-		}
-	}
+    UserActor() {
+        receive(
+                ReceiveBuilder.match(
+                        Join.class, join -> {
+                            this.uuid = join.uuid;
+                            this.out = join.out;
+                            this.in = join.in;
+
+                            final ActorRef self = self();
+                            in.onClose(new Callback0() {
+                                public void invoke() {
+                                    signalJActor.tell(new SignalJActor.Quit(uuid), self);
+                                }
+                            });
+                            in.onMessage(new Callback<JsonNode>() {
+                                @Override
+                                public void invoke(JsonNode json) throws Throwable {
+                                    Logger.debug("Message from user: " + json);
+                                    self.tell(new InternalMessage(json), self);
+                                }
+                            });
+                        }
+                ).match(
+                        MethodReturn.class, methodReturn -> {
+                            final signalJ.models.Messages.MethodReturn json = new signalJ.models.Messages.MethodReturn(methodReturn.uuid, methodReturn.id, methodReturn.hub, methodReturn.method, methodReturn.returnType, methodReturn.returnValue);
+                            final JsonNode j = Json.toJson(json);
+                            out.write(j);
+                            Logger.debug("Return Value: " + j);
+                        }
+                ).match(
+                        ClientFunctionCall.class, clientFunctionCall -> {
+                            final signalJ.models.Messages.ClientFunctionCall json = new signalJ.models.Messages.ClientFunctionCall(clientFunctionCall.caller, clientFunctionCall.hubName, clientFunctionCall.name);
+                            if(clientFunctionCall.args != null) {
+                                int i = 0;
+                                for(final Object obj : clientFunctionCall.args) {
+                                    json.addParameter("param_" + i , obj); //TODO put real name from hubDescriptor
+                                    i++;
+                                }
+                            }
+                            final JsonNode j = Json.toJson(json);
+                            out.write(j);
+                            Logger.debug("ClientFunctionCall Value: " + j);
+                        }
+                ).match(
+                        InternalMessage.class, internalMessage -> {
+                            /*if(internalMessage.json.get("type").textValue().equalsIgnoreCase("HubJoin")) {
+                                signalJActor.tell(new SignalJActor.HubJoin(internalMessage.json.get("channel").textValue(),
+                                        UUID.fromString(internalMessage.json.get("uuid").textValue())), getSelf());
+                            }
+                            if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToAll")) {
+                                signalJActor.tell(new SignalJActor.SendToAll(internalMessage.json.get("message").textValue()), getSelf());
+                            }
+                            if(internalMessage.json.get("type").textValue().equalsIgnoreCase("SendToChannel")) {
+                                signalJActor.tell(new SignalJActor.SendToHub(internalMessage.json.get("channel").textValue(),
+                                        internalMessage.json.get("message").textValue()), getSelf());
+                            }*/
+                            if(internalMessage.json.get("type").textValue().equalsIgnoreCase("execute")) {
+                                signalJActor.tell(new SignalJActor.Execute(internalMessage.json), self());
+                            }
+                            if(internalMessage.json.get("type").textValue().equalsIgnoreCase("describe")) {
+                                signalJActor.tell(new SignalJActor.Describe(internalMessage.json, self()), self());
+                            }
+                            if(internalMessage.json.get("type").textValue().equalsIgnoreCase("groupAdd")) {
+                                signalJActor.tell(new SignalJActor.GroupJoin(internalMessage.json.get("group").textValue(),
+                                        UUID.fromString(internalMessage.json.get("uuid").textValue())), self());
+                            }
+                            if(internalMessage.json.get("type").textValue().equalsIgnoreCase("groupRemove")) {
+                                signalJActor.tell(new SignalJActor.GroupLeave(internalMessage.json.get("group").textValue(),
+                                        UUID.fromString(internalMessage.json.get("uuid").textValue())), self());
+                            }
+                        }
+                ).build()
+        );
+    }
 	
 	public static class MethodReturn {
 		final UUID uuid;
