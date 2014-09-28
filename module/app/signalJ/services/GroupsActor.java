@@ -7,6 +7,8 @@ import play.Logger;
 import signalJ.SignalJPlugin;
 
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public class GroupsActor extends AbstractActor {
     private final Map<String, List<UUID>> groups = new HashMap<>();
@@ -47,9 +49,9 @@ public class GroupsActor extends AbstractActor {
                         SignalJActor.Quit.class, quit -> {
                             if (usersInGroup.containsKey(quit.uuid)) {
                                 final List<String> userGroups = usersInGroup.get(quit.uuid);
-                                for (String group : userGroups) {
-                                    leaveGroup(quit.uuid, group);
-                                }
+                                userGroups.stream().forEach(
+                                        group -> leaveGroup(quit.uuid, group)
+                                );
                                 usersInGroup.remove(quit.uuid);
                             }
                         }
@@ -79,10 +81,8 @@ public class GroupsActor extends AbstractActor {
                         case InGroupExcept:
                             final List<UUID> inGroupExcept = Arrays.asList(clientFunctionCall.allExcept);
                             if (groups.containsKey(clientFunctionCall.groupName)) {
-                                final List<UUID> sendTo = new ArrayList<>();
-                                for (final UUID uuid : groups.get(clientFunctionCall.groupName)) {
-                                    if (!inGroupExcept.contains(uuid)) sendTo.add(uuid);
-                                }
+                                final List<UUID> sendTo = (groups.get(clientFunctionCall.groupName).stream()
+                                        .filter(uuid -> !inGroupExcept.contains(uuid)).collect(Collectors.toList()));
                                 signalJActor.forward(new HubActor.ClientFunctionCall(
                                         clientFunctionCall.method,
                                         clientFunctionCall.hubName,
