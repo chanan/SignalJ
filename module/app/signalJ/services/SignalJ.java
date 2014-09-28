@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static akka.pattern.Patterns.ask;
 
+//TODO Use Play 2.3 syntax
 public class SignalJ extends Controller {
 	private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
 	

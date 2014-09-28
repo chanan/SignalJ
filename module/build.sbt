@@ -1,6 +1,6 @@
 name := "SignalJ"
 
-version := "0.1.4"
+version := "0.2.0"
 
 organization := "signalJ"
 
@@ -17,10 +17,10 @@ publishTo <<= version { (v: String) =>
 
 publishArtifact in(Compile, packageDoc) := false
 
-publishMavenStyle := true 
-
-play.Project.playJavaSettings
+publishMavenStyle := true
 
 resolvers += "release repository" at "http://chanan.github.io/maven-repo/releases/"
 
 resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"
+
+scalaVersion := "2.11.1"

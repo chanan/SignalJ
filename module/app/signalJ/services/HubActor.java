@@ -1,7 +1,8 @@
 package signalJ.services;
 
+import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
+import akka.japi.pf.ReceiveBuilder;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -19,38 +20,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-class HubActor extends UntypedActor {
+class HubActor extends AbstractActor {
 	private final static ObjectMapper mapper = new ObjectMapper();
 	private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
 	private HubsDescriptor.HubDescriptor hubDescriptor;
 	private Class<? extends Hub<?>> clazz;
 
-    @Override
-	public void onReceive(Object message) throws Exception {
-		if(message instanceof RegisterHub) {
-			final RegisterHub registerHub = (RegisterHub) message;
-			hubDescriptor = registerHub.descriptor;
-			clazz = registerHub.hub;
-			Logger.debug("Registered hub actor: " + registerHub.hub.getName());
-		}
-		if(message instanceof Execute) {
-			final Execute execute = (Execute) message;
-			final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
-			final String hub = execute.json.get("hub").textValue();
-			final Hub<?> instance = (Hub<?>)GlobalHost.getHub(hub);//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-			instance.setConnectionId(uuid);
-			instance.setHubClassName(hub);
-			final String method = execute.json.get("method").textValue();
-			final Class<?>[] classes = getParamTypeList(execute.json);
-			final Method m = instance.getClass().getMethod(method, classes);
-            final Object ret = m.invoke(instance, getParams(execute.json, classes));
-            if(ret != null) {
-            	final String id = execute.json.get("id").textValue();
-            	final String returnType = execute.json.get("returnType").textValue();
-                signalJActor.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), getSelf());
-            }
-		}
-	}
+    HubActor() {
+        receive(
+                ReceiveBuilder.match(
+                        RegisterHub.class, registerHub -> {
+                            hubDescriptor = registerHub.descriptor;
+                            clazz = registerHub.hub;
+                            Logger.debug("Registered hub actor: " + registerHub.hub.getName());
+                        }
+                ).match(
+                        Execute.class, execute -> {
+                            final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
+                            final String hub = execute.json.get("hub").textValue();
+                            final Hub<?> instance = (Hub<?>)GlobalHost.getHub(hub);//   .getDependencyResolver().getHubInstance(hub, _classLoader);
+                            instance.setConnectionId(uuid);
+                            instance.setHubClassName(hub);
+                            final String method = execute.json.get("method").textValue();
+                            final Class<?>[] classes = getParamTypeList(execute.json);
+                            final Method m = instance.getClass().getMethod(method, classes);
+                            final Object ret = m.invoke(instance, getParams(execute.json, classes));
+                            if(ret != null) {
+                                final String id = execute.json.get("id").textValue();
+                                final String returnType = execute.json.get("returnType").textValue();
+                                signalJActor.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), self());
+                            }
+                        }
+                ).build()
+        );
+    }
 	
 	private Class<?>[] getParamTypeList(JsonNode node) throws ClassNotFoundException {
 		final List<Class<?>> ret = new ArrayList<Class<?>>();
