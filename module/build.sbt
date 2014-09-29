@@ -24,3 +24,5 @@ resolvers += "release repository" at "http://chanan.github.io/maven-repo/release
 resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"
 
 scalaVersion := "2.11.1"
+
+lazy val root = (project in file(".")).enablePlugins(PlayJava)

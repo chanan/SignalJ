@@ -28,7 +28,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 Add to your libraryDependencies:
 
 ```
-"signalJ" %% "signalj" % "0.1.4"
+"signalJ" %% "signalj" % "0.2.0"
 ```
 
 Instructions
