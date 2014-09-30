@@ -21,7 +21,7 @@ var receiveEvent = function(event) {
     }
     if(data.type === "init") {
     	uuid = data.uuid;
-    	oninit();  //TODO: This should be done with promises. currently this causes an error when oninit is not defined
+    	oninit(uuid);  //TODO: This should be done with promises. currently this causes an error when oninit is not defined
     }
     if(data.type === "methodReturn") {
     	var f = callbacks[data.id];
