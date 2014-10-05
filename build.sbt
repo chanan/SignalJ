@@ -1,6 +1,6 @@
 name := "SignalJSample"
 
-version := "1.0"
+version := "1.0.0"
 
 libraryDependencies ++= Seq(
   "com.google.inject" % "guice" % "3.0"

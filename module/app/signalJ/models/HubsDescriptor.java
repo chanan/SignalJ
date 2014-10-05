@@ -1,9 +1,12 @@
 package signalJ.models;
+import play.Logger;
+
 import static org.reflections.ReflectionUtils.getMethods;
 import static org.reflections.ReflectionUtils.withModifier;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -139,11 +142,11 @@ public class HubsDescriptor {
 			
 			private void init(Method m) {
 				int i = 0;
-				for(Class<?> p : m.getParameterTypes()) {
-					Parameter param = new Parameter(p, i);
-					parameters.put(i, param);
-					i++;
-				}
+                for(Type c : m.getGenericParameterTypes()) {
+                    Parameter param = new Parameter(c.getTypeName(), i);
+                    parameters.put(i, param);
+                    i++;
+                }
 			}
 
 			public String getName() {
@@ -184,7 +187,7 @@ public class HubsDescriptor {
                 StringBuilder sb = new StringBuilder();
 				sb.append("function ").append(lowerCaseFirstChar(hub.getSimpleName())).append("_").append(name).append("(");
 				for(Parameter p : parameters.values()) {
-					sb.append(p.type.getSimpleName().toLowerCase()).append("_").append(p.index);
+					sb.append(p.getSimpleName().toLowerCase()).append("_").append(p.index);
 					if(p.index != parameters.values().size() - 1) sb.append(", ");
 				}
 				if(!returnType.toString().equalsIgnoreCase("void")) {
@@ -196,8 +199,8 @@ public class HubsDescriptor {
 				sb.append("returnType: '").append(returnType).append("', ");
 				sb.append("parameters: [");
 				for(Parameter p : parameters.values()) {
-					sb.append("{ value: ").append(p.type.getSimpleName().toLowerCase()).append("_").append(p.index);
-					sb.append(", type: '").append(p.type.getName()).append("'}");
+					sb.append("{ value: ").append(p.getSimpleName().toLowerCase()).append("_").append(p.index);
+					sb.append(", type: '").append(p.getName()).append("'}");
 					if(p.index != parameters.values().size() - 1) sb.append(", ");
 				}
 				sb.append("]};").append(CRLF);
@@ -212,17 +215,28 @@ public class HubsDescriptor {
 		}
 		
 		class Parameter {
-			private final Class<?> type;
+			//private final Class<?> type;
+            private final String typeName;
+            private final String simpleName;
 			private final int index;
 			
-			Parameter(Class<?> type, int index) {
-				this.type = type;
+			Parameter(String typeName, int index) {
+				this.typeName = typeName;
 				this.index = index;
+                String temp = "";
+                if(typeName.contains("<")) temp = typeName.substring(0, typeName.indexOf("<"));
+                else temp = typeName;
+                if(temp.contains(".")) temp = temp.substring(temp.lastIndexOf(".") + 1);
+                simpleName = temp;
 			}
 
-			public Class<?> getType() {
-				return type;
+			public String getName() {
+				return typeName;
 			}
+
+            public String getSimpleName() {
+                return simpleName;
+            }
 
 			public int getIndex() {
 				return index;
@@ -230,7 +244,7 @@ public class HubsDescriptor {
 
 			@Override
 			public String toString() {
-				return "{\"type\": \"" + type + "\", \"index\": " + index + "}";
+				return "{\"type\": \"" + typeName + "\", \"index\": " + index + "}";
 			}
 		}
 	}

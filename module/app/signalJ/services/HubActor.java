@@ -4,6 +4,7 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.japi.pf.ReceiveBuilder;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +45,7 @@ class HubActor extends AbstractActor {
                             final String method = execute.json.get("method").textValue();
                             final Class<?>[] classes = getParamTypeList(execute.json);
                             final Method m = instance.getClass().getMethod(method, classes);
-                            final Object ret = m.invoke(instance, getParams(execute.json, classes));
+                            final Object ret = m.invoke(instance, getParams(execute.json));
                             if(ret != null) {
                                 final String id = execute.json.get("id").textValue();
                                 final String returnType = execute.json.get("returnType").textValue();
@@ -65,7 +66,10 @@ class HubActor extends AbstractActor {
 	}
 	
 	private Class<?> getClassForName(String className) throws ClassNotFoundException {
-		switch (className.toLowerCase()) {
+        String temp;
+        if(className.contains("<")) temp = className.substring(0, className.indexOf("<"));
+        else temp = className;
+		switch (temp.toLowerCase()) {
 			case "byte":
 				return byte.class;
 			case "short":
@@ -83,16 +87,27 @@ class HubActor extends AbstractActor {
 			case "boolean":
 				return boolean.class;
 			default:
-				return Class.forName(className);
+				return Class.forName(temp);
 		}
 	}
 	
-	private Object[] getParams(JsonNode node, Class<?>[] params ) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
+	private Object[] getParams(JsonNode node) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
 		final List<Object> ret = new ArrayList<Object>();
 		for(final JsonNode param : node.get("parameters")) {
-			final Class<?> clazz = getClassForName(param.get("type").textValue());
-			final Object obj = mapper.readValue(mapper.treeAsTokens(param.get("value")), clazz);
-			ret.add(obj);
+            final String className = param.get("type").textValue();
+            if(className.contains("<")) {
+                final String className1 = className.substring(0, className.indexOf("<"));
+                final String className2 = className.substring(className.indexOf("<") + 1, className.length() - 1);
+                final Class<?> clazz1 = getClassForName(className1);
+                final Class<?> clazz2 = getClassForName(className2);
+                final JavaType javaType = mapper.getTypeFactory().constructParametricType(clazz1, clazz2);
+                final Object obj = mapper.readValue(mapper.treeAsTokens(param.get("value")), javaType);
+                ret.add(obj);
+            } else {
+                final Class<?> clazz = getClassForName(param.get("type").textValue());
+                final Object obj = mapper.readValue(mapper.treeAsTokens(param.get("value")), clazz);
+                ret.add(obj);
+            }
 		}
 		return ret.toArray();
 	}

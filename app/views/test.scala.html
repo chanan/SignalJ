@@ -13,7 +13,8 @@ Result: <span id="result"></span>
 Message will be pushed from server 2 + 3 = <span id="push"></span><br>
 Person full name (Press first button): <span id="fullname"></span><br>
 <button id="joinGroup">Join "test" group</button> <button id="joinGroupClientSide">Clientside Join "test" group</button> <button id="leaveGroup">Leave "test" group</button><br>
-<button id="talkToGroup">Say hello to group</button> <button id="talkToGroupOtherThanMe">Say hello to group other than me</button>
+<button id="talkToGroup">Say hello to group</button> <button id="talkToGroupOtherThanMe">Say hello to group other than me</button><br>
+<button id="sendListOfInt">Send List of Int</button>
 <script type="text/javascript">
 $(function() {
 	$('#btnHello').click(function() {
@@ -47,6 +48,13 @@ $(function() {
 	$('#joinGroupClientSide').click(function() {
 		groupAdd("test");
 	});
+    $('#sendListOfInt').click(function() {
+        var arr = new Array();
+        arr[0] = 1;
+        arr[1] = 2;
+        arr[2] = 3;
+        helloWorld_listOfInt(arr);
+    });
 });
 
 function oninit(uuid) {
@@ -81,5 +89,9 @@ function sendToGroup(message) {
 }
 function thisWillBeCalledFromOutsideTheHub(message) {
 	console.log("This was sent from out side the hub to all clients: " + message);
+}
+function complexList(people) {
+    console.log("People: %O", people);
+    helloWorld_listOfPerson(people);
 }
 </script>

@@ -1,4 +1,5 @@
 package hubs;
+import java.util.List;
 import java.util.UUID;
 
 import models.Person;
@@ -12,4 +13,5 @@ public interface FirstTestPage {
 	public void notCalledFromClient(UUID connectionId);
 	public void sendToGroup(String message);
 	public void thisWillBeCalledFromOutsideTheHub(String message);
+    public void complexList(List<Person> people);
 }

@@ -6,6 +6,9 @@ import signalJ.services.Hub;
 
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HelloWorld extends Hub<FirstTestPage> {
 	private StringService service;
 	
@@ -24,6 +27,9 @@ public class HelloWorld extends Hub<FirstTestPage> {
 		clients().client(getConnectionId()).calledFromClient(getConnectionId());
 		//Test all except by NOT sending to self:
 		clients().allExcept(getConnectionId()).notCalledFromClient(getConnectionId());
+        List<Person> list = new ArrayList<>();
+        list.add(new Person("John", "Smith"));
+        clients().caller.complexList(list);
 	}
 	
 	public void saySomethingANumberOfTimes(String something, int number) {
@@ -52,6 +58,21 @@ public class HelloWorld extends Hub<FirstTestPage> {
 		clients().group(group, getConnectionId()).sendToGroup(message);
 		clients().othersInGroup(group).sendToGroup("Another way: " + message);
 	}
+
+    public void listOfInt(List<Integer> list) {
+        Logger.debug("The list: " + list);
+        Logger.debug("The items:");
+        list.stream().forEach(i -> {
+            int x = i * 2;
+            Logger.debug("item * 2: " + x);
+        });
+    }
+
+    public void listOfPerson(List<Person> people) {
+        Logger.debug("People: " + people);
+        Logger.debug("Last names:");
+        people.stream().forEach(p -> Logger.debug(p.getLastName()));
+    }
 
 	@Override
 	protected Class<FirstTestPage> getInterface() {
