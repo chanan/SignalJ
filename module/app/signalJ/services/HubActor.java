@@ -87,7 +87,7 @@ class HubActor extends AbstractActor {
 			case "boolean":
 				return boolean.class;
 			default:
-				return Class.forName(temp);
+				return Class.forName(temp, false, GlobalHost.getClassLoader());
 		}
 	}
 	
