@@ -1,6 +1,11 @@
 function getSocket() {
 	var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
-	var socket = new WS("ws://localhost:9000/signalJ/Join"); //"at sign routes.PlaySockets.join().webSocketURL(request)"
+    var socket;
+    if(window.location.protocol != "https:") {
+        socket = new WS("ws://localhost:9000/signalJ/Join"); //"at sign routes.PlaySockets.join().webSocketURL(request)"
+    } else {
+        socket = new WS("wss://localhost:9000/signalJ/Join"); //"at sign routes.PlaySockets.join().webSocketURL(request)"
+    }
 	return socket;
 }
 
