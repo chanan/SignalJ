@@ -1,11 +1,12 @@
 function getSocket() {
 	var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
-    var socket;
-    if(window.location.protocol != "https:") {
-        socket = new WS("ws://localhost:9000/signalJ/Join"); //"at sign routes.PlaySockets.join().webSocketURL(request)"
-    } else {
-        socket = new WS("wss://localhost:9000/signalJ/Join"); //"at sign routes.PlaySockets.join().webSocketURL(request)"
-    }
+    var url;
+    if(window.location.protocol === "https:") url = "wss://";
+    else url = "ws://"
+    url = url + window.location.host;
+    //if(window.location.port != 80) url = url + ":" + window.location.port;
+    url = url + "/signalJ/Join";
+    var socket = new WS(url);
 	return socket;
 }
 
