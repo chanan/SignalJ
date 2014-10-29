@@ -1,5 +1,6 @@
 package signalJ.services;
 import akka.actor.ActorRef;
+import play.Logger;
 
 import java.util.UUID;
 
@@ -20,11 +21,13 @@ public abstract class Hub<T> implements HubContext<T> {
 	
 	public void setHubClassName(String className) {
 		if(this.className == null) this.className = className;
+        Logger.debug("Hub Classname: " + className);
 	}
 	
 	@Override
 	public ClientsContext<T> clients() {
-		return new ClientsContext<T>(getInterface(), className ,getConnectionId(), signalJActor);
+        Logger.debug("Hub: " + className);
+        return new ClientsContext<T>(getInterface(), className, getConnectionId(), signalJActor);
 	}
 	
 	@Override

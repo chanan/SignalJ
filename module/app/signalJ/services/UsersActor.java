@@ -3,6 +3,7 @@ package signalJ.services;
 import akka.actor.*;
 import akka.japi.pf.ReceiveBuilder;
 import play.Logger;
+import signalJ.infrastructure.ProtectedData;
 import signalJ.services.SignalJActor.Join;
 import signalJ.services.SignalJActor.Quit;
 
@@ -11,9 +12,11 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 class UsersActor extends AbstractActor {
+    private final ProtectedData protectedData;
 	//TODO: Make this a supervisor
 
-    UsersActor() {
+    UsersActor(ProtectedData protectedData) {
+        this.protectedData = protectedData;
         receive(
                 ReceiveBuilder.match(
                         Join.class, join -> {
@@ -76,7 +79,7 @@ class UsersActor extends AbstractActor {
     }
 
     private ActorRef getUser(UUID uuid) {
-        return Optional.ofNullable(getContext().getChild(uuid.toString())).orElseGet(() -> context().actorOf(Props.create(UserActor.class), uuid.toString()));
+        return Optional.ofNullable(getContext().getChild(uuid.toString())).orElseGet(() -> context().actorOf(Props.create(UserActor.class, protectedData), uuid.toString()));
     }
 	
 	public static class GetUser{

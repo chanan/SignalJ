@@ -29,34 +29,57 @@ class HubActor extends AbstractActor {
 
     HubActor() {
         receive(
-                ReceiveBuilder.match(
-                        RegisterHub.class, registerHub -> {
-                            hubDescriptor = registerHub.descriptor;
-                            clazz = registerHub.hub;
-                            Logger.debug("Registered hub actor: " + registerHub.hub.getName());
-                        }
-                ).match(
-                        Execute.class, execute -> {
-                            final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
-                            final String hub = execute.json.get("hub").textValue();
-                            final Hub<?> instance = (Hub<?>)GlobalHost.getHub(hub);//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-                            instance.setConnectionId(uuid);
-                            instance.setHubClassName(hub);
-                            final String method = execute.json.get("method").textValue();
-                            final Class<?>[] classes = getParamTypeList(execute.json);
-                            final Method m = instance.getClass().getMethod(method, classes);
-                            final Object ret = m.invoke(instance, getParams(execute.json));
-                            if(ret != null) {
-                                final String id = execute.json.get("id").textValue();
-                                final String returnType = execute.json.get("returnType").textValue();
-                                signalJActor.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), self());
-                            }
-                        }
-                ).build()
+                ReceiveBuilder.match(RegisterHub.class, registerHub -> {
+                    hubDescriptor = registerHub.descriptor;
+                    clazz = registerHub.hub;
+                    Logger.debug("Registered hub actor: " + clazz.getName());
+                }).match(Execute.class, execute -> {
+                    Logger.debug("Clazz: " + clazz.getName() + " " + clazz.getSimpleName());
+                    final UUID uuid = execute.uuid;
+                    final Hub<?> instance = (Hub<?>)GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
+                    instance.setConnectionId(uuid);
+                    instance.setHubClassName(clazz.getSimpleName());
+                    final String methodName = execute.json.get("M").textValue();
+                    //final Class<?>[] classes = getParamTypeList(execute.json);
+                    //final Method m = instance.getClass().getMethod(method, classes);
+                    final Method m = getMethod(instance, methodName, execute.json.get("A"));
+                    final Object ret = m.invoke(instance, getParams(m, execute.json.get("A")));
+                    /*if(ret != null) {
+                        final String id = execute.json.get("id").textValue();
+                        final String returnType = execute.json.get("returnType").textValue();
+                        signalJActor.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), self());
+                    }*/
+                }).build()
         );
     }
-	
-	private Class<?>[] getParamTypeList(JsonNode node) throws ClassNotFoundException {
+
+    private Method getMethod(Hub<?> instance, String methodName, JsonNode args) {
+        Method ret = null;
+        for(Method m : instance.getClass().getDeclaredMethods()) {
+            boolean match = false;
+            if(m.getName().equals(methodName) && m.getParameterCount() == args.size()) {
+                boolean parseError = false;
+                for(int i = 0; i < m.getParameterCount(); i++) {
+                    final Class<?> clazz = m.getParameterTypes()[i];
+                    try {
+                        final Object obj = mapper.readValue(mapper.treeAsTokens(args.get(i)), clazz);
+                    } catch (Exception e) {
+                        Logger.error("Parse error", e);
+                        parseError = true;
+                        break;
+                    }
+                }
+                if(!parseError) match = true;
+            }
+            if(match) {
+                ret = m;
+                break;
+            }
+        }
+        return ret;
+    }
+
+    private Class<?>[] getParamTypeList(JsonNode node) throws ClassNotFoundException {
 		final List<Class<?>> ret = new ArrayList<Class<?>>();
 		for(final JsonNode param : node.get("parameters")) {
 			final Class<?> clazz = getClassForName(param.get("type").textValue());
@@ -91,9 +114,15 @@ class HubActor extends AbstractActor {
 		}
 	}
 	
-	private Object[] getParams(JsonNode node) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
+	private Object[] getParams(Method m, JsonNode args) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
 		final List<Object> ret = new ArrayList<Object>();
-		for(final JsonNode param : node.get("parameters")) {
+        for(int i = 0; i < m.getParameterCount(); i++) {
+            final Class<?> clazz = m.getParameterTypes()[i];
+            final Object obj = mapper.readValue(mapper.treeAsTokens(args.get(i)), clazz);
+            ret.add(obj);
+        }
+        return ret.toArray();
+		/*for(final JsonNode param : node.get("parameters")) {
             final String className = param.get("type").textValue();
             if(className.contains("<")) {
                 final String className1 = className.substring(0, className.indexOf("<"));
@@ -109,7 +138,7 @@ class HubActor extends AbstractActor {
                 ret.add(obj);
             }
 		}
-		return ret.toArray();
+		return ret.toArray();*/
 	}
 	
 	public static class Join {

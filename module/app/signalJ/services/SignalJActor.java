@@ -7,41 +7,36 @@ import akka.japi.pf.ReceiveBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import play.Logger;
 import play.mvc.WebSocket;
+import signalJ.infrastructure.ProtectedData;
 import signalJ.models.HubsDescriptor;
 import signalJ.services.HubActor.ClientFunctionCall;
 
 import java.util.UUID;
 
 public class SignalJActor extends AbstractActor {
-    private final ActorRef usersActor = context().actorOf(Props.create(UsersActor.class), "users");
+    private final ActorRef usersActor;
 	private final ActorRef hubsActor = context().actorOf(Props.create(HubsActor.class), "hubs");
     private final ActorRef groupsActor = context().actorOf(Props.create(GroupsActor.class), "groups");
+    private final ProtectedData protectedData;
 
-    public SignalJActor() {
-        receive(ReceiveBuilder.match(
-                Join.class, join -> {
+    public SignalJActor(ProtectedData protectedData) {
+        this.protectedData = protectedData;
+        this.usersActor = context().actorOf(Props.create(UsersActor.class, protectedData), "users");
+        receive(ReceiveBuilder.match(Join.class, join -> {
                     usersActor.forward(join, context());
                     Logger.debug(join.uuid + " logged on");
                 }
-        ).match(
-                Quit.class, quit -> {
+        ).match(Quit.class, quit -> {
                     usersActor.forward(quit, context());
                     groupsActor.forward(quit, context());
                 }
-        ).match(
-                SendToHub.class, sendToHub -> hubsActor.forward(sendToHub, context())
-        ).match(
-                RegisterHub.class, registerHub -> hubsActor.forward(registerHub, context())
-        ).match(
-                Execute.class, execute -> hubsActor.forward(execute, context())
-        ).match(
-                Describe.class, describe -> hubsActor.forward(describe, context())
-        ).match(
-                GroupJoin.class, groupJoin -> groupsActor.forward(groupJoin, context())
-        ).match(
-                GroupLeave.class, groupLeave -> groupsActor.forward(groupLeave, context())
-        ).match(
-                ClientFunctionCall.class, clientFunctionCall -> {
+        ).match(SendToHub.class, sendToHub -> hubsActor.forward(sendToHub, context())
+        ).match(RegisterHub.class, registerHub -> hubsActor.forward(registerHub, context())
+        ).match(Execute.class, execute -> hubsActor.forward(execute, context())
+        ).match(Describe.class, describe -> hubsActor.forward(describe, context())
+        ).match(GroupJoin.class, groupJoin -> groupsActor.forward(groupJoin, context())
+        ).match(GroupLeave.class, groupLeave -> groupsActor.forward(groupLeave, context())
+        ).match(ClientFunctionCall.class, clientFunctionCall -> {
                     switch (clientFunctionCall.sendType) {
                         case All:
                         case Others:
@@ -58,21 +53,21 @@ public class SignalJActor extends AbstractActor {
                             break;
                     }
                 }
-        ).match(
-                UserActor.MethodReturn.class, methodReturn -> usersActor.forward(methodReturn, context())
-        ).match(
-                HubsActor.GetJavaScript.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
+        ).match(UserActor.MethodReturn.class, methodReturn -> usersActor.forward(methodReturn, context())
+        ).match(HubsActor.GetJavaScript.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
+        ).match(HubsActor.GetJavaScript2.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
         ).build());
     }
 	
 	public static class Join {
-		public final UUID uuid = UUID.randomUUID();
-        final WebSocket.Out<JsonNode> out;
-        final WebSocket.In<JsonNode> in;
+		public final UUID uuid;
+        public final WebSocket.Out<JsonNode> out;
+        public final WebSocket.In<JsonNode> in;
         
-        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in) {
+        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid) {
             this.out = out;
             this.in = in;
+            this.uuid = uuid;
         }
     }
 	
@@ -133,9 +128,11 @@ public class SignalJActor extends AbstractActor {
 	}
 	
 	public static class Execute {
+        final UUID uuid;
 		final JsonNode json;
 		
-		public Execute(JsonNode json) {
+		public Execute(UUID uuid, JsonNode json) {
+            this.uuid = uuid;
 			this.json = json;
 		}
 	}

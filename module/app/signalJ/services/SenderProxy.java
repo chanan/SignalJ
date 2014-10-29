@@ -12,15 +12,17 @@ import java.util.UUID;
 class SenderProxy implements InvocationHandler {
 	private final SendType sendType;
 	private final Class<?> clazz;
+    private final String hubName;
 	private final UUID caller;
 	private final UUID[] clients;
 	private final UUID[] allExcept;
 	private final String groupName;
     private final ActorRef signalJActor;
 
-	public SenderProxy(ActorRef signalJActor, SendType sendType, Class<?> clazz, UUID caller) {
+	public SenderProxy(ActorRef signalJActor, SendType sendType, Class<?> clazz, String hubName, UUID caller) {
 		this.sendType = sendType;
 		this.clazz = clazz;
+        this.hubName = hubName;
 		this.caller = caller;
 		this.clients = null;
 		this.allExcept = null;
@@ -28,9 +30,10 @@ class SenderProxy implements InvocationHandler {
         this.signalJActor = signalJActor;
 	}
 	
-	public SenderProxy(ActorRef signalJActor, SendType sendType, Class<?> clazz, UUID caller, UUID[] clients, UUID[] allExcept, String groupName) {
+	public SenderProxy(ActorRef signalJActor, SendType sendType, Class<?> clazz, String hubName, UUID caller, UUID[] clients, UUID[] allExcept, String groupName) {
 		this.sendType = sendType;
 		this.clazz = clazz;
+        this.hubName = hubName;
 		this.caller = caller;
 		this.clients = clients;
 		this.allExcept = allExcept;
@@ -40,8 +43,8 @@ class SenderProxy implements InvocationHandler {
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		Logger.debug(sendType + " - " + method.getName() + " " + argsToString(args));
-        signalJActor.tell(new HubActor.ClientFunctionCall(method, clazz.getName(), caller, sendType, method.getName(), args, clients, allExcept, groupName), ActorRef.noSender());
+		Logger.debug(sendType + ": " + hubName + " - " + method.getName() + " " + argsToString(args));
+        signalJActor.tell(new HubActor.ClientFunctionCall(method, hubName, caller, sendType, method.getName(), args, clients, allExcept, groupName), ActorRef.noSender());
 		return null;
 	}
 

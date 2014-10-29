@@ -11,9 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by Chanan on 4/18/2014.
- */
 public class Chat extends Hub<ChatPage> {
     private final static List<String> users = new ArrayList<String>();
     private static ActorRef robot;

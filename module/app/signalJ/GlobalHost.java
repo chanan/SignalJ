@@ -28,7 +28,6 @@ public class GlobalHost {
 	
 	private static Hub<?> getInstance(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		final Hub<?> hub = getDependencyResolver().getHubInstance(className, _classLoader);
-		hub.setHubClassName(className);
         hub.setSignalJActor(SignalJPlugin.getSignalJActor());
 		return hub;
 	}
