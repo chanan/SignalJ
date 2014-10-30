@@ -12,6 +12,7 @@ import play.Logger;
 import signalJ.GlobalHost;
 import signalJ.SignalJPlugin;
 import signalJ.models.HubsDescriptor;
+import signalJ.models.RequestContext;
 import signalJ.services.SignalJActor.Execute;
 import signalJ.services.SignalJActor.RegisterHub;
 
@@ -37,13 +38,18 @@ class HubActor extends AbstractActor {
                     Logger.debug("Clazz: " + clazz.getName() + " " + clazz.getSimpleName());
                     final UUID uuid = execute.uuid;
                     final Hub<?> instance = (Hub<?>)GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-                    instance.setConnectionId(uuid);
+                    final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt());
+                    instance.setContext(context);
                     instance.setHubClassName(clazz.getSimpleName());
                     final String methodName = execute.json.get("M").textValue();
                     //final Class<?>[] classes = getParamTypeList(execute.json);
                     //final Method m = instance.getClass().getMethod(method, classes);
                     final Method m = getMethod(instance, methodName, execute.json.get("A"));
                     final Object ret = m.invoke(instance, getParams(m, execute.json.get("A")));
+                    if(ret == null)
+                        signalJActor.tell(new UserActor.ClientCallEnd(context), self());
+                    else
+                        signalJActor.tell(new UserActor.MethodReturn(context, ret), self());
                     /*if(ret != null) {
                         final String id = execute.json.get("id").textValue();
                         final String returnType = execute.json.get("returnType").textValue();
@@ -165,15 +171,15 @@ class HubActor extends AbstractActor {
 		final String name;
 		final Object[] args;
 		final SendType sendType;
-		final UUID caller;
+		final RequestContext context;
 		final Method method;
 		final UUID[] clients;
 		final UUID[] allExcept;
 		final String groupName;
 		
-		public ClientFunctionCall(Method method, String hubName, UUID caller, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName) {
+		public ClientFunctionCall(Method method, String hubName, RequestContext context, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName) {
 			this.hubName = hubName;
-			this.caller = caller;
+			this.context = context;
 			this.sendType = sendType;
 			this.name = name;
 			this.args = args;

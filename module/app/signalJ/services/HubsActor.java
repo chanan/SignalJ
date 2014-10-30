@@ -34,13 +34,14 @@ class HubsActor extends AbstractActor {
                 ReceiveBuilder.match(GetJavaScript.class, request ->  sender().tell(js, self())
                 ).match(GetJavaScript2.class, request ->  sender().tell(js2, self())
                 ).match(Describe.class, describe -> {
+                            //TODO Reanble describe?
                             final UUID uuid = UUID.fromString(describe.json.get("uuid").textValue());
                             final String id = describe.json.get("id").textValue();
                             final String hub = "system";
                             final String returnType = "json";
                             final String method = "describe";
                             final String returnValue = hubsDescriptor.toString();
-                            describe.user.tell(new UserActor.MethodReturn(uuid, id, returnValue, hub, method, returnType), self());
+                            //describe.user.tell(new UserActor.MethodReturn(uuid, id, returnValue, hub, method, returnType), self());
                         }
                 ).match(HubJoin.class, hubJoin -> getContext().getChildren().forEach(hub -> hub.tell(hubJoin, self()))
                 ).match(SignalJActor.SendToHub.class, sendToHub -> {

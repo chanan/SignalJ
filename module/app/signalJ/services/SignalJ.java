@@ -12,6 +12,7 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.WebSocket;
 import signalJ.SignalJPlugin;
+import signalJ.infrastructure.Cursor;
 import signalJ.infrastructure.ProtectedData;
 import signalJ.infrastructure.Purposes;
 import signalJ.models.NegotiationResponse;
@@ -43,7 +44,7 @@ public class SignalJ extends Controller {
                 try {
                     Join join = new SignalJActor.Join(out, in, uuid);
                     signalJActor.tell(join, ActorRef.noSender());
-                    sendUUID(out, join.uuid);
+                    //sendUUID(out, join.uuid);
                 } catch (Exception ex) {
                     Logger.error("Error creating websocket!", ex);
                 }
@@ -67,14 +68,4 @@ public class SignalJ extends Controller {
             }
         });
     }
-	
-	//TODO: Convert to serialization
-	private void sendUUID(WebSocket.Out<JsonNode> out, UUID uuid) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"C\":\"");
-        sb.append(SignalJPlugin.getProtectedDataProvider().protect(uuid.toString(), Purposes.ConnectionToken).get());
-        sb.append("\",\"S\":1,\"M\":[]}");
-		final JsonNode event = mapper.readTree(sb.toString());
-		out.write(event);
-	}
 }

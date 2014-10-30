@@ -21,10 +21,11 @@
         // Reference the auto-generated proxy for the hub.
         var chat = $.connection.chatHub;
         // Create a function that the hub can call back to display messages.
-        chat.client.addNewMessageToPage = function (name, message) {
+        chat.client.addNewMessageToPage = function (name, message, words) {
             // Add the message to the page.
             $('#discussion').append('<li><strong>' + htmlEncode(name)
                     + '</strong>: ' + htmlEncode(message) + '</li>');
+            console.log("Words: %O", words);
         };
         // Get the user name and store it to prepend to messages.
         //$('#displayname').val(prompt('Enter your name:', ''));
@@ -38,6 +39,10 @@
                 chat.server.send($('#displayname').val(), $('#message').val());
                 // Clear text box and reset focus for next comment.
                 $('#message').val('').focus();
+                var words = ["Hi", "Hello"];
+                chat.server.send2(words).done(function(x) {
+                    console.log("X: " + x);
+                });
             });
         });
     });

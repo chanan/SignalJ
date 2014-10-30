@@ -56,6 +56,7 @@ public class SignalJActor extends AbstractActor {
         ).match(UserActor.MethodReturn.class, methodReturn -> usersActor.forward(methodReturn, context())
         ).match(HubsActor.GetJavaScript.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
         ).match(HubsActor.GetJavaScript2.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
+        ).match(UserActor.ClientCallEnd.class, clientCallEnd -> usersActor.forward(clientCallEnd, context())
         ).build());
     }
 	

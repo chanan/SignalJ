@@ -24,9 +24,9 @@ public class HelloWorld extends Hub<FirstTestPage> {
 		clients().caller.twoParams(2, 3);
 		clients().all.complexObj(new Person("John", "Smith"));
 		//Test client(s) by sending to self:
-		clients().client(getConnectionId()).calledFromClient(getConnectionId());
+		clients().client(context().connectionId).calledFromClient(context().connectionId);
 		//Test all except by NOT sending to self:
-		clients().allExcept(getConnectionId()).notCalledFromClient(getConnectionId());
+		clients().allExcept(context().connectionId).notCalledFromClient(context().connectionId);
         List<Person> list = new ArrayList<>();
         list.add(new Person("John", "Smith"));
         clients().caller.complexList(list);
@@ -43,11 +43,11 @@ public class HelloWorld extends Hub<FirstTestPage> {
 	}
 	
 	public void joinGroup(String group) {
-		groups().add(getConnectionId(), group);
+		groups().add(context().connectionId, group);
 	}
 	
 	public void leaveGroup(String group) {
-		groups().remove(getConnectionId(), group);
+		groups().remove(context().connectionId, group);
 	}
 	
 	public void talkToGroup(String group, String message) {
@@ -55,7 +55,7 @@ public class HelloWorld extends Hub<FirstTestPage> {
 	}
 	
 	public void talkToGroupOtherThanMe(String group, String message) {
-		clients().group(group, getConnectionId()).sendToGroup(message);
+		clients().group(group, context().connectionId).sendToGroup(message);
 		clients().othersInGroup(group).sendToGroup("Another way: " + message);
 	}
 

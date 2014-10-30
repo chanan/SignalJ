@@ -13,9 +13,11 @@ import play.libs.Json;
 import play.mvc.WebSocket;
 import scala.concurrent.duration.Duration;
 import signalJ.SignalJPlugin;
+import signalJ.infrastructure.Cursor;
 import signalJ.infrastructure.DefaultProtectedData;
 import signalJ.infrastructure.ProtectedData;
 import signalJ.infrastructure.Purposes;
+import signalJ.models.RequestContext;
 import signalJ.services.HubActor.ClientFunctionCall;
 import signalJ.services.SignalJActor.Join;
 
@@ -26,6 +28,7 @@ class UserActor extends AbstractActor {
 	private UUID uuid;
 	private WebSocket.Out<JsonNode> out;
     private WebSocket.In<JsonNode> in;
+    private final String prefix = Cursor.GetCursorPrefix();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
     private final ObjectMapper mapper = new ObjectMapper();
     private final ProtectedData protectedData;
@@ -45,11 +48,9 @@ class UserActor extends AbstractActor {
                         Logger.debug("Message from user: " + uuid + " : " + json);
                         self.tell(new InternalMessage(json), self);
                     });
+                    sendConnect();
                 }).match(MethodReturn.class, methodReturn -> {
-                    final signalJ.models.Messages.MethodReturn json = new signalJ.models.Messages.MethodReturn(methodReturn.uuid, methodReturn.id, methodReturn.hub, methodReturn.method, methodReturn.returnType, methodReturn.returnValue);
-                    final JsonNode j = Json.toJson(json);
-                    out.write(j);
-                    Logger.debug("Return Value: " + j);
+                    writeMethodReturn(methodReturn);
                 }).match(ClientFunctionCall.class, clientFunctionCall -> {
                     /*final signalJ.models.Messages.ClientFunctionCall json = new signalJ.models.Messages.ClientFunctionCall(clientFunctionCall.caller, clientFunctionCall.hubName, clientFunctionCall.name);
                     if (clientFunctionCall.args != null) {
@@ -77,10 +78,40 @@ class UserActor extends AbstractActor {
                         signalJActor.tell(new SignalJActor.GroupLeave(internalMessage.json.get("group").textValue(),
                                 UUID.fromString(internalMessage.json.get("uuid").textValue())), self());
                     }
-                }).match(ReceiveTimeout.class, r-> {
+                }).match(ClientCallEnd.class, clientCallEnd -> {
+                    writeConfirm(clientCallEnd.context);
+                }).match(ReceiveTimeout.class, r -> {
                     out.write(mapper.readTree("{ }"));
                 }).build()
         );
+    }
+
+    private void writeMethodReturn(MethodReturn methodReturn) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{").append("\"R\":");
+        sb.append(Json.toJson(methodReturn.returnValue));
+        sb.append(",\"I\":\"").append(methodReturn.context.messageId).append("\"}");
+        final JsonNode event = mapper.readTree(sb.toString());
+        out.write(event);
+        Logger.debug("Return Value: " + event);
+    }
+
+    private void writeConfirm(RequestContext context) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"I\":\"").append(context.messageId).append("\"}");
+        final JsonNode event = mapper.readTree(sb.toString());
+        out.write(event);
+    }
+
+    //TODO: Convert to serialization
+    private void sendConnect() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"C\":\"");
+        //sb.append(SignalJPlugin.getProtectedDataProvider().protect(uuid.toString(), Purposes.ConnectionToken).get());
+        sb.append(prefix);
+        sb.append("\",\"S\":1,\"M\":[]}");
+        final JsonNode event = mapper.readTree(sb.toString());
+        out.write(event);
     }
 
     private JsonNode createNode(ClientFunctionCall clientFunctionCall) throws IOException {
@@ -90,7 +121,8 @@ class UserActor extends AbstractActor {
         sb.append('{');
         sb.append("\"C\":");
         //sb.append("\"d-74B585BD-A,2|E,0|F,1|G,0\"");
-        sb.append('"').append(protectedData.protect(uuid.toString(), Purposes.ConnectionToken).get()).append('"');
+        //sb.append('"').append(protectedData.protect(uuid.toString(), Purposes.ConnectionToken).get()).append('"');
+        sb.append('"').append(prefix).append('"');
         sb.append(",\"M\":[");
         sb.append('{');
         sb.append("\"H\":").append('"').append(clientFunctionCall.hubName).append('"').append(',');
@@ -109,20 +141,12 @@ class UserActor extends AbstractActor {
     }
 
     public static class MethodReturn {
-		final UUID uuid;
-		final String id;
+		final RequestContext context;
 		final Object returnValue;
-		final String hub;
-		final String method;
-		final String returnType;
 		
-		public MethodReturn(UUID uuid, String id, Object returnValue, String hub, String method, String returnType) {
-			this.uuid = uuid;
-			this.id = id;
+		public MethodReturn(RequestContext context, Object returnValue) {
+            this.context = context;
 			this.returnValue = returnValue;
-			this.hub = hub;
-			this.method = method;
-			this.returnType = returnType;
 		}
 	}
 	
@@ -133,4 +157,12 @@ class UserActor extends AbstractActor {
 			this.json = json;
 		}
 	}
+
+    public static class ClientCallEnd {
+        public final RequestContext context;
+
+        public ClientCallEnd(RequestContext context) {
+            this.context = context;
+        }
+    }
 }
