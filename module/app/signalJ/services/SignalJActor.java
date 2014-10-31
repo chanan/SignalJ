@@ -4,14 +4,9 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
 import play.Logger;
-import play.mvc.WebSocket;
 import signalJ.infrastructure.ProtectedData;
-import signalJ.models.HubsDescriptor;
-import signalJ.services.HubActor.ClientFunctionCall;
-
-import java.util.UUID;
+import signalJ.models.Messages;
 
 public class SignalJActor extends AbstractActor {
     private final ActorRef usersActor;
@@ -20,19 +15,19 @@ public class SignalJActor extends AbstractActor {
 
     public SignalJActor(ProtectedData protectedData) {
         this.usersActor = context().actorOf(Props.create(UsersActor.class, protectedData), "users");
-        receive(ReceiveBuilder.match(Join.class, join -> {
+        receive(
+            ReceiveBuilder.match(Messages.Join.class, join -> {
                 usersActor.forward(join, context());
                 Logger.debug(join.uuid + " logged on");
-            }).match(Quit.class, quit -> {
+            }).match(Messages.Quit.class, quit -> {
                 usersActor.forward(quit, context());
                 groupsActor.forward(quit, context());
-            }).match(SendToHub.class, sendToHub -> hubsActor.forward(sendToHub, context())
-            ).match(RegisterHub.class, registerHub -> hubsActor.forward(registerHub, context())
-            ).match(Execute.class, execute -> hubsActor.forward(execute, context())
-            ).match(Describe.class, describe -> hubsActor.forward(describe, context())
-            ).match(GroupJoin.class, groupJoin -> groupsActor.forward(groupJoin, context())
-            ).match(GroupLeave.class, groupLeave -> groupsActor.forward(groupLeave, context())
-            ).match(ClientFunctionCall.class, clientFunctionCall -> {
+            }).match(Messages.RegisterHub.class, registerHub -> hubsActor.forward(registerHub, context())
+            ).match(Messages.Execute.class, execute -> hubsActor.forward(execute, context())
+            ).match(Messages.Describe.class, describe -> hubsActor.forward(describe, context())
+            ).match(Messages.GroupJoin.class, groupJoin -> groupsActor.forward(groupJoin, context())
+            ).match(Messages.GroupLeave.class, groupLeave -> groupsActor.forward(groupLeave, context())
+            ).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
                 switch (clientFunctionCall.sendType) {
                     case All:
                     case Others:
@@ -48,132 +43,12 @@ public class SignalJActor extends AbstractActor {
                     default:
                         break;
                 }
-            }).match(UserActor.MethodReturn.class, methodReturn -> usersActor.forward(methodReturn, context())
-            ).match(HubsActor.GetJavaScript.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
-            ).match(HubsActor.GetJavaScript2.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
-            ).match(UserActor.ClientCallEnd.class, clientCallEnd -> usersActor.forward(clientCallEnd, context())
-            ).match(Reconnect.class, reconnect -> usersActor.forward(reconnect, context())
+            }).match(Messages.MethodReturn.class, methodReturn -> usersActor.forward(methodReturn, context())
+            ).match(Messages.GetJavaScript.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
+            ).match(Messages.GetJavaScript2.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
+            ).match(Messages.ClientCallEnd.class, clientCallEnd -> usersActor.forward(clientCallEnd, context())
+            ).match(Messages.Reconnect.class, reconnect -> usersActor.forward(reconnect, context())
             ).build()
         );
     }
-	
-	public static class Join {
-		public final UUID uuid;
-        public final WebSocket.Out<JsonNode> out;
-        public final WebSocket.In<JsonNode> in;
-        
-        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid) {
-            this.out = out;
-            this.in = in;
-            this.uuid = uuid;
-        }
-    }
-
-    public static class Reconnect {
-        public final UUID uuid;
-        public final WebSocket.Out<JsonNode> out;
-        public final WebSocket.In<JsonNode> in;
-
-        public Reconnect(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid) {
-            this.out = out;
-            this.in = in;
-            this.uuid = uuid;
-        }
-    }
-	
-	public static class HubJoin {
-		final String hubName;
-		final UUID uuid;
-		
-		public HubJoin(String hubName, UUID uuid) {
-			this.hubName = hubName;
-			this.uuid = uuid;
-		}
-	}
-	
-	public static class Quit {
-		final UUID uuid;
-		
-		public Quit(UUID uuid) {
-			this.uuid = uuid;
-		}
-	}
-	
-	public static class SendToAll {
-		final String message;
-		
-		public SendToAll(String message) {
-			this.message = message;
-		}
-	}
-	
-	public static class Send {
-		final UUID uuid;
-		final String message;
-		
-		public Send(UUID uuid, String message) {
-			this.uuid = uuid;
-			this.message = message; 
-		}
-	}
-	
-	public static class SendToHub {
-		final String hubName;
-		final String message;
-		
-		public SendToHub(String hubName, String message) {
-			this.hubName = hubName;
-			this.message = message;
-		}
-	}
-	
-	public static class RegisterHub {
-		final Class<? extends Hub<?>> hub;
-		final HubsDescriptor.HubDescriptor descriptor;
-		
-		public RegisterHub(Class<? extends Hub<?>> hub, HubsDescriptor.HubDescriptor descriptor) {
-			this.hub = hub;
-			this.descriptor = descriptor;
-		}
-	}
-	
-	public static class Execute {
-        final UUID uuid;
-		final JsonNode json;
-		
-		public Execute(UUID uuid, JsonNode json) {
-            this.uuid = uuid;
-			this.json = json;
-		}
-	}
-	
-	public static class Describe {
-		final JsonNode json;
-		final ActorRef user;
-		
-		public Describe(JsonNode json, ActorRef user) {
-			this.json = json;
-			this.user = user;
-		}
-	}
-	
-	public static class GroupJoin {
-		final String groupname;
-		final UUID uuid;
-		
-		public GroupJoin(String groupname, UUID uuid) {
-			this.groupname = groupname;
-			this.uuid = uuid;
-		}
-	}
-	
-	public static class GroupLeave {
-		final String groupname;
-		final UUID uuid;
-		
-		public GroupLeave(String groupname, UUID uuid) {
-			this.groupname = groupname;
-			this.uuid = uuid;
-		}
-	}
 }

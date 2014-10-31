@@ -12,9 +12,8 @@ import play.Logger;
 import signalJ.GlobalHost;
 import signalJ.SignalJPlugin;
 import signalJ.models.HubsDescriptor;
+import signalJ.models.Messages;
 import signalJ.models.RequestContext;
-import signalJ.services.SignalJActor.Execute;
-import signalJ.services.SignalJActor.RegisterHub;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -30,11 +29,11 @@ class HubActor extends AbstractActor {
 
     HubActor() {
         receive(
-                ReceiveBuilder.match(RegisterHub.class, registerHub -> {
+                ReceiveBuilder.match(Messages.RegisterHub.class, registerHub -> {
                     hubDescriptor = registerHub.descriptor;
                     clazz = registerHub.hub;
                     Logger.debug("Registered hub actor: " + clazz.getName());
-                }).match(Execute.class, execute -> {
+                }).match(Messages.Execute.class, execute -> {
                     Logger.debug("Clazz: " + clazz.getName() + " " + clazz.getSimpleName());
                     final UUID uuid = execute.uuid;
                     final Hub<?> instance = (Hub<?>)GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
@@ -47,9 +46,9 @@ class HubActor extends AbstractActor {
                     final Method m = getMethod(instance, methodName, execute.json.get("A"));
                     final Object ret = m.invoke(instance, getParams(m, execute.json.get("A")));
                     if(ret == null)
-                        signalJActor.tell(new UserActor.ClientCallEnd(context), self());
+                        signalJActor.tell(new Messages.ClientCallEnd(context), self());
                     else
-                        signalJActor.tell(new UserActor.MethodReturn(context, ret), self());
+                        signalJActor.tell(new Messages.MethodReturn(context, ret), self());
                     /*if(ret != null) {
                         final String id = execute.json.get("id").textValue();
                         final String returnType = execute.json.get("returnType").textValue();
@@ -145,59 +144,5 @@ class HubActor extends AbstractActor {
             }
 		}
 		return ret.toArray();*/
-	}
-	
-	public static class Join {
-		final UUID uuid;
-		final ActorRef user;
-
-		public Join(UUID uuid, ActorRef user) {
-			this.uuid = uuid;
-			this.user = user;
-		}
-	}
-	
-	public static class Send {
-		final String message;
-		
-		public Send(String message) {
-			this.message = message;
-		}
-	}
-	
-	//TODO maybe use inheritance to make this more sane
-	public static class ClientFunctionCall {
-		final String hubName;
-		final String name;
-		final Object[] args;
-		final SendType sendType;
-		final RequestContext context;
-		final Method method;
-		final UUID[] clients;
-		final UUID[] allExcept;
-		final String groupName;
-		
-		public ClientFunctionCall(Method method, String hubName, RequestContext context, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName) {
-			this.hubName = hubName;
-			this.context = context;
-			this.sendType = sendType;
-			this.name = name;
-			this.args = args;
-			this.method = method;
-			this.clients = clients;
-			this.allExcept = allExcept;
-			this.groupName = groupName;
-		}
-
-		public enum SendType
-		{
-			All,
-			Others,
-			Caller,
-			Clients, 
-			AllExcept, 
-			Group, 
-			InGroupExcept
-		}
 	}
 }

@@ -14,6 +14,7 @@ import scala.concurrent.duration.Duration;
 import signalJ.SignalJPlugin;
 import signalJ.infrastructure.Cursor;
 import signalJ.infrastructure.ProtectedData;
+import signalJ.models.Messages;
 import signalJ.models.RequestContext;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public class WebsocketTransport extends AbstractActor {
     private final ObjectMapper mapper = new ObjectMapper();
     private final ProtectedData protectedData;
 
-    public WebsocketTransport(ProtectedData protectedData, SignalJActor.Join join) {
+    public WebsocketTransport(ProtectedData protectedData, Messages.Join join) {
         this.protectedData = protectedData;
         this.uuid = join.uuid;
         this.out = join.out;
@@ -37,7 +38,7 @@ public class WebsocketTransport extends AbstractActor {
         final ActorRef self = getContext().self();
 
         in.onClose(() -> {
-            signalJActor.tell(new SignalJActor.Quit(uuid), self);
+            signalJActor.tell(new Messages.Quit(uuid), self);
             self.tell(PoisonPill.getInstance(), self);
         });
         in.onMessage(json -> {
@@ -47,26 +48,26 @@ public class WebsocketTransport extends AbstractActor {
 
         context().setReceiveTimeout(Duration.create("20 seconds"));
 
-        receive(ReceiveBuilder.match(SignalJActor.Join.class, r -> writeConnect()
-                ).match(UserActor.MethodReturn.class, methodReturn -> writeMethodReturn(methodReturn)
-                ).match(HubActor.ClientFunctionCall.class, clientFunctionCall -> writeClientFunctionCall(clientFunctionCall)
+        receive(ReceiveBuilder.match(Messages.Join.class, r -> writeConnect()
+                ).match(Messages.MethodReturn.class, methodReturn -> writeMethodReturn(methodReturn)
+                ).match(Messages.ClientFunctionCall.class, clientFunctionCall -> writeClientFunctionCall(clientFunctionCall)
                 ).match(InternalMessage.class, internalMessage -> {
                     if (internalMessage.json.hasNonNull("H")) {
-                        signalJActor.tell(new SignalJActor.Execute(uuid, internalMessage.json), self());
+                        signalJActor.tell(new Messages.Execute(uuid, internalMessage.json), self());
                     } else if (internalMessage.json.get("type").textValue().equalsIgnoreCase("execute")) {
-                        signalJActor.tell(new SignalJActor.Execute(uuid, internalMessage.json), self());
+                        signalJActor.tell(new Messages.Execute(uuid, internalMessage.json), self());
                     } else if (internalMessage.json.get("type").textValue().equalsIgnoreCase("describe")) {
-                        signalJActor.tell(new SignalJActor.Describe(internalMessage.json, self()), self());
+                        signalJActor.tell(new Messages.Describe(internalMessage.json, self()), self());
                     } else if (internalMessage.json.get("type").textValue().equalsIgnoreCase("groupAdd")) {
-                        signalJActor.tell(new SignalJActor.GroupJoin(internalMessage.json.get("group").textValue(),
+                        signalJActor.tell(new Messages.GroupJoin(internalMessage.json.get("group").textValue(),
                                 UUID.fromString(internalMessage.json.get("uuid").textValue())), self());
                     } else if (internalMessage.json.get("type").textValue().equalsIgnoreCase("groupRemove")) {
-                        signalJActor.tell(new SignalJActor.GroupLeave(internalMessage.json.get("group").textValue(),
+                        signalJActor.tell(new Messages.GroupLeave(internalMessage.json.get("group").textValue(),
                                 UUID.fromString(internalMessage.json.get("uuid").textValue())), self());
                     }
-                }).match(UserActor.ClientCallEnd.class, clientCallEnd -> writeConfirm(clientCallEnd.context)
+                }).match(Messages.ClientCallEnd.class, clientCallEnd -> writeConfirm(clientCallEnd.context)
                 ).match(ReceiveTimeout.class, r -> writeHeartbeat()
-                ).match(SignalJActor.Reconnect.class, r -> Logger.debug("Reconnect Websocket " + r.uuid)
+                ).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect Websocket " + r.uuid)
                 ).build()
         );
     }
@@ -89,7 +90,7 @@ public class WebsocketTransport extends AbstractActor {
         out.write(event);
     }
 
-    private void writeMethodReturn(UserActor.MethodReturn methodReturn) throws IOException {
+    private void writeMethodReturn(Messages.MethodReturn methodReturn) throws IOException {
         final StringBuilder sb = new StringBuilder();
         sb.append("{").append("\"R\":");
         sb.append(Json.toJson(methodReturn.returnValue));
@@ -99,7 +100,7 @@ public class WebsocketTransport extends AbstractActor {
         Logger.debug("Return Value: " + event);
     }
 
-    private void writeClientFunctionCall(HubActor.ClientFunctionCall clientFunctionCall) throws IOException {
+    private void writeClientFunctionCall(Messages.ClientFunctionCall clientFunctionCall) throws IOException {
         final StringBuilder sb = new StringBuilder();
         sb.append('{');
         sb.append("\"C\":");

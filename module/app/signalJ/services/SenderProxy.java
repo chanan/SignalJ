@@ -2,8 +2,8 @@ package signalJ.services;
 
 import akka.actor.ActorRef;
 import play.Logger;
+import signalJ.models.Messages;
 import signalJ.models.RequestContext;
-import signalJ.services.HubActor.ClientFunctionCall.SendType;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -11,7 +11,7 @@ import java.lang.reflect.Proxy;
 import java.util.UUID;
 
 class SenderProxy implements InvocationHandler {
-	private final SendType sendType;
+	private final Messages.SendType sendType;
 	private final Class<?> clazz;
     private final String hubName;
 	private final RequestContext context;
@@ -20,7 +20,7 @@ class SenderProxy implements InvocationHandler {
 	private final String groupName;
     private final ActorRef signalJActor;
 
-	public SenderProxy(ActorRef signalJActor, SendType sendType, Class<?> clazz, String hubName, RequestContext context) {
+	public SenderProxy(ActorRef signalJActor, Messages.SendType sendType, Class<?> clazz, String hubName, RequestContext context) {
 		this.sendType = sendType;
 		this.clazz = clazz;
         this.hubName = hubName;
@@ -31,7 +31,7 @@ class SenderProxy implements InvocationHandler {
         this.signalJActor = signalJActor;
 	}
 	
-	public SenderProxy(ActorRef signalJActor, SendType sendType, Class<?> clazz, String hubName, RequestContext context, UUID[] clients, UUID[] allExcept, String groupName) {
+	public SenderProxy(ActorRef signalJActor, Messages.SendType sendType, Class<?> clazz, String hubName, RequestContext context, UUID[] clients, UUID[] allExcept, String groupName) {
 		this.sendType = sendType;
 		this.clazz = clazz;
         this.hubName = hubName;
@@ -45,7 +45,7 @@ class SenderProxy implements InvocationHandler {
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		Logger.debug(sendType + ": " + hubName + " - " + method.getName() + " " + argsToString(args));
-        signalJActor.tell(new HubActor.ClientFunctionCall(method, hubName, context, sendType, method.getName(), args, clients, allExcept, groupName), ActorRef.noSender());
+        signalJActor.tell(new Messages.ClientFunctionCall(method, hubName, context, sendType, method.getName(), args, clients, allExcept, groupName), ActorRef.noSender());
 		return null;
 	}
 

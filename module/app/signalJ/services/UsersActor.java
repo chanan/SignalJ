@@ -1,14 +1,16 @@
 package signalJ.services;
 
-import akka.actor.*;
+import akka.actor.AbstractActor;
+import akka.actor.ActorRef;
+import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
-import play.Logger;
 import signalJ.infrastructure.ProtectedData;
-import signalJ.services.SignalJActor.Join;
-import signalJ.services.SignalJActor.Quit;
+import signalJ.models.Messages;
 
-import java.util.*;
-import java.util.stream.Collector;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 class UsersActor extends AbstractActor {
@@ -18,22 +20,22 @@ class UsersActor extends AbstractActor {
     UsersActor(ProtectedData protectedData) {
         this.protectedData = protectedData;
         receive(
-                ReceiveBuilder.match(Join.class, join -> {
+                ReceiveBuilder.match(Messages.Join.class, join -> {
                     final ActorRef user = getUser(join.uuid);
                     user.forward(join, context());
-                }).match(Quit.class, quit -> {
+                }).match(Messages.Quit.class, quit -> {
                     final ActorRef user = getUser(quit.uuid);
                     user.tell(quit, self());
-                }).match(GetUser.class, getUser -> {
+                }).match(Messages.GetUser.class, getUser -> {
                     final ActorRef user = getUser(getUser.uuid);
                     sender().tell(user, self());
-                }).match(UserActor.MethodReturn.class, methodReturn -> {
+                }).match(Messages.MethodReturn.class, methodReturn -> {
                     final ActorRef user = getUser(methodReturn.context.connectionId);
                     user.forward(methodReturn, context());
-                }).match(UserActor.ClientCallEnd.class, clientCallEnd -> {
+                }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
                     final ActorRef user = getUser(clientCallEnd.context.connectionId);
                     user.forward(clientCallEnd, context());
-                }).match(HubActor.ClientFunctionCall.class, clientFunctionCall -> {
+                }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
                     switch (clientFunctionCall.sendType) {
                         case All:
                             getContext().getChildren().forEach(user -> user.forward(clientFunctionCall, context()));
@@ -63,7 +65,7 @@ class UsersActor extends AbstractActor {
                             });
                             break;
                     }
-                }).match(SignalJActor.Reconnect.class, reconnect -> {
+                }).match(Messages.Reconnect.class, reconnect -> {
                     final ActorRef user = getUser(reconnect.uuid);
                     user.forward(reconnect, context());
                 }).build()
@@ -77,12 +79,4 @@ class UsersActor extends AbstractActor {
     private ActorRef getUser(UUID uuid) {
         return Optional.ofNullable(getContext().getChild(uuid.toString())).orElseGet(() -> context().actorOf(Props.create(UserActor.class, protectedData), uuid.toString()));
     }
-	
-	public static class GetUser{
-		final UUID uuid;
-		
-		public GetUser(UUID uuid) {
-			this.uuid = uuid;
-		}
-	}
 }

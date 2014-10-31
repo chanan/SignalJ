@@ -2,8 +2,6 @@ package signalJ.services;
 
 import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import play.Logger;
 import play.libs.F.Function;
 import play.libs.F.Promise;
@@ -12,13 +10,9 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.WebSocket;
 import signalJ.SignalJPlugin;
-import signalJ.infrastructure.Cursor;
-import signalJ.infrastructure.ProtectedData;
-import signalJ.infrastructure.Purposes;
+import signalJ.models.Messages;
 import signalJ.models.NegotiationResponse;
-import signalJ.services.SignalJActor.Join;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import static akka.pattern.Patterns.ask;
@@ -26,7 +20,6 @@ import static akka.pattern.Patterns.ask;
 //TODO Use Play 2.3 syntax
 public class SignalJ extends Controller {
 	private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
-    private final ObjectMapper mapper = new ObjectMapper();
     private final String startStringPayload = "{ \"Response\": \"started\" }";
     private final String pongStringPayload = "{ \"Response\": \"pong\" }";
 
@@ -42,7 +35,7 @@ public class SignalJ extends Controller {
         return new WebSocket<JsonNode>() {
             public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out){
                 try {
-                    Join join = new SignalJActor.Join(out, in, uuid);
+                    Messages.Join join = new Messages.Join(out, in, uuid);
                     signalJActor.tell(join, ActorRef.noSender());
                 } catch (Exception ex) {
                     Logger.error("Error creating websocket!", ex);
@@ -57,7 +50,7 @@ public class SignalJ extends Controller {
         return new WebSocket<JsonNode>() {
             public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out){
                 try {
-                    SignalJActor.Reconnect reconnect = new SignalJActor.Reconnect(out, in, uuid);
+                    Messages.Reconnect reconnect = new Messages.Reconnect(out, in, uuid);
                     signalJActor.tell(reconnect, ActorRef.noSender());
                 } catch (Exception ex) {
                     Logger.error("Error creating reconnecting websocket!", ex);
@@ -75,7 +68,7 @@ public class SignalJ extends Controller {
     }
 
     public Promise<Result> hubs2() {
-        return Promise.wrap(ask(signalJActor, new HubsActor.GetJavaScript2(), 1000)).map(new Function<Object, Result>() {
+        return Promise.wrap(ask(signalJActor, new Messages.GetJavaScript2(), 1000)).map(new Function<Object, Result>() {
             @Override
             public Result apply(Object response) throws Throwable {
                 return ok(response.toString());

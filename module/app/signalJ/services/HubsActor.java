@@ -12,10 +12,9 @@ import play.Logger;
 import signalJ.GlobalHost;
 import signalJ.models.HubsDescriptor;
 import signalJ.models.HubsDescriptor.HubDescriptor;
-import signalJ.services.SignalJActor.Describe;
+import signalJ.models.Messages;
 
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 class HubsActor extends AbstractActor {
@@ -31,10 +30,10 @@ class HubsActor extends AbstractActor {
             Logger.error("Error creating hub descriptor", e);
         }
         receive(
-                ReceiveBuilder.match(GetJavaScript.class, request ->  sender().tell(js, self())
-                ).match(GetJavaScript2.class, request ->  sender().tell(js2, self())
-                ).match(Describe.class, describe -> {
-                            //TODO Reanble describe?
+                ReceiveBuilder.match(Messages.GetJavaScript.class, request ->  sender().tell(js, self())
+                ).match(Messages.GetJavaScript2.class, request ->  sender().tell(js2, self())
+                ).match(Messages.Describe.class, describe -> {
+                            //TODO Re-Enable describe?
                             final UUID uuid = UUID.fromString(describe.json.get("uuid").textValue());
                             final String id = describe.json.get("id").textValue();
                             final String hub = "system";
@@ -43,16 +42,12 @@ class HubsActor extends AbstractActor {
                             final String returnValue = hubsDescriptor.toString();
                             //describe.user.tell(new UserActor.MethodReturn(uuid, id, returnValue, hub, method, returnType), self());
                         }
-                ).match(HubJoin.class, hubJoin -> getContext().getChildren().forEach(hub -> hub.tell(hubJoin, self()))
-                ).match(SignalJActor.SendToHub.class, sendToHub -> {
-                            final ActorRef hub = getHub(sendToHub.hubName);
-                            hub.tell(new HubActor.Send(sendToHub.message), self());
-                        }
-                ).match(SignalJActor.Execute.class, execute -> {
+                ).match(Messages.HubJoin.class, hubJoin -> getContext().getChildren().forEach(hub -> hub.tell(hubJoin, self()))
+                ).match(Messages.Execute.class, execute -> {
                             final ActorRef hub = getHub(execute.json.get("H").textValue());
                             hub.forward(execute, getContext());
                         }
-                ).match(GetHub.class, getHub -> {
+                ).match(Messages.GetHub.class, getHub -> {
                             final ActorRef hub = getHub(getHub.hubName);
                             sender().tell(hub, self());
                         }
@@ -70,7 +65,7 @@ class HubsActor extends AbstractActor {
 			Logger.debug("Hub found: " + hub.getName());
 			final HubDescriptor descriptor = hubsDescriptor.addDescriptor(hub.getName());
             final ActorRef channel = getHub(hub.getSimpleName());
-            channel.tell(new SignalJActor.RegisterHub((Class<? extends Hub<?>>) hub, descriptor), self());
+            channel.tell(new Messages.RegisterHub((Class<? extends Hub<?>>) hub, descriptor), self());
 		}
         js = hubsDescriptor.toJS() + signalJ.views.js.hubs.render() + "\n";
 
@@ -141,49 +136,9 @@ class HubsActor extends AbstractActor {
 		}
 		return configBuilder;
 	}
-	
-	public static class GetJavaScript {
-		
-	}
-
-    public static class GetJavaScript2 {
-
-    }
-
-    /*private ActorRef getHub(String hubName) {
-        ActorRef actor = null;
-        for (ActorRef child : getContext().getChildren()) {
-            if(child.path().toString().endsWith("." + hubName)) {
-                actor = child;
-                break;
-            }
-        }
-        if(actor == null) {
-            actor = context().actorOf(Props.create(HubActor.class), hubName);
-        }
-        return actor;
-    }*/
 
     private ActorRef getHub(String hubName) {
         final String name = hubName.toLowerCase();
         return Optional.ofNullable(getContext().getChild(name)).orElseGet(() -> context().actorOf(Props.create(HubActor.class), name));
-    }
-
-    public static class HubJoin {
-        final UUID uuid;
-        final ActorRef user;
-
-        public HubJoin(UUID uuid, ActorRef user) {
-            this.uuid = uuid;
-            this.user = user;
-        }
-    }
-
-    public static class GetHub {
-        final String hubName;
-
-        public GetHub(String hubName) {
-            this.hubName = hubName;
-        }
     }
 }

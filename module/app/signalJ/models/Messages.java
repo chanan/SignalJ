@@ -1,107 +1,70 @@
 package signalJ.models;
+import akka.actor.ActorRef;
+import com.fasterxml.jackson.databind.JsonNode;
+import play.mvc.WebSocket;
+import signalJ.services.Hub;
+
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class Messages {
-	public static class ClientFunctionCall {
-		private final UUID uuid;
-		private final String hub;
-		private final String function;
-		private final List<Parameter> args = new ArrayList<Parameter>();
-		private final String type = "clientFunctionCall"; 
-		
-		public ClientFunctionCall(UUID uuid, String hub, String function) {
-			this.uuid = uuid;
-			this.hub = hub;
-			this.function = function;
-		}
-		
-		public UUID getUuid() {
-			return uuid;
-		}
-		
-		public String getHub() {
-			return hub;
-		}
-		
-		public String getFunction() {
-			return function;
-		}
-		
-		public List<Parameter> getArgs() {
-			return args;
-		}
-		
-		public String getType() {
-			return type;
-		}
-		
-		public Parameter addParameter(String name, Object value) {
-			Parameter p = new Parameter(name, value);
-			args.add(p);
-			return p;
-		}
-		
-		@Override
-		public String toString() {
-			return "{uuid: " + uuid + ", hub: " + hub + ", function: " + function + ", args: [" + args + "], type: " + type + "}";
-		}
-	}
+    //TODO maybe use inheritance to make this more sane
+    public static class ClientFunctionCall {
+        public final String hubName;
+        public final String name;
+        public final Object[] args;
+        public final SendType sendType;
+        public final RequestContext context;
+        public final Method method;
+        public final UUID[] clients;
+        public final UUID[] allExcept;
+        public final String groupName;
 
-	public static class MethodReturn {
-		private final UUID uuid;
-		private final String id;
-		private final String hub;
-		private final String method;
-		private final String returnType;
-		private final Object returnValue;
-		private final String type = "methodReturn";
-		
-		public MethodReturn(UUID uuid, String id, String hub, String method, String returnType, Object returnValue) {
-			this.uuid = uuid;
-			this.id = id;
-			this.hub = hub;
-			this.method = method;
-			this.returnType = returnType;
-			this.returnValue = returnValue;
-		}
-		
-		public UUID getUuid() {
-			return uuid;
-		}
-		
-		public String getId() {
-			return id;
-		}
-		
-		public String getHub() {
-			return hub;
-		}
-		
-		public String getMethod() {
-			return method;
-		}
-		
-		public String getReturnType() {
-			return returnType;
-		}
-		
-		public Object getReturnValue() {
-			return returnValue;
-		}
-		
-		public String getType() {
-			return type;
-		}
-		
-		@Override
-		public String toString() {
-			return "{uuid: " + uuid + ", id: " + id + ", hub: " + hub + ", method: " + method + ", returnType: " + returnType + ", returnValue: " + returnValue + "}";
-		}
-	}
+        public ClientFunctionCall(Method method, String hubName, RequestContext context, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName) {
+            this.hubName = hubName;
+            this.context = context;
+            this.sendType = sendType;
+            this.name = name;
+            this.args = args;
+            this.method = method;
+            this.clients = clients;
+            this.allExcept = allExcept;
+            this.groupName = groupName;
+        }
+    }
+
+    public enum SendType
+    {
+        All,
+        Others,
+        Caller,
+        Clients,
+        AllExcept,
+        Group,
+        InGroupExcept
+    }
+
+    public static class MethodReturn {
+        public final RequestContext context;
+        public final Object returnValue;
+
+        public MethodReturn(RequestContext context, Object returnValue) {
+            this.context = context;
+            this.returnValue = returnValue;
+        }
+    }
+
+    public static class ClientCallEnd {
+        public final RequestContext context;
+
+        public ClientCallEnd(RequestContext context) {
+            this.context = context;
+        }
+    }
 	
-	public static class Parameter {
+	/*public static class Parameter {
 		private final String name;
 		private final Object value;
 		
@@ -153,5 +116,149 @@ public class Messages {
 			this.name = name;
 			this.value = value;
 		}	
-	}
+	}*/
+
+    public static class GetUser{
+        public final UUID uuid;
+
+        public GetUser(UUID uuid) {
+            this.uuid = uuid;
+        }
+    }
+
+    public static class GetJavaScript {
+
+    }
+
+    public static class GetJavaScript2 {
+
+    }
+
+    public static class HubJoin {
+        public final UUID uuid;
+        public final ActorRef user;
+
+        public HubJoin(UUID uuid, ActorRef user) {
+            this.uuid = uuid;
+            this.user = user;
+        }
+    }
+
+    public static class GetHub {
+        public final String hubName;
+
+        public GetHub(String hubName) {
+            this.hubName = hubName;
+        }
+    }
+
+    /*public static class Join {
+        public final UUID uuid;
+        public final ActorRef user;
+
+        public Join(UUID uuid, ActorRef user) {
+            this.uuid = uuid;
+            this.user = user;
+        }
+    }*/
+
+    public static class Send {
+        public final String message;
+
+        public Send(String message) {
+            this.message = message;
+        }
+    }
+
+    public static class Join {
+        public final UUID uuid;
+        public final WebSocket.Out<JsonNode> out;
+        public final WebSocket.In<JsonNode> in;
+
+        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid) {
+            this.out = out;
+            this.in = in;
+            this.uuid = uuid;
+        }
+    }
+
+    public static class Reconnect {
+        public final UUID uuid;
+        public final WebSocket.Out<JsonNode> out;
+        public final WebSocket.In<JsonNode> in;
+
+        public Reconnect(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid) {
+            this.out = out;
+            this.in = in;
+            this.uuid = uuid;
+        }
+    }
+
+    /*public static class HubJoin {
+        final String hubName;
+        final UUID uuid;
+
+        public HubJoin(String hubName, UUID uuid) {
+            this.hubName = hubName;
+            this.uuid = uuid;
+        }
+    }*/
+
+    public static class Quit {
+        public final UUID uuid;
+
+        public Quit(UUID uuid) {
+            this.uuid = uuid;
+        }
+    }
+
+    public static class RegisterHub {
+        public final Class<? extends Hub<?>> hub;
+        public final HubsDescriptor.HubDescriptor descriptor;
+
+        public RegisterHub(Class<? extends Hub<?>> hub, HubsDescriptor.HubDescriptor descriptor) {
+            this.hub = hub;
+            this.descriptor = descriptor;
+        }
+    }
+
+    public static class Execute {
+        public final UUID uuid;
+        public final JsonNode json;
+
+        public Execute(UUID uuid, JsonNode json) {
+            this.uuid = uuid;
+            this.json = json;
+        }
+    }
+
+    public static class Describe {
+        public final JsonNode json;
+        public final ActorRef user;
+
+        public Describe(JsonNode json, ActorRef user) {
+            this.json = json;
+            this.user = user;
+        }
+    }
+
+    public static class GroupJoin {
+        public final String groupname;
+        public final UUID uuid;
+
+        public GroupJoin(String groupname, UUID uuid) {
+            this.groupname = groupname;
+            this.uuid = uuid;
+        }
+    }
+
+    public static class GroupLeave {
+        public final String groupname;
+        public final UUID uuid;
+
+        public GroupLeave(String groupname, UUID uuid) {
+            this.groupname = groupname;
+            this.uuid = uuid;
+        }
+    }
 }
