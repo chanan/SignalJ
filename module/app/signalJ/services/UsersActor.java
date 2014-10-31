@@ -23,8 +23,7 @@ class UsersActor extends AbstractActor {
                     user.forward(join, context());
                 }).match(Quit.class, quit -> {
                     final ActorRef user = getUser(quit.uuid);
-                    user.tell(PoisonPill.getInstance(), self());
-                    Logger.debug(quit.uuid + " logged off");
+                    user.tell(quit, self());
                 }).match(GetUser.class, getUser -> {
                     final ActorRef user = getUser(getUser.uuid);
                     sender().tell(user, self());
@@ -64,8 +63,11 @@ class UsersActor extends AbstractActor {
                             });
                             break;
                     }
+                }).match(SignalJActor.Reconnect.class, reconnect -> {
+                    final ActorRef user = getUser(reconnect.uuid);
+                    user.forward(reconnect, context());
                 }).build()
-        );
+            );
     }
 
     private List<ActorRef> getUsers(UUID[] uuids) {

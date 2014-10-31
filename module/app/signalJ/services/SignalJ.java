@@ -44,9 +44,23 @@ public class SignalJ extends Controller {
                 try {
                     Join join = new SignalJActor.Join(out, in, uuid);
                     signalJActor.tell(join, ActorRef.noSender());
-                    //sendUUID(out, join.uuid);
                 } catch (Exception ex) {
                     Logger.error("Error creating websocket!", ex);
+                }
+            }
+        };
+    }
+
+    public WebSocket<JsonNode> reconnect() {
+        final String connectionToken = request().getQueryString("connectionToken");
+        final UUID uuid = UUID.fromString(connectionToken.substring(0, connectionToken.lastIndexOf(':')));
+        return new WebSocket<JsonNode>() {
+            public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out){
+                try {
+                    SignalJActor.Reconnect reconnect = new SignalJActor.Reconnect(out, in, uuid);
+                    signalJActor.tell(reconnect, ActorRef.noSender());
+                } catch (Exception ex) {
+                    Logger.error("Error creating reconnecting websocket!", ex);
                 }
             }
         };

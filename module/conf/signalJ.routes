@@ -1,9 +1,10 @@
 # GET			/signalJ/Join						@signalJ.services.SignalJ.join()
 # GET			/js/hubs.js							@signalJ.services.SignalJ.hubs()
-GET			/js/hubs2.js							@signalJ.services.SignalJ.hubs2()
+GET        /js/hubs2.js              @signalJ.services.SignalJ.hubs2()
 
 # SignalR
-GET         /signalj/negotiate                      @signalJ.services.SignalJ.negotiate()
-GET         /signalj/connect                        @signalJ.services.SignalJ.connect()
-GET         /signalj/start                          @signalJ.services.SignalJ.start()
-GET         /signalj/ping                           @signalJ.services.SignalJ.ping()
+GET        /signalj/negotiate        @signalJ.services.SignalJ.negotiate()
+GET        /signalj/connect          @signalJ.services.SignalJ.connect()
+GET        /signalj/start            @signalJ.services.SignalJ.start()
+GET        /signalj/ping             @signalJ.services.SignalJ.ping()
+GET        /signalj/reconnect        @signalJ.services.SignalJ.reconnect()
