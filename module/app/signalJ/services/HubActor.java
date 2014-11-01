@@ -40,7 +40,6 @@ class HubActor extends AbstractActor {
                     final Hub<?> instance = (Hub<?>)GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
                     final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt());
                     instance.setContext(context);
-                    instance.setHubClassName(clazz.getSimpleName());
                     final String methodName = execute.json.get("M").textValue();
                     final Method m = getMethod(instance, methodName, execute.json.get("A"));
                     final Object ret = m.invoke(instance, getParams(m, execute.json.get("A")));

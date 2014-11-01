@@ -7,9 +7,6 @@ import models.ChatMessage;
 import signalJ.GlobalHost;
 import signalJ.services.HubContext;
 
-/**
- * Created by Chanan on 4/19/2014.
- */
 public class Robot extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {

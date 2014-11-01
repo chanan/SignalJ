@@ -21,8 +21,4 @@ public class Application extends Controller {
     	hub.clients().all.thisWillBeCalledFromOutsideTheHub("Hello From controller");
     	return ok();
     }
-
-    public static Result signalr() {
-        return ok(views.html.signalr.render());
-    }
 }
