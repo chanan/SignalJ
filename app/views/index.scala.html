@@ -1,131 +1,75 @@
 @(message: String)
 
 @main("Welcome to SignalJ") {
-
-    <h1>SignalJ</h1>
-
-    <h2>Overview</h2>
-
-    <p>A port of <a target="_blank" href="http://asp.net/signalr">SignalR</a> to the PlayFramework using Actors.</p>
-
-    <h2>Examples</h2>
-
-    <p>Jump right to some examples:</p>
-
-    <ul>
-        <li><a href="http://localhost:9000/test">Test page of various SignalJ functions</a></li>
-        <li><a href="http://localhost:9000/chat">A port of the Playframework websocket-chat sample app</a></li>
-        <li><a href="http://localhost:9000/signalr">SignalR</a></li>
-    </ul>
-
-    <h2>Setup Instructions</h2>
-
-    <p>Add the following to your build.sbt:</p>
-
-<p><code><pre>
+        <h1>SignalJ</h1><h2>Overview</h2><p>A port of <a href="http://asp.net/signalr">SignalR</a> to the PlayFramework using Actors.</p><h2>Examples</h2><p>Jump right to some examples:</p>
+        <ul>
+            <li><a href="http://localhost:9000/test">Test page of various SignalJ functions</a></li>
+            <li><a href="http://localhost:9000/chat">A port of the Playframework websocket-chat sample app</a></li>
+        </ul><h2>Setup Instructions</h2><p>Add the following to your build.sbt:</p>
+        <pre><code>
 resolvers += "release repository" at "http://chanan.github.io/maven-repo/releases/"
 
 resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"
-</pre></code></p>
-
-    <p>Add to your libraryDependencies:</p>
-
-<p><code><pre>
-"signalJ" %% "signalj" % "0.3.0"
-</pre></code></p>
-
-    <h2>Instructions</h2>
-
-    <p><strong>Note:</strong> This is a work in progress! These are not the full instructions</p>
-
-    <h3>Interface</h3>
-
-    <p>Create an interface for the javascript functions in your page (all functions should return void). The method params can be complex types</p>
-    <p>For example see: ChatPage.java or FirstTestPage.java in the hubs package.</p>
-
-    <h3>Hubs</h3>
-
-    <p>Create a hub class that extends <code>Hub&lt;TInterface&gt;</code> where TInterface is the interface created above. You must also override
-    <code>getInterface()</code> and return the interface class.</p>
-
-    <p>The methods you create in the Hub class can be called from the javascript in your page with the syntax <code>hub_method()</code>.</p>
-
-    <h3>Calling back to the page</h3>
-    <p>The methods of the interface you defined become methods you can call from the hub. For example, if you defined a method in your interface
-    called "myMethod()":</p>
-    <ul>
-        <li><code>clients().all.myMethod()</code> - executes <code>myMethod</code> on all clients</li>
-        <li><code>clients().others.myMethod()</code> - executes <code>myMethod</code> on all clients other than the caller</li>
-        <li><code>clients().caller.myMethod()</code> - executes <code>myMethod</code> on the caller</li>
-        <li><code>clients().client(conenctionId).myMethod()</code> - executes <code>myMethod</code> on a specific client</li>
-        <li><code>clients().allExcept.myMethod()</code> - executes <code>myMethod</code> on a all clients excepts the specified list of clients</li>
-    </ul>
-
-    <p>Hub classes are instantiated on every call. Therefore, they are thread safe. Hubs can't store data unless it is in a static variable.
-    In that case you need to ensure thread safety of the data. A future version of SignalJ may allow Actors to be hubs.</p>
-
-    <h3>Groups</h3>
-
-    <h4>Group management</h4>
-
-    <p>Groups can be used to group user together. Groups get created when the first user joins and get deleted when the last user leaves.</p>
-
-    <p>Groups can be managed server side from within the hub:</p>
-
-    <ul>
-        <li><code>groups().add(getConnectionId(), group)</code> - Adds a connection to a group</li>
-        <li><code>groups().remove(getConnectionId(), group)</code> - Removes a connection to a group</li>
-    </ul>
-
-    <p>Group membership can also be accessed from javascript (<strong>Note:</strong> the javascript syntax <strong>will</strong> change
-        in future versions prior to 1.0 release.):</p>
-
-    <ul>
-        <li><code>groupAdd(group)</code> - Adds the current caller to a group</li>
-        <li><code>groupRemove(group)</code> - Removes the current caller to a group</li>
-    </ul>
-
-    <h3>Group communication</h3>
-
-    <p>You can invoke javascript functions to pages in a group with the following commands (as before calling <code>myMethod()</code>):</p>
-
-    <ul>
-        <li><code>clients().group(group).myMethod()</code> - Invokes <code>myMethod</code> on clients that are part of the group</li>
-        <li><code>clients().group(group, getConnectionId()).myMethod()</code> - Invokes <code>myMethod</code> on clients that are part of the group except the listed connections</li>
-        <li><code>clients().inGroupExcept(group, getConnectionId()).myMethod()</code> - Alias for above syntax</li>
-        <li><code>clients().othersInGroup(group).myMethod()</code> - Invokes <code>myMethod</code> on clients that are part of the group other than the caller</li>
-    </ul>
-
-    <h2>Examples</h2>
-
-    <p>Examples of how hubs and page can talk to each other using group and client communication can be found in the hubs.Helloworld which
-       can be accessed at: <a href="http://localhost:9000/test">http://localhost:9000/test</a> and hubs.Chat which can be accessed at
-        <a href="http://localhost:9000/chat">http://localhost:9000/Chat</a> (Which is a rewrite of the playframework websocket-chat example.</p>
-
-    <h2>Accessing the hub methods from outside the hub</h2>
-
-    <p>You can access the hub from outside the hub by calling <code>getHub</code> on the GlobalHost. You can see this for example,
-        in the actors.Robot which is used in the Chat example:</p>
-
-    <p><code>HubContext&lt;ChatPage&gt; hub = GlobalHost.getHub(Chat.class);</code></p>
-
-    <h2>Dependency Injection</h2>
-
-    <p>You may use dependency injection for your hub classes. To do so, implement <code>DependencyResolver</code> (for example:
-        hubs.GuiceDependencyResolver). In your app's <code>Global.onStart</code> set the resolver in the GlobalHost:</p>
-
- <p><code><pre>
+        </code></pre><p>Add to your libraryDependencies:</p>
+        <pre><code>"signalJ" %% "signalj" % "0.3.0"
+        </code></pre><h2>Instructions</h2><p><em>Note:</em> This is a work in progress! These are not the full instructions</p><h3>Interface</h3><p>Create an interface for the javascript functions in your page (all functions should return void). The method params can be complex types.</p><p>For example see: ChatPage.java or FirstTestPage.java in the hubs package.</p><h3>Hubs</h3><p>Create a hub class that extends <code>Hub&lt;TInterface&gt;</code> where TInterface is the interface created above. You must also override <code>getInterface()</code> and return the interface class.</p><h3>Javascript</h3><p>On your javascript page you must first make a connection to the hub. For example: <code>test.scala.html</code>:</p>
+        <pre><code>var hub = $.connection.helloWorld;
+        </code></pre><p>You can use <code>hub.client</code> to setup the callback that the server will use into your page:</p>
+        <pre><code>
+hub.client.firstTestFunctionWithParam = function(param) {
+    console.log("Called from server with param: " + param);
+};
+        </code></pre><p>You may then start the hub, which will start the websocket connection. This will return a promise which can be used to setup server calls:</p>
+        <pre><code>
+$.connection.hub.start().done(function () {
+    $('#btnHello').click(function() {
+        hub.server.sayHello();
+    });
+    ...
+});
+        </code></pre><p>Also, as seen in the example above, <code>hub.server</code> is used to call into the hub serverside methods.</p><p>Server side method may also return a value which is return in a promise like so:</p>
+        <pre><code>
+$('#btnAdd').click(function() {
+    hub.server.add(1, 2).done(function(result) {
+        $('#result').html(result);
+    });
+});
+        </code></pre><h2>Calling back to the page</h2><p>The methods of the interface you defined become methods you can call from the hub. For example, if you defined a method in your interface  called "myMethod()":</p>
+        <ul>
+            <li><code>clients().all.myMethod()</code> - executes <code>myMethod</code> on all clients</li>
+            <li><code>clients().others.myMethod()</code> - executes <code>myMethod</code> on all clients other than the caller</li>
+            <li><code>clients().caller.myMethod()</code> - executes <code>myMethod</code> on the caller</li>
+            <li><code>clients().client(conenctionId).myMethod()</code> - executes <code>myMethod</code> on a specific client</li>
+            <li><code>clients().allExcept.myMethod()</code> - executes <code>myMethod</code> on a all clients excepts the specified list of clients</li>
+        </ul><p>Hub classes are instantiated on every call. Therefore, they are thread safe. Hubs can't store data unless it is in a static variable. In that case you need to ensure thread safety of the data. A future version of SignalJ may allow Actors to be hubs.</p><h3>Groups</h3><h4>Group management</h4><p>Groups can be used to group user together. Groups get created when the first user joins and get deleted when the last user leaves.</p><p>Groups can be managed server side from within the hub:</p>
+        <ul>
+            <li><code>groups().add(getConnectionId(), group)</code> - Adds a connection to a group</li>
+            <li><code>groups().remove(getConnectionId(), group)</code> - Removes a connection to a group</li>
+        </ul><p>(*NOTE:* the following is disabled for now in order to match up with SignalR) Group membership can also be accessed from javascript (*Note:* the javascript syntax <em>will</em> change in future versions prior to 1.0 release.):</p>
+        <ul>
+            <li><code>groupAdd(group)</code> - Adds the current caller to a group</li>
+            <li><code>groupRemove(group)</code> - Removes the current caller to a group</li>
+        </ul><h3>Group communication</h3><p>You can invoke javascript functions to pages in a group with the following commands (as before calling <code>myMethod()</code>):</p>
+        <ul>
+            <li><code>clients().group(group).myMethod()</code> - Invokes <code>myMethod</code> on clients that are part of the group</li>
+            <li><code>clients().group(group, getConnectionId()).myMethod()</code> - Invokes <code>myMethod</code> on clients that are part of the group except the listed connections</li>
+            <li><code>clients().inGroupExcept(group, getConnectionId()).myMethod()</code> - Alias for above syntax</li>
+            <li><code>clients().othersInGroup(group).myMethod()</code> - Invokes <code>myMethod</code> on clients that are part of the group other than the caller</li>
+        </ul><h2>Examples</h2><p>Examples of how hubs and page can talk to each other using group and client communication can be found in the hubs.Helloworld which can be accessed at: <a href="http://localhost:9000/test">http://localhost:9000/test</a> and hubs.Chat which can be accessed at <a href="http://localhost:9000/Chat">http://localhost:9000/Chat</a> (Which is a rewrite of the playframework websocket-chat example.</p><p></p><h2>Accessing the hub methods from outside the hub</h2><p>You can access the hub from outside the hub by calling <code>getHub</code> on the <code>GlobalHost</code>. You can see this for example, in the <code>actors.Robot</code> which is used in the Chat example:</p><p><code>HubContext&lt;ChatPage&gt; hub = GlobalHost.getHub(Chat.class);</code></p><h2>Dependency Injection</h2><p>You may use dependency injection for your hub classes. To do so, implement <code>DependencyResolver</code> (for example:  hubs.GuiceDependencyResolver). In your app's <code>Global.onStart</code> set the resolver in the GlobalHost:</p>
+        <pre><code data-language="java">
 GuiceDependencyResolver resolver = new GuiceDependencyResolver(injector);
 GlobalHost.setDependencyResolver(resolver);
- </pre></code></p>
-
-    <h2>Future changes</h2>
-
-    <ul>
-        <li>Add supervision</li>
-        <li>Make sure SignalJ works in a webfarm</li>
-        <li>Make the javascript sane</li>
-        <li>Verify feature parity with SignalR</li>
-    </ul>
-
+        </code></pre><h2>Future changes</h2>
+        <ul>
+            <li>Add supervision</li>
+            <li>clientside groups?</li>
+            <li>describe?</li>
+            <li>javascript &amp; minify</li>
+            <li>groups at the hub level</li>
+            <li>better exceptions</li>
+            <li>SSE</li>
+            <li>Long polling</li>
+            <li>Forever Frames</li>
+            <li>Clustering</li>
+        </ul>
 }
