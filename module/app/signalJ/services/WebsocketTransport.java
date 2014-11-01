@@ -123,11 +123,13 @@ public class WebsocketTransport extends AbstractActor {
         sb.append("\"H\":").append('"').append(clientFunctionCall.hubName).append('"').append(',');
         sb.append("\"M\":").append('"').append(clientFunctionCall.method.getName()).append('"').append(',');
         sb.append("\"A\":[");
-        boolean first = true;
-        for (final Object obj : clientFunctionCall.args) {
-            if (!first) sb.append(',');
-            first = false;
-            sb.append(Json.toJson(obj));
+        if(clientFunctionCall.args != null) {
+            boolean first = true;
+            for (final Object obj : clientFunctionCall.args) {
+                if (!first) sb.append(',');
+                first = false;
+                sb.append(Json.toJson(obj));
+            }
         }
         sb.append("]}]}");
         final JsonNode j = mapper.readTree(sb.toString());

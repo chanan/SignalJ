@@ -10,4 +10,12 @@ public class RequestContext {
         this.connectionId = connectionId;
         this.messageId = messageId;
     }
+
+    @Override
+    public String toString() {
+        return "RequestContext{" +
+                "connectionId=" + connectionId +
+                ", messageId=" + messageId +
+                '}';
+    }
 }

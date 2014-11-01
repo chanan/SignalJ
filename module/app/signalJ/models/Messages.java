@@ -6,6 +6,7 @@ import play.mvc.WebSocket;
 import signalJ.services.Hub;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class Messages {
@@ -51,6 +52,22 @@ public class Messages {
         @Override
         public long getMessageId() {
             return messageId;
+        }
+
+        @Override
+        public String toString() {
+            return "ClientFunctionCall{" +
+                    "hubName='" + hubName + '\'' +
+                    ", name='" + name + '\'' +
+                    ", args=" + Arrays.toString(args) +
+                    ", sendType=" + sendType +
+                    ", context=" + context +
+                    ", method=" + method +
+                    ", clients=" + Arrays.toString(clients) +
+                    ", allExcept=" + Arrays.toString(allExcept) +
+                    ", groupName='" + groupName + '\'' +
+                    ", messageId=" + messageId +
+                    '}';
         }
     }
 
@@ -122,14 +139,6 @@ public class Messages {
         public HubJoin(UUID uuid, ActorRef user) {
             this.uuid = uuid;
             this.user = user;
-        }
-    }
-
-    public static class GetHub {
-        public final String hubName;
-
-        public GetHub(String hubName) {
-            this.hubName = hubName;
         }
     }
 
