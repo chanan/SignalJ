@@ -194,16 +194,6 @@ public class Messages {
         }
     }
 
-    public static class Describe {
-        public final JsonNode json;
-        public final ActorRef user;
-
-        public Describe(JsonNode json, ActorRef user) {
-            this.json = json;
-            this.user = user;
-        }
-    }
-
     public static class GroupJoin {
         public final String groupname;
         public final UUID uuid;

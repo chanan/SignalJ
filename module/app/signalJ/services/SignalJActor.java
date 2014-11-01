@@ -24,7 +24,6 @@ public class SignalJActor extends AbstractActor {
                 groupsActor.forward(quit, context());
             }).match(Messages.RegisterHub.class, registerHub -> hubsActor.forward(registerHub, context())
             ).match(Messages.Execute.class, execute -> hubsActor.forward(execute, context())
-            ).match(Messages.Describe.class, describe -> hubsActor.forward(describe, context())
             ).match(Messages.GroupJoin.class, groupJoin -> groupsActor.forward(groupJoin, context())
             ).match(Messages.GroupLeave.class, groupLeave -> groupsActor.forward(groupLeave, context())
             ).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {

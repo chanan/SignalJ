@@ -32,16 +32,7 @@ class HubsActor extends AbstractActor {
         receive(
                 ReceiveBuilder.match(Messages.GetJavaScript.class, request ->  sender().tell(js, self())
                 ).match(Messages.GetJavaScript2.class, request ->  sender().tell(js2, self())
-                ).match(Messages.Describe.class, describe -> {
-                    //TODO Re-Enable describe?
-                    final UUID uuid = UUID.fromString(describe.json.get("uuid").textValue());
-                    final String id = describe.json.get("id").textValue();
-                    final String hub = "system";
-                    final String returnType = "json";
-                    final String method = "describe";
-                    final String returnValue = hubsDescriptor.toString();
-                    //describe.user.tell(new UserActor.MethodReturn(uuid, id, returnValue, hub, method, returnType), self());
-                }).match(Messages.HubJoin.class, hubJoin -> getContext().getChildren().forEach(hub -> hub.tell(hubJoin, self()))
+                ).match(Messages.HubJoin.class, hubJoin -> getContext().getChildren().forEach(hub -> hub.tell(hubJoin, self()))
                 ).match(Messages.Execute.class, execute -> {
                     final ActorRef hub = getHub(execute.json.get("H").textValue());
                     hub.forward(execute, getContext());

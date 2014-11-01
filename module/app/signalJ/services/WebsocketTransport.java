@@ -62,8 +62,6 @@ public class WebsocketTransport extends AbstractActor {
                     signalJActor.tell(new Messages.Execute(uuid, internalMessage.json), self());
                 } else if (internalMessage.json.get("type").textValue().equalsIgnoreCase("execute")) {
                     signalJActor.tell(new Messages.Execute(uuid, internalMessage.json), self());
-                } else if (internalMessage.json.get("type").textValue().equalsIgnoreCase("describe")) {
-                    signalJActor.tell(new Messages.Describe(internalMessage.json, self()), self());
                 } else if (internalMessage.json.get("type").textValue().equalsIgnoreCase("groupAdd")) {
                     signalJActor.tell(new Messages.GroupJoin(internalMessage.json.get("group").textValue(),
                             UUID.fromString(internalMessage.json.get("uuid").textValue())), self());

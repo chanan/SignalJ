@@ -10,7 +10,6 @@
 <br>
 Result: <span id="result"></span>
 <br>
-<button id="btnDescribe">Log to console Describe</button><br>
 Message will be pushed from server 2 + 3 = <span id="push"></span><br>
 Person full name (Press first button): <span id="fullname"></span><br>
 <button id="joinGroup">Join "test" group</button> <button id="joinGroupClientSide">Clientside Join "test" group</button> <button id="leaveGroup">Leave "test" group</button><br>
@@ -71,13 +70,6 @@ Person full name (Press first button): <span id="fullname"></span><br>
                 hub.server.add(1, 2).done(function(result) {
                     $('#result').html(result);
                 });
-            });
-
-            $('#btnDescribe').click(function() {
-                /*hubs_describe(function(data) {
-                    console.log("Describe: %O", data);
-                });*/
-                alert('Not implemented');
             });
 
             $('#joinGroup').click(function() {
