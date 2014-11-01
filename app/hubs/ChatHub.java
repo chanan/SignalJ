@@ -1,5 +1,6 @@
 package hubs;
 
+import models.Person;
 import play.Logger;
 import signalJ.services.Hub;
 
@@ -18,6 +19,14 @@ public class ChatHub extends Hub<ChatHubPage> {
     public String send2(List<String> words) {
         Logger.debug(words.toString());
         return "yay";
+    }
+
+    public void complexObj(Person person) {
+        Logger.debug(person.getFirstName());
+    }
+
+    public void complexList(String str, List<Person> list) {
+        list.stream().forEach(p -> Logger.debug(p.getFirstName()));
     }
 
     @Override

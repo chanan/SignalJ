@@ -43,6 +43,11 @@
                 chat.server.send2(words).done(function(x) {
                     console.log("X: " + x);
                 });
+                var person = {firstName: "John", lastName: "Smith"};
+                chat.server.complexObj(person);
+                var person2 = {firstName: "John2", lastName: "Smith2"};
+                var arr = [person, person2];
+                chat.server.complexList("string", arr);
             });
         });
     });
