@@ -1,6 +1,7 @@
-<script type="text/javascript" src="/assets/javascripts/jquery-1.9.0.min.js"></script>
-<script type="text/javascript" src="/js/hubs.js"></script>
-<h1>Here!</h1>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.1.min.js"></script>
+<script src="http://ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.1.0.min.js"></script>
+<script src="/js/hubs2.js"></script>
+<h1>SignalJ Test Page</h1>
 <button id="btnHello">Say Hello on the server!</button>
 <br>
 <button id="btnHello2">Say Hello twice</button>
@@ -16,82 +17,97 @@ Person full name (Press first button): <span id="fullname"></span><br>
 <button id="talkToGroup">Say hello to group</button> <button id="talkToGroupOtherThanMe">Say hello to group other than me</button><br>
 <button id="sendListOfInt">Send List of Int</button>
 <script type="text/javascript">
-$(function() {
-	$('#btnHello').click(function() {
-		helloWorld_sayHello();
-	});
-	$('#btnHello2').click(function() {
-		helloWorld_saySomethingANumberOfTimes("hello", 2);
-	});
-	$('#btnAdd').click(function() {
-		helloWorld_add(1, 2, function(data) {
-			$('#result').html(data);
-		});
-	});
-	$('#btnDescribe').click(function() {
-		hubs_describe(function(data) {
-			console.log("Describe: %O", data);
-		});
-	});
-	$('#joinGroup').click(function() {
-		helloWorld_joinGroup("test");
-	});
-	$('#leaveGroup').click(function() {
-		helloWorld_leaveGroup("test");
-	});
-	$('#talkToGroup').click(function() {
-		helloWorld_talkToGroup("test", "Hi to everyone in group!");
-	});
-	$('#talkToGroupOtherThanMe').click(function() {
-		helloWorld_talkToGroupOtherThanMe("test", "Hi to others in group!");
-	});
-	$('#joinGroupClientSide').click(function() {
-		groupAdd("test");
-	});
-    $('#sendListOfInt').click(function() {
-        var arr = new Array();
-        arr[0] = 1;
-        arr[1] = 2;
-        arr[2] = 3;
-        helloWorld_listOfInt(arr);
+    $(function () {
+        var hub = $.connection.helloWorld;
+        hub.client.firstTestFunction = function() {
+            console.log("Called from server!");
+        };
+
+        hub.client.firstTestFunctionWithParam = function(param) {
+            console.log("Called from server with param: " + param);
+        };
+
+        hub.client.twoParams = function(int1, int2) {
+            console.log(int1 + int2);
+            $('#push').html(int1 + int2);
+        };
+
+        hub.client.complexObj = function(person) {
+            console.log("Person: %O", person);
+            $('#fullname').html(person.firstName + " " + person.lastName);
+        };
+
+        hub.client.calledFromClient = function(connectionId) {
+            console.log("This was called directly to this connection: " + connectionId)
+        };
+
+        hub.client.notCalledFromClient = function(connectionId) {
+            console.log("This was NOT sent to: " + connectionId)
+        };
+
+        hub.client.sendToGroup = function(message) {
+            console.log("This was sent to the group: " + message);
+        };
+
+        hub.client.thisWillBeCalledFromOutsideTheHub = function(message) {
+            console.log("This was sent from out side the hub to all clients: " + message);
+        };
+
+        hub.client.complexList = function(people) {
+            console.log("People: %O", people);
+            hub.server.listOfPerson(people);
+        };
+
+        $.connection.hub.start().done(function () {
+            $('#btnHello').click(function() {
+                hub.server.sayHello();
+            });
+
+            $('#btnHello2').click(function() {
+                hub.server.saySomethingANumberOfTimes("hello", 2);
+            });
+
+            $('#btnAdd').click(function() {
+                hub.server.add(1, 2).done(function(result) {
+                    $('#result').html(result);
+                });
+            });
+
+            $('#btnDescribe').click(function() {
+                /*hubs_describe(function(data) {
+                    console.log("Describe: %O", data);
+                });*/
+                alert('Not implemented');
+            });
+
+            $('#joinGroup').click(function() {
+                hub.server.joinGroup('test');
+            });
+
+            $('#leaveGroup').click(function() {
+                hub.server.leaveGroup('test');
+            });
+
+            $('#talkToGroup').click(function() {
+                hub.server.talkToGroup('test', 'Hi to everyone in group!');
+            });
+
+            $('#talkToGroupOtherThanMe').click(function() {
+                hub.server.talkToGroupOtherThanMe('test', 'Hi to others in group!');
+            });
+
+            $('#joinGroupClientSide').click(function() {
+                //groupAdd("test");
+                alert('Not implemented');
+            } ) ;
+
+            $('#sendListOfInt').click(function() {
+                var arr = new Array();
+                arr[0] = 1;
+                arr[1] = 2;
+                arr[2] = 3;
+                hub.server.listOfInt(arr);
+            });
+        });
     });
-});
-
-function oninit(uuid) {
-    console.log("Connection init. This connection's id is: " + uuid);
-}
-
-function firstTestFunction() {
-	console.log("Called from server!");
-}
-
-function firstTestFunctionWithParam(param) {
-	console.log("Called from server with param: " + param);
-}
-
-function twoParams(int1, int2) {
-	console.log(int1 + int2);
-	$('#push').html(int1 + int2);
-}
-
-function complexObj(person) {
-	console.log("Person: %O", person);
-	$('#fullname').html(person.firstName + " " + person.lastName);
-}
-function calledFromClient(connectionId) {
-	console.log("This was called directly to this connection: " + connectionId)
-}
-function notCalledFromClient(connectionId) {
-	console.log("This was NOT sent to: " + connectionId)
-}
-function sendToGroup(message) {
-	console.log("This was sent to the group: " + message);
-}
-function thisWillBeCalledFromOutsideTheHub(message) {
-	console.log("This was sent from out side the hub to all clients: " + message);
-}
-function complexList(people) {
-    console.log("People: %O", people);
-    helloWorld_listOfPerson(people);
-}
 </script>

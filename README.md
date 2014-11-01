@@ -28,7 +28,7 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 Add to your libraryDependencies:
 
 ```
-"signalJ" %% "signalj" % "0.2.4"
+"signalJ" %% "signalj" % "0.3.0"
 ```
 
 Instructions
@@ -47,7 +47,44 @@ For example see: ChatPage.java or FirstTestPage.java in the hubs package.
 Create a hub class that extends `Hub<TInterface>` where TInterface is the interface created above. You must also override
 `getInterface()` and return the interface class.
 
-The methods you create in the Hub class can be called from the javascript in your page with the syntax `hub_method()`.
+### Javascript
+
+On your javascript page you must first make a connection to the hub. For example: `test.scala.html`:
+
+```
+var hub = $.connection.helloWorld;
+```
+
+You can use `hub.client` to setup the callback that the server will use into your page:
+
+```
+hub.client.firstTestFunctionWithParam = function(param) {
+    console.log("Called from server with param: " + param);
+};
+```
+
+You may then start the hub, which will start the websocket connection. This will return a promise which can be used to setup server calls:
+
+```
+$.connection.hub.start().done(function () {
+    $('#btnHello').click(function() {
+        hub.server.sayHello();
+    });
+    ...
+});
+```
+
+Also, as seen in the example above, `hub.server` is used to call into the hub serverside methods.
+
+Server side method may also return a value which is return in a promise like so:
+
+```
+$('#btnAdd').click(function() {
+    hub.server.add(1, 2).done(function(result) {
+        $('#result').html(result);
+    });
+});
+```
 
 Calling back to the page
 ------------------------
@@ -75,7 +112,7 @@ Groups can be managed server side from within the hub:
 * `groups().add(getConnectionId(), group)` - Adds a connection to a group
 * `groups().remove(getConnectionId(), group)` - Removes a connection to a group
     
-Group membership can also be accessed from javascript (*Note:* the javascript syntax *will* change
+(*NOTE:* the following is disabled for now in order to match up with SignalR) Group membership can also be accessed from javascript (*Note:* the javascript syntax *will* change
 in future versions prior to 1.0 release.):
 
 * `groupAdd(group)` - Adds the current caller to a group
@@ -101,7 +138,7 @@ Accessing the hub methods from outside the hub
 ----------------------------------------------
 
 You can access the hub from outside the hub by calling `getHub` on the `GlobalHost`. You can see this for example,
-in the actors.Robot which is used in the Chat example:
+in the `actors.Robot` which is used in the Chat example:
 
 `HubContext<ChatPage> hub = GlobalHost.getHub(Chat.class);`
 
@@ -120,6 +157,12 @@ Future changes
 --------------
     
 * Add supervision
-* Make sure SignalJ works in a webfarm
-* Make the javascript sane
-* Verify feature parity with SignalR
+* clientside groups?
+* describe?
+* javascript & minify
+* groups at the hub level
+* better exceptions
+* SSE
+* Long polling
+* Forever Frames
+* Clustering

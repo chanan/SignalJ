@@ -28,10 +28,18 @@ public class GlobalHost {
 	
 	private static Hub<?> getInstance(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		final Hub<?> hub = getDependencyResolver().getHubInstance(className, _classLoader);
-		hub.setHubClassName(className);
         hub.setSignalJActor(SignalJPlugin.getSignalJActor());
+        hub.setHubClassName(getSimpleName(className));
 		return hub;
 	}
+
+    private static String getSimpleName(String className) {
+        if(className.indexOf('.') != -1) {
+            return className.substring(className.lastIndexOf('.') + 1);
+        } else {
+            return className;
+        }
+    }
 
     static void setClassLoader(ClassLoader classLoader) {
         _classLoader = classLoader;

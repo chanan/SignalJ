@@ -12,11 +12,12 @@ import play.Logger;
 import signalJ.GlobalHost;
 import signalJ.SignalJPlugin;
 import signalJ.models.HubsDescriptor;
-import signalJ.services.SignalJActor.Execute;
-import signalJ.services.SignalJActor.RegisterHub;
+import signalJ.models.Messages;
+import signalJ.models.RequestContext;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,41 +30,52 @@ class HubActor extends AbstractActor {
 
     HubActor() {
         receive(
-                ReceiveBuilder.match(
-                        RegisterHub.class, registerHub -> {
-                            hubDescriptor = registerHub.descriptor;
-                            clazz = registerHub.hub;
-                            Logger.debug("Registered hub actor: " + registerHub.hub.getName());
-                        }
-                ).match(
-                        Execute.class, execute -> {
-                            final UUID uuid = UUID.fromString(execute.json.get("uuid").textValue());
-                            final String hub = execute.json.get("hub").textValue();
-                            final Hub<?> instance = (Hub<?>)GlobalHost.getHub(hub);//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-                            instance.setConnectionId(uuid);
-                            instance.setHubClassName(hub);
-                            final String method = execute.json.get("method").textValue();
-                            final Class<?>[] classes = getParamTypeList(execute.json);
-                            final Method m = instance.getClass().getMethod(method, classes);
-                            final Object ret = m.invoke(instance, getParams(execute.json));
-                            if(ret != null) {
-                                final String id = execute.json.get("id").textValue();
-                                final String returnType = execute.json.get("returnType").textValue();
-                                signalJActor.tell(new UserActor.MethodReturn(uuid, id, ret, hub, method, returnType), self());
-                            }
-                        }
-                ).build()
+                ReceiveBuilder.match(Messages.RegisterHub.class, registerHub -> {
+                    hubDescriptor = registerHub.descriptor;
+                    clazz = registerHub.hub;
+                    Logger.debug("Registered hub actor: " + clazz.getName());
+                }).match(Messages.Execute.class, execute -> {
+                    Logger.debug("Clazz: " + clazz.getName() + " " + clazz.getSimpleName());
+                    final UUID uuid = execute.uuid;
+                    final Hub<?> instance = (Hub<?>)GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
+                    final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt());
+                    instance.setContext(context);
+                    final String methodName = execute.json.get("M").textValue();
+                    final Method m = getMethod(instance, methodName, execute.json.get("A"));
+                    final Object ret = m.invoke(instance, getParams(m, execute.json.get("A")));
+                    if(ret == null)
+                        signalJActor.tell(new Messages.ClientCallEnd(context), self());
+                    else
+                        signalJActor.tell(new Messages.MethodReturn(context, ret), self());
+                }).build()
         );
     }
-	
-	private Class<?>[] getParamTypeList(JsonNode node) throws ClassNotFoundException {
-		final List<Class<?>> ret = new ArrayList<Class<?>>();
-		for(final JsonNode param : node.get("parameters")) {
-			final Class<?> clazz = getClassForName(param.get("type").textValue());
-			ret.add(clazz);
-		}
-		return ret.toArray(new Class<?>[0]);
-	}
+
+    private Method getMethod(Hub<?> instance, String methodName, JsonNode args) {
+        Method ret = null;
+        for(Method m : instance.getClass().getDeclaredMethods()) {
+            boolean match = false;
+            if(m.getName().equals(methodName) && m.getParameterCount() == args.size()) {
+                boolean parseError = false;
+                for(int i = 0; i < m.getParameterCount(); i++) {
+                    final Class<?> clazz = m.getParameterTypes()[i];
+                    try {
+                        final Object obj = mapper.readValue(mapper.treeAsTokens(args.get(i)), clazz);
+                    } catch (Exception e) {
+                        Logger.error("Parse error", e);
+                        parseError = true;
+                        break;
+                    }
+                }
+                if(!parseError) match = true;
+            }
+            if(match) {
+                ret = m;
+                break;
+            }
+        }
+        return ret;
+    }
 	
 	private Class<?> getClassForName(String className) throws ClassNotFoundException {
         String temp;
@@ -91,78 +103,24 @@ class HubActor extends AbstractActor {
 		}
 	}
 	
-	private Object[] getParams(JsonNode node) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
-		final List<Object> ret = new ArrayList<Object>();
-		for(final JsonNode param : node.get("parameters")) {
-            final String className = param.get("type").textValue();
-            if(className.contains("<")) {
-                final String className1 = className.substring(0, className.indexOf("<"));
-                final String className2 = className.substring(className.indexOf("<") + 1, className.length() - 1);
-                final Class<?> clazz1 = getClassForName(className1);
-                final Class<?> clazz2 = getClassForName(className2);
-                final JavaType javaType = mapper.getTypeFactory().constructParametricType(clazz1, clazz2);
-                final Object obj = mapper.readValue(mapper.treeAsTokens(param.get("value")), javaType);
+	private Object[] getParams(Method m, JsonNode args) throws ClassNotFoundException, JsonParseException, JsonMappingException, IOException {
+		final List<Object> ret = new ArrayList<>();
+        for(int i = 0; i < m.getParameterCount(); i++) {
+            final Type type = m.getGenericParameterTypes()[i];
+            if(type.getTypeName().contains("<")) {
+                final String genericClassName = type.getTypeName().substring(0, type.getTypeName().indexOf("<"));
+                final String className = type.getTypeName().substring(type.getTypeName().indexOf("<") + 1, type.getTypeName().length() - 1);
+                final Class<?> genericClazz = getClassForName(genericClassName);
+                final Class<?> clazz = getClassForName(className);
+                final JavaType javaType = mapper.getTypeFactory().constructParametricType(genericClazz, clazz);
+                final Object obj = mapper.readValue(mapper.treeAsTokens(args.get(i)), javaType);
                 ret.add(obj);
             } else {
-                final Class<?> clazz = getClassForName(param.get("type").textValue());
-                final Object obj = mapper.readValue(mapper.treeAsTokens(param.get("value")), clazz);
+                final Class<?> clazz = m.getParameterTypes()[i];
+                final Object obj = mapper.readValue(mapper.treeAsTokens(args.get(i)), clazz);
                 ret.add(obj);
             }
-		}
-		return ret.toArray();
-	}
-	
-	public static class Join {
-		final UUID uuid;
-		final ActorRef user;
-
-		public Join(UUID uuid, ActorRef user) {
-			this.uuid = uuid;
-			this.user = user;
-		}
-	}
-	
-	public static class Send {
-		final String message;
-		
-		public Send(String message) {
-			this.message = message;
-		}
-	}
-	
-	//TODO maybe use inheritance to make this more sane
-	public static class ClientFunctionCall {
-		final String hubName;
-		final String name;
-		final Object[] args;
-		final SendType sendType;
-		final UUID caller;
-		final Method method;
-		final UUID[] clients;
-		final UUID[] allExcept;
-		final String groupName;
-		
-		public ClientFunctionCall(Method method, String hubName, UUID caller, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName) {
-			this.hubName = hubName;
-			this.caller = caller;
-			this.sendType = sendType;
-			this.name = name;
-			this.args = args;
-			this.method = method;
-			this.clients = clients;
-			this.allExcept = allExcept;
-			this.groupName = groupName;
-		}
-
-		public enum SendType
-		{
-			All,
-			Others,
-			Caller,
-			Clients, 
-			AllExcept, 
-			Group, 
-			InGroupExcept
-		}
+        }
+        return ret.toArray();
 	}
 }
