@@ -1,17 +1,16 @@
 package signalJ.models;
+
 import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.JsonNode;
 import play.mvc.WebSocket;
 import signalJ.services.Hub;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 public class Messages {
     //TODO maybe use inheritance to make this more sane
-    public static class ClientFunctionCall {
+    public static class ClientFunctionCall implements TransportMessage {
         public final String hubName;
         public final String name;
         public final Object[] args;
@@ -21,6 +20,7 @@ public class Messages {
         public final UUID[] clients;
         public final UUID[] allExcept;
         public final String groupName;
+        public final long messageId;
 
         public ClientFunctionCall(Method method, String hubName, RequestContext context, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName) {
             this.hubName = hubName;
@@ -32,11 +32,29 @@ public class Messages {
             this.clients = clients;
             this.allExcept = allExcept;
             this.groupName = groupName;
+            this.messageId = -1;
+        }
+
+        public ClientFunctionCall(Method method, String hubName, RequestContext context, SendType sendType, String name, Object[] args, UUID[] clients, UUID[] allExcept, String groupName, long messageId) {
+            this.hubName = hubName;
+            this.context = context;
+            this.sendType = sendType;
+            this.name = name;
+            this.args = args;
+            this.method = method;
+            this.clients = clients;
+            this.allExcept = allExcept;
+            this.groupName = groupName;
+            this.messageId = messageId;
+        }
+
+        @Override
+        public long getMessageId() {
+            return messageId;
         }
     }
 
-    public enum SendType
-    {
+    public enum SendType {
         All,
         Others,
         Caller,
@@ -46,83 +64,46 @@ public class Messages {
         InGroupExcept
     }
 
-    public static class MethodReturn {
+    public static class MethodReturn implements TransportMessage {
         public final RequestContext context;
         public final Object returnValue;
+        public final long messageId;
 
         public MethodReturn(RequestContext context, Object returnValue) {
             this.context = context;
             this.returnValue = returnValue;
+            this.messageId = -1;
+        }
+
+        public MethodReturn(RequestContext context, Object returnValue, long messageId) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = messageId;
+        }
+
+        @Override
+        public long getMessageId() {
+            return messageId;
         }
     }
 
-    public static class ClientCallEnd {
+    public static class ClientCallEnd implements TransportMessage {
         public final RequestContext context;
+        public final long messageId;
 
         public ClientCallEnd(RequestContext context) {
             this.context = context;
+            this.messageId = -1;
         }
-    }
-	
-	/*public static class Parameter {
-		private final String name;
-		private final Object value;
-		
-		public String getName() {
-			return name;
-		}
-		
-		public Object getValue() {
-			return value;
-		}
-		
-		@Override
-		public String toString() {
-			return "{name: " + name + ", value: " + value.toString() + "}";
-		}
-		
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((name == null) ? 0 : name.hashCode());
-			result = prime * result + ((value == null) ? 0 : value.hashCode());
-			return result;
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			Parameter other = (Parameter) obj;
-			if (name == null) {
-				if (other.name != null)
-					return false;
-			} else if (!name.equals(other.name))
-				return false;
-			if (value == null) {
-				if (other.value != null)
-					return false;
-			} else if (!value.equals(other.value))
-				return false;
-			return true;
-		}
-		
-		public Parameter(String name, Object value) {
-			this.name = name;
-			this.value = value;
-		}	
-	}*/
 
-    public static class GetUser{
-        public final UUID uuid;
+        public ClientCallEnd(RequestContext context, long messageId) {
+            this.context = context;
+            this.messageId = messageId;
+        }
 
-        public GetUser(UUID uuid) {
-            this.uuid = uuid;
+        @Override
+        public long getMessageId() {
+            return messageId;
         }
     }
 
@@ -152,24 +133,6 @@ public class Messages {
         }
     }
 
-    /*public static class Join {
-        public final UUID uuid;
-        public final ActorRef user;
-
-        public Join(UUID uuid, ActorRef user) {
-            this.uuid = uuid;
-            this.user = user;
-        }
-    }*/
-
-    public static class Send {
-        public final String message;
-
-        public Send(String message) {
-            this.message = message;
-        }
-    }
-
     public static class Join {
         public final UUID uuid;
         public final WebSocket.Out<JsonNode> out;
@@ -193,16 +156,6 @@ public class Messages {
             this.uuid = uuid;
         }
     }
-
-    /*public static class HubJoin {
-        final String hubName;
-        final UUID uuid;
-
-        public HubJoin(String hubName, UUID uuid) {
-            this.hubName = hubName;
-            this.uuid = uuid;
-        }
-    }*/
 
     public static class Quit {
         public final UUID uuid;
@@ -259,6 +212,14 @@ public class Messages {
         public GroupLeave(String groupname, UUID uuid) {
             this.groupname = groupname;
             this.uuid = uuid;
+        }
+    }
+
+    public static class Ack {
+        public final long MessageId;
+
+        public Ack(long messageId) {
+            MessageId = messageId;
         }
     }
 }

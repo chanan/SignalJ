@@ -5,9 +5,14 @@ import akka.japi.pf.ReceiveBuilder;
 import scala.concurrent.duration.Duration;
 import signalJ.infrastructure.ProtectedData;
 import signalJ.models.Messages;
+import signalJ.models.TransportMessage;
+
+import java.util.*;
 
 class UserActor extends AbstractActor {
     private final ProtectedData protectedData;
+    private final Map<Long, TransportMessage> messages = new HashMap<>();
+    private long messageId = 0;
     private ActorRef transport;
 
     UserActor(ProtectedData protectedData) {
@@ -16,21 +21,37 @@ class UserActor extends AbstractActor {
                 ReceiveBuilder.match(Messages.Join.class, join -> {
                     transport = context().actorOf(Props.create(WebsocketTransport.class, protectedData, join));
                     transport.tell(join, self());
-                }).match(Messages.MethodReturn.class, methodReturn -> transport.tell(methodReturn, self())
-                ).match(Messages.ClientFunctionCall.class, clientFunctionCall -> transport.tell(clientFunctionCall, self())
-                ).match(Messages.ClientCallEnd.class, clientCallEnd -> transport.tell(clientCallEnd, self())
-                ).match(Messages.Reconnect.class, reconnect -> {
+                }).match(Messages.MethodReturn.class, methodReturn -> {
+                    final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.context, methodReturn.returnValue, messageId++);
+                    messages.put(messageId, message);
+                    transport.tell(message, self());
+                }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
+                    final Messages.ClientFunctionCall message = new Messages.ClientFunctionCall(clientFunctionCall.method, clientFunctionCall.hubName, clientFunctionCall.context, clientFunctionCall.sendType, clientFunctionCall.name, clientFunctionCall.args, clientFunctionCall.clients, clientFunctionCall.allExcept, clientFunctionCall.groupName, messageId++);
+                    messages.put(messageId, message);
+                    transport.tell(message, self());
+                }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
+                    final Messages.ClientCallEnd message = new Messages.ClientCallEnd(clientCallEnd.context, messageId++);
+                    messages.put(messageId, message);
+                    transport.tell(message, self());
+                }).match(Messages.Reconnect.class, reconnect -> {
                     attemptStopTransport();
                     final Messages.Join join = new Messages.Join(reconnect.out, reconnect.in, reconnect.uuid);
                     transport = context().actorOf(Props.create(WebsocketTransport.class, protectedData, join));
                     transport.tell(reconnect, self());
+                    resendMessages();
                 }).match(Messages.Quit.class, quit -> {
                     //Wait a minute before shutting down allowing clients to reconnect
                     context().setReceiveTimeout(Duration.create("1 minute"));
-                }).match(ReceiveTimeout.class, r-> {
+                }).match(ReceiveTimeout.class, r -> {
                     context().stop(self());
+                }).match(Messages.Ack.class, ack -> {
+                    messages.remove(ack.MessageId);
                 }).build()
         );
+    }
+
+    private void resendMessages() {
+        messages.keySet().stream().sorted().map(l -> messages.get(l)).forEach(m -> transport.tell(m, self()));
     }
 
     private void attemptStopTransport() {
