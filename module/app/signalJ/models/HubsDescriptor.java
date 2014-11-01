@@ -82,6 +82,7 @@ public class HubsDescriptor {
 	
 	public class HubDescriptor {
 		private final String name;
+        private final String jsonName;
 		private final Class<? extends HubDescriptor> hub;
 		private final List<Procedure> procedures = new ArrayList<Procedure>();
 
@@ -89,12 +90,16 @@ public class HubsDescriptor {
 		public HubDescriptor(String name) throws ClassNotFoundException {
 			hub = (Class<? extends HubDescriptor>) Class.forName(name);
 			this.name = name;
+            final String temp = name.substring(name.lastIndexOf('.') + 1);
+            this.jsonName = temp.substring(0, 1).toLowerCase() + temp.substring(1);
 			init();
 		}
 
         public HubDescriptor(String name, ClassLoader classLoader) throws ClassNotFoundException {
             hub = (Class<? extends HubDescriptor>) Class.forName(name, true, classLoader);
             this.name = name;
+            final String temp = name.substring(name.lastIndexOf('.') + 1);
+            this.jsonName = temp.substring(0, 1).toLowerCase() + temp.substring(1);
             init();
         }
 
@@ -105,8 +110,12 @@ public class HubsDescriptor {
 				procedures.add(procedure);
 			}
 		}
-		
-		public String getName() {
+
+        public String getJsonName() {
+            return jsonName;
+        }
+
+        public String getName() {
 			return name;
 		}
 
@@ -129,7 +138,7 @@ public class HubsDescriptor {
 			return sb.toString();
 		}
 		
-		class Procedure {
+		public class Procedure {
 			private final String name;
 			private final Class<?> returnType;
 			private final Map<Integer, Parameter> parameters = new HashMap<Integer, Parameter>();
@@ -214,7 +223,7 @@ public class HubsDescriptor {
 			}
 		}
 		
-		class Parameter {
+		public class Parameter {
 			//private final Class<?> type;
             private final String typeName;
             private final String simpleName;

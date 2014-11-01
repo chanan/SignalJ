@@ -1,6 +1,7 @@
 package signalJ.services;
 
 import akka.actor.ActorRef;
+import signalJ.models.Messages;
 
 import java.util.UUID;
 
@@ -12,10 +13,10 @@ public class GroupsContext {
     }
 
     public void add(UUID connectionId, String groupName) {
-		signalJActor.tell(new SignalJActor.GroupJoin(groupName, connectionId), ActorRef.noSender());
+		signalJActor.tell(new Messages.GroupJoin(groupName, connectionId), ActorRef.noSender());
 	}
 	
 	public void remove(UUID connectionId, String groupName) {
-		signalJActor.tell(new SignalJActor.GroupLeave(groupName, connectionId), ActorRef.noSender());
+		signalJActor.tell(new Messages.GroupLeave(groupName, connectionId), ActorRef.noSender());
 	}
 }
