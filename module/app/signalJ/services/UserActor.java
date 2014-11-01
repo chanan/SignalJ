@@ -14,6 +14,7 @@ class UserActor extends AbstractActor {
     private final Map<Long, TransportMessage> messages = new HashMap<>();
     private long messageId = 0;
     private ActorRef transport;
+    private boolean connected = false;
 
     UserActor(ProtectedData protectedData) {
         this.protectedData = protectedData;
@@ -21,6 +22,8 @@ class UserActor extends AbstractActor {
                 ReceiveBuilder.match(Messages.Join.class, join -> {
                     transport = context().actorOf(Props.create(WebsocketTransport.class, protectedData, join));
                     transport.tell(join, self());
+                    connected = true;
+                    context().watch(transport);
                 }).match(Messages.MethodReturn.class, methodReturn -> {
                     final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.context, methodReturn.returnValue, messageId++);
                     messages.put(messageId, message);
@@ -38,6 +41,7 @@ class UserActor extends AbstractActor {
                     final Messages.Join join = new Messages.Join(reconnect.out, reconnect.in, reconnect.uuid);
                     transport = context().actorOf(Props.create(WebsocketTransport.class, protectedData, join));
                     transport.tell(reconnect, self());
+                    connected = true;
                     resendMessages();
                 }).match(Messages.Quit.class, quit -> {
                     //Wait a minute before shutting down allowing clients to reconnect
@@ -46,6 +50,9 @@ class UserActor extends AbstractActor {
                     context().stop(self());
                 }).match(Messages.Ack.class, ack -> {
                     messages.remove(ack.MessageId);
+                }).match(Terminated.class, t -> t.actor().equals(transport), t -> {
+                    transport = null;
+                    connected = false;
                 }).build()
         );
     }
@@ -56,7 +63,7 @@ class UserActor extends AbstractActor {
 
     private void attemptStopTransport() {
         try {
-            transport.tell(PoisonPill.getInstance(), self());
+            if (connected) transport.tell(PoisonPill.getInstance(), self());
         } catch (Exception e) { }
     }
 }
