@@ -17,7 +17,8 @@ Person full name (Press first button): <span id="fullname"></span><br>
 <button id="sendListOfInt">Send List of Int</button>
 <script type="text/javascript">
     $(function () {
-        var hub = $.connection.helloWorld;
+        $.connection.hub.logging = true;
+        var hub = $.connection.test;
         hub.client.firstTestFunction = function() {
             console.log("Called from server!");
         };

@@ -1,20 +1,19 @@
 package signalJ.models;
-import play.Logger;
-
-import static org.reflections.ReflectionUtils.getMethods;
-import static org.reflections.ReflectionUtils.withModifier;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.*;
 
+import static org.reflections.ReflectionUtils.getMethods;
+import static org.reflections.ReflectionUtils.withModifier;
+
 public class HubsDescriptor {
 	private final Map<String, HubDescriptor> hubs = new HashMap<>();
     private String toString;
 	
-	public HubDescriptor addDescriptor(String name) throws ClassNotFoundException {
-		HubDescriptor hub = new HubDescriptor(name);
+	public HubDescriptor addDescriptor(String name, String hubName) throws ClassNotFoundException {
+		HubDescriptor hub = new HubDescriptor(name, hubName);
 		hubs.put(name, hub);
 		return hub;
 	}
@@ -54,11 +53,10 @@ public class HubsDescriptor {
 		private final List<Procedure> procedures = new ArrayList<Procedure>();
 
 		@SuppressWarnings("unchecked")
-		public HubDescriptor(String name) throws ClassNotFoundException {
+		public HubDescriptor(String name, String hubName) throws ClassNotFoundException {
 			hub = (Class<? extends HubDescriptor>) Class.forName(name);
 			this.name = name;
-            final String temp = name.substring(name.lastIndexOf('.') + 1);
-            this.jsonName = temp.substring(0, 1).toLowerCase() + temp.substring(1);
+            this.jsonName = hubName.substring(0, 1).toLowerCase() + hubName.substring(1);
 			init();
 		}
 

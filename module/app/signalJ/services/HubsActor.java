@@ -11,6 +11,8 @@ import org.reflections.util.ConfigurationBuilder;
 import play.Logger;
 import signalJ.GlobalHost;
 import signalJ.SignalJPlugin;
+import signalJ.annotations.HubName;
+import signalJ.exceptions.ExceptionsHelper;
 import signalJ.models.HubsDescriptor;
 import signalJ.models.HubsDescriptor.HubDescriptor;
 import signalJ.models.Messages;
@@ -46,12 +48,23 @@ class HubsActor extends AbstractActor {
 		final Set<Class<? extends Hub>> hubs = reflections.getSubTypesOf(Hub.class);
 		for(final Class<? extends Hub> hub : hubs) {
 			Logger.debug("Hub found: " + hub.getName());
-			final HubDescriptor descriptor = hubsDescriptor.addDescriptor(hub.getName());
-            final ActorRef hubActor = createHub(hub.getSimpleName());
-            hubActor.tell(new Messages.RegisterHub((Class<? extends Hub<?>>) hub, descriptor), self());
+            final String hubName = getHubName(hub);
+			final HubDescriptor descriptor = hubsDescriptor.addDescriptor(hub.getName(), hubName);
+            try {
+                final ActorRef hubActor = createHub(hubName);
+                hubActor.tell(new Messages.RegisterHub((Class<? extends Hub<?>>) hub, descriptor), self());
+            } catch (IllegalStateException e) {
+                Logger.error("Error creating hubs", e);
+            }
 		}
         js = generateProxy(hubsDescriptor);
+        GlobalHost.setDescriptors(hubsDescriptor);
 	}
+
+    private String getHubName(Class<? extends Hub> hub) {
+        if(hub.getAnnotation(HubName.class) == null) return hub.getSimpleName();
+        return hub.getAnnotation(HubName.class).value();
+    }
 
     private String generateProxy(HubsDescriptor hubsDescriptor)
     {
@@ -122,6 +135,7 @@ class HubsActor extends AbstractActor {
 
     private ActorRef createHub(String hubName) {
         final String name = hubName.toLowerCase();
-        return Optional.ofNullable(getContext().getChild(name)).orElseGet(() -> context().actorOf(Props.create(HubActor.class), name));
+        if(getContext().getChild(name) != null) throw new IllegalStateException(String.format(ExceptionsHelper.DUPLICATE_HUB, name));
+        return context().actorOf(Props.create(HubActor.class), name);
     }
 }

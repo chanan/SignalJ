@@ -1,5 +1,6 @@
 package signalJ;
 
+import signalJ.models.HubsDescriptor;
 import signalJ.services.Hub;
 import signalJ.services.HubContext;
 
@@ -7,8 +8,17 @@ public class GlobalHost {
 	private final static DependencyResolver _defaultDependencyResolver = new DefaultDependencyResolver();
 	private static DependencyResolver _dependencyResolver;
     private static ClassLoader _classLoader;
+    private static HubsDescriptor descriptors;
 
-	public static DependencyResolver getDependencyResolver() {
+    public static HubsDescriptor getDescriptors() {
+        return descriptors;
+    }
+
+    public static void setDescriptors(HubsDescriptor descriptors) {
+        GlobalHost.descriptors = descriptors;
+    }
+
+    public static DependencyResolver getDependencyResolver() {
 		return _dependencyResolver != null ? _dependencyResolver : _defaultDependencyResolver;
 	}
 
@@ -29,7 +39,7 @@ public class GlobalHost {
 	private static Hub<?> getInstance(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		final Hub<?> hub = getDependencyResolver().getHubInstance(className, _classLoader);
         hub.setSignalJActor(SignalJPlugin.getSignalJActor());
-        hub.setHubClassName(getSimpleName(className));
+        hub.setHubClassName(descriptors.getDescriptor(className).getJsonName());
 		return hub;
 	}
 

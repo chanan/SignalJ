@@ -33,7 +33,7 @@ class HubActor extends AbstractActor {
                 ReceiveBuilder.match(Messages.RegisterHub.class, registerHub -> {
                     hubDescriptor = registerHub.descriptor;
                     clazz = registerHub.hub;
-                    Logger.debug("Registered hub actor: " + clazz.getName());
+                    Logger.debug("Registered hub actor: " + hubDescriptor.getJsonName());
                 }).match(Messages.Execute.class, execute -> {
                     final UUID uuid = execute.uuid;
                     final Hub<?> instance = (Hub<?>)GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);

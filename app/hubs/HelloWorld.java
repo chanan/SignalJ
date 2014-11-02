@@ -2,6 +2,7 @@ package hubs;
 import models.Person;
 import play.Logger;
 import services.StringService;
+import signalJ.annotations.HubName;
 import signalJ.services.Hub;
 
 import com.google.inject.Inject;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@HubName("test")
 public class HelloWorld extends Hub<FirstTestPage> {
 	private StringService service;
 	

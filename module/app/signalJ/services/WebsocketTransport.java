@@ -47,7 +47,7 @@ public class WebsocketTransport extends AbstractActor {
             self.tell(new InternalMessage(json), self);
         });
 
-        context().setReceiveTimeout(Duration.create("20 seconds"));
+        context().setReceiveTimeout(Duration.create("10 seconds"));
 
         receive(
             ReceiveBuilder.match(Messages.Join.class, r -> writeConnect()
