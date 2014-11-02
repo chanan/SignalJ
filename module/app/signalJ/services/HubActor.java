@@ -35,7 +35,6 @@ class HubActor extends AbstractActor {
                     clazz = registerHub.hub;
                     Logger.debug("Registered hub actor: " + clazz.getName());
                 }).match(Messages.Execute.class, execute -> {
-                    Logger.debug("Clazz: " + clazz.getName() + " " + clazz.getSimpleName());
                     final UUID uuid = execute.uuid;
                     final Hub<?> instance = (Hub<?>)GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
                     final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt());

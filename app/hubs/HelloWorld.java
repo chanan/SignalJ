@@ -8,6 +8,7 @@ import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class HelloWorld extends Hub<FirstTestPage> {
 	private StringService service;
@@ -42,14 +43,6 @@ public class HelloWorld extends Hub<FirstTestPage> {
 		return a + b;
 	}
 	
-	public void joinGroup(String group) {
-		groups().add(context().connectionId, group);
-	}
-	
-	public void leaveGroup(String group) {
-		groups().remove(context().connectionId, group);
-	}
-	
 	public void talkToGroup(String group, String message) {
 		clients().group(group).sendToGroup(message);
 	}
@@ -72,6 +65,22 @@ public class HelloWorld extends Hub<FirstTestPage> {
         Logger.debug("People: " + people);
         Logger.debug("Last names:");
         people.stream().forEach(p -> Logger.debug(p.getLastName()));
+    }
+
+    public void joinGroup(String group) {
+        groups().add(context().connectionId, group);
+    }
+
+    public void leaveGroup(String group) {
+        groups().remove(context().connectionId, group);
+    }
+
+    public void joinGroup(UUID connectionId, String group) {
+        groups().add(connectionId, group);
+    }
+
+    public void leaveGroup(UUID connectionId, String group) {
+        groups().remove(connectionId, group);
     }
 
 	@Override

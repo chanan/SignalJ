@@ -12,7 +12,7 @@ Result: <span id="result"></span>
 <br>
 Message will be pushed from server 2 + 3 = <span id="push"></span><br>
 Person full name (Press first button): <span id="fullname"></span><br>
-<button id="joinGroup">Join "test" group</button> <button id="joinGroupClientSide">Clientside Join "test" group</button> <button id="leaveGroup">Leave "test" group</button><br>
+<button id="joinGroup">Join "test" group</button> <button id="leaveGroup">Leave "test" group</button><br>
 <button id="talkToGroup">Say hello to group</button> <button id="talkToGroupOtherThanMe">Say hello to group other than me</button><br>
 <button id="sendListOfInt">Send List of Int</button>
 <script type="text/javascript">
@@ -58,6 +58,8 @@ Person full name (Press first button): <span id="fullname"></span><br>
         };
 
         $.connection.hub.start().done(function () {
+            console.log("Connection Id: " + $.connection.hub.id);
+
             $('#btnHello').click(function() {
                 hub.server.sayHello();
             });
@@ -87,11 +89,6 @@ Person full name (Press first button): <span id="fullname"></span><br>
             $('#talkToGroupOtherThanMe').click(function() {
                 hub.server.talkToGroupOtherThanMe('test', 'Hi to others in group!');
             });
-
-            $('#joinGroupClientSide').click(function() {
-                //groupAdd("test");
-                alert('Not implemented');
-            } ) ;
 
             $('#sendListOfInt').click(function() {
                 var arr = new Array();
