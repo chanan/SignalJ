@@ -120,8 +120,8 @@ resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapsh
 });
 </code></pre>
 
-<h2>
-<a name="calling-back-to-the-page" class="anchor" href="#calling-back-to-the-page"><span class="octicon octicon-link"></span></a>Calling back to the page</h2>
+<h3>
+<a name="calling-back-to-the-page" class="anchor" href="#calling-back-to-the-page"><span class="octicon octicon-link"></span></a>Calling back to the page</h3>
 
 <p>The methods of the interface you defined become methods you can call from the hub. For example, if you defined a method in your interface
     called "myMethod()":</p>
@@ -169,8 +169,8 @@ in future versions prior to 1.0 release.):</p>
 <code>groupRemove(group)</code> - Removes the current caller to a group</li>
 </ul>
 
-<h3>
-<a name="group-communication" class="anchor" href="#group-communication"><span class="octicon octicon-link"></span></a>Group communication</h3>
+<h4>
+<a name="group-communication" class="anchor" href="#group-communication"><span class="octicon octicon-link"></span></a>Group communication</h4>
 
 <p>You can invoke javascript functions to pages in a group with the following commands (as before calling <code>myMethod()</code>):</p>
 
@@ -185,23 +185,16 @@ in future versions prior to 1.0 release.):</p>
 <code>clients().othersInGroup(group).myMethod()</code> - Invokes <code>myMethod</code> on clients that are part of the group other than the caller</li>
 </ul>
 
-<h2>
-<a name="examples-1" class="anchor" href="#examples-1"><span class="octicon octicon-link"></span></a>Examples</h2>
-
-<p>Examples of how hubs and page can talk to each other using group and client communication can be found in the hubs.Helloworld which
-can be accessed at: <a href="http://localhost:9000/test">http://localhost:9000/test</a> and hubs.Chat which can be accessed at
-<a href="http://localhost:9000/Chat">http://localhost:9000/Chat</a> (Which is a rewrite of the playframework websocket-chat example.</p>
-
-<h2>
-<a name="accessing-the-hub-methods-from-outside-the-hub" class="anchor" href="#accessing-the-hub-methods-from-outside-the-hub"><span class="octicon octicon-link"></span></a>Accessing the hub methods from outside the hub</h2>
+<h3>
+<a name="accessing-the-hub-methods-from-outside-the-hub" class="anchor" href="#accessing-the-hub-methods-from-outside-the-hub"><span class="octicon octicon-link"></span></a>Accessing the hub methods from outside the hub</h3>
 
 <p>You can access the hub from outside the hub by calling <code>getHub</code> on the <code>GlobalHost</code>. You can see this for example,
 in the <code>actors.Robot</code> which is used in the Chat example:</p>
 
 <p><code>HubContext&lt;ChatPage&gt; hub = GlobalHost.getHub(Chat.class);</code></p>
 
-<h2>
-<a name="dependency-injection" class="anchor" href="#dependency-injection"><span class="octicon octicon-link"></span></a>Dependency Injection</h2>
+<h3>
+<a name="dependency-injection" class="anchor" href="#dependency-injection"><span class="octicon octicon-link"></span></a>Dependency Injection</h3>
 
 <p>You may use dependency injection for your hub classes. To do so, implement <code>DependencyResolver</code> (for example:
         hubs.GuiceDependencyResolver). In your app's <code>Global.onStart</code> set the resolver in the GlobalHost:</p>
@@ -209,6 +202,13 @@ in the <code>actors.Robot</code> which is used in the Chat example:</p>
 <div class="highlight highlight-java"><pre><span class="n">GuiceDependencyResolver</span> <span class="n">resolver</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">GuiceDependencyResolver</span><span class="o">(</span><span class="n">injector</span><span class="o">);</span>
 <span class="n">GlobalHost</span><span class="o">.</span><span class="na">setDependencyResolver</span><span class="o">(</span><span class="n">resolver</span><span class="o">);</span>
 </pre></div>
+
+<h2>
+<a name="examples-1" class="anchor" href="#examples-1"><span class="octicon octicon-link"></span></a>Examples</h2>
+
+<p>Examples of how hubs and page can talk to each other using group and client communication can be found in the hubs.Helloworld which
+can be accessed at: <a href="http://localhost:9000/test">http://localhost:9000/test</a> and hubs.Chat which can be accessed at
+<a href="http://localhost:9000/Chat">http://localhost:9000/Chat</a> (Which is a rewrite of the playframework websocket-chat example.</p>
 
 <h2>
 <a name="future-changes" class="anchor" href="#future-changes"><span class="octicon octicon-link"></span></a>Future changes</h2>
