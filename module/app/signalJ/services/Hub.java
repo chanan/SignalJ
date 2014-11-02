@@ -24,7 +24,7 @@ public abstract class Hub<T> implements HubContext<T> {
 	
 	@Override
 	public GroupsContext groups() {
-		return new GroupsContext(signalJActor);
+		return new GroupsContext(className, signalJActor);
 	}
 
     public void setSignalJActor(ActorRef signalJActor) {

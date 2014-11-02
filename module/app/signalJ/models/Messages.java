@@ -191,20 +191,24 @@ public class Messages {
     }
 
     public static class GroupJoin {
+        public final String hubname;
         public final String groupname;
         public final UUID uuid;
 
-        public GroupJoin(String groupname, UUID uuid) {
+        public GroupJoin(String hubname, String groupname, UUID uuid) {
+            this.hubname = hubname;
             this.groupname = groupname;
             this.uuid = uuid;
         }
     }
 
     public static class GroupLeave {
+        public final String hubname;
         public final String groupname;
         public final UUID uuid;
 
-        public GroupLeave(String groupname, UUID uuid) {
+        public GroupLeave(String hubname, String groupname, UUID uuid) {
+            this.hubname = hubname;
             this.groupname = groupname;
             this.uuid = uuid;
         }
