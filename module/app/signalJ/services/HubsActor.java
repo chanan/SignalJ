@@ -10,6 +10,7 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import play.Logger;
 import signalJ.GlobalHost;
+import signalJ.SignalJPlugin;
 import signalJ.models.HubsDescriptor;
 import signalJ.models.HubsDescriptor.HubDescriptor;
 import signalJ.models.Messages;
@@ -30,7 +31,7 @@ class HubsActor extends AbstractActor {
             Logger.error("Error creating hub descriptor", e);
         }
         receive(
-                ReceiveBuilder.match(Messages.GetJavaScript.class, request ->  sender().tell(js, self())
+                ReceiveBuilder.match(Messages.GetJavaScript.class, request -> sender().tell(js, self())
                 ).match(Messages.GetJavaScript2.class, request ->  sender().tell(js2, self())
                 ).match(Messages.HubJoin.class, hubJoin -> getContext().getChildren().forEach(hub -> hub.tell(hubJoin, self()))
                 ).match(Messages.Execute.class, execute -> {
@@ -43,7 +44,7 @@ class HubsActor extends AbstractActor {
 	@SuppressWarnings("unchecked")
 	private void fillDescriptors() throws ClassNotFoundException {
         hubsDescriptor.setClassLoader(GlobalHost.getClassLoader());
-		final ConfigurationBuilder configBuilder = build("hubs");
+		final ConfigurationBuilder configBuilder = build();
 		final Reflections reflections = new Reflections(configBuilder.setScanners(new SubTypesScanner()));
 		final Set<Class<? extends Hub>> hubs = reflections.getSubTypesOf(Hub.class);
 		for(final Class<? extends Hub> hub : hubs) {
@@ -113,11 +114,10 @@ class HubsActor extends AbstractActor {
         return sb.append(newline);
     }
 
-    private static ConfigurationBuilder build(String... namespaces) {
+    private static ConfigurationBuilder build() {
 		final ConfigurationBuilder configBuilder = new ConfigurationBuilder();
-		for(final String namespace : namespaces) {
-			configBuilder.addUrls(ClasspathHelper.forPackage(namespace));
-		}
+        configBuilder.addClassLoaders(ClasspathHelper.classLoaders(GlobalHost.getClassLoader()));
+        configBuilder.addUrls(ClasspathHelper.forClassLoader(GlobalHost.getClassLoader()));
 		return configBuilder;
 	}
 
