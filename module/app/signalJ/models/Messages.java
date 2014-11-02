@@ -128,10 +128,6 @@ public class Messages {
 
     }
 
-    public static class GetJavaScript2 {
-
-    }
-
     public static class HubJoin {
         public final UUID uuid;
         public final ActorRef user;

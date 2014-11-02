@@ -22,7 +22,6 @@ class HubsActor extends AbstractActor {
 	private final HubsDescriptor hubsDescriptor = new HubsDescriptor();
     private final String newline = System.getProperty("line.separator");
     private String js;
-    private String js2;
 
     HubsActor() {
         try {
@@ -32,7 +31,6 @@ class HubsActor extends AbstractActor {
         }
         receive(
                 ReceiveBuilder.match(Messages.GetJavaScript.class, request -> sender().tell(js, self())
-                ).match(Messages.GetJavaScript2.class, request ->  sender().tell(js2, self())
                 ).match(Messages.HubJoin.class, hubJoin -> getContext().getChildren().forEach(hub -> hub.tell(hubJoin, self()))
                 ).match(Messages.Execute.class, execute -> {
                     final ActorRef hub = getHub(execute.json.get("H").textValue());
@@ -43,7 +41,6 @@ class HubsActor extends AbstractActor {
 
 	@SuppressWarnings("unchecked")
 	private void fillDescriptors() throws ClassNotFoundException {
-        hubsDescriptor.setClassLoader(GlobalHost.getClassLoader());
 		final ConfigurationBuilder configBuilder = build();
 		final Reflections reflections = new Reflections(configBuilder.setScanners(new SubTypesScanner()));
 		final Set<Class<? extends Hub>> hubs = reflections.getSubTypesOf(Hub.class);
@@ -53,10 +50,7 @@ class HubsActor extends AbstractActor {
             final ActorRef hubActor = createHub(hub.getSimpleName());
             hubActor.tell(new Messages.RegisterHub((Class<? extends Hub<?>>) hub, descriptor), self());
 		}
-        js = hubsDescriptor.toJS() + signalJ.views.js.hubs.render() + "\n";
-
-        //SignalR
-        js2 = generateProxy(hubsDescriptor);
+        js = generateProxy(hubsDescriptor);
 	}
 
     private String generateProxy(HubsDescriptor hubsDescriptor)

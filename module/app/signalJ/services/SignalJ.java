@@ -67,8 +67,8 @@ public class SignalJ extends Controller {
         return ok (pongStringPayload);
     }
 
-    public Promise<Result> hubs2() {
-        return Promise.wrap(ask(signalJActor, new Messages.GetJavaScript2(), 5000)).map(new Function<Object, Result>() {
+    public Promise<Result> hubs() {
+        return Promise.wrap(ask(signalJActor, new Messages.GetJavaScript(), 5000)).map(new Function<Object, Result>() {
             @Override
             public Result apply(Object response) throws Throwable {
                 return ok(response.toString());

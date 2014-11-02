@@ -14,17 +14,11 @@ import java.util.List;
 import java.util.Map;
 
 public class HubsDescriptor {
-	public final static String VERSION = "1.0";
 	private final Map<String, HubDescriptor> hubs = new HashMap<>();
-	private final static String CRLF = "\n";
-    private String js;
     private String toString;
-    private ClassLoader classLoader;
 	
 	public HubDescriptor addDescriptor(String name) throws ClassNotFoundException {
-		HubDescriptor hub;
-        if(classLoader != null) hub = new HubDescriptor(name, this.classLoader);
-        else hub = new HubDescriptor(name);
+		HubDescriptor hub = new HubDescriptor(name);
 		hubs.put(name, hub);
 		return hub;
 	}
@@ -36,14 +30,6 @@ public class HubsDescriptor {
 	public HubDescriptor getDescriptor(String name) {
 		return hubs.get(name);
 	}
-
-    public void setClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
-    }
-	
-	public boolean isEmpty() {
-		return hubs.isEmpty();
-	}
 	
 	public int size() {
 		return hubs.size();
@@ -53,7 +39,7 @@ public class HubsDescriptor {
 	public String toString() {
         if(toString != null) return toString;
         StringBuilder sb = new StringBuilder();
-		sb.append("{\"version\": \"").append(VERSION).append("\", \"hubs\": [");
+		sb.append("{\"hubs\": [");
 		int i = 0;
 		for(final HubDescriptor hub : hubs.values()) {
 			sb.append(hub);
@@ -63,21 +49,6 @@ public class HubsDescriptor {
 		sb.append("]}");
         toString = sb.toString();
 		return toString;
-	}
-	
-	public String toJS() {
-        if(js != null) return js;
-		StringBuilder sb = new StringBuilder();
-		sb.append("//Hubs version: ").append(VERSION).append(CRLF);
-		for(final HubDescriptor hub : hubs.values()) {
-			sb.append(hub.toJS()).append(CRLF);
-		}
-        js = sb.toString();
-		return js;
-	}
-	
-	private String lowerCaseFirstChar(String className) {
-		return Character.toLowerCase(className.charAt(0)) + className.substring(1);
 	}
 	
 	public class HubDescriptor {
@@ -94,14 +65,6 @@ public class HubsDescriptor {
             this.jsonName = temp.substring(0, 1).toLowerCase() + temp.substring(1);
 			init();
 		}
-
-        public HubDescriptor(String name, ClassLoader classLoader) throws ClassNotFoundException {
-            hub = (Class<? extends HubDescriptor>) Class.forName(name, true, classLoader);
-            this.name = name;
-            final String temp = name.substring(name.lastIndexOf('.') + 1);
-            this.jsonName = temp.substring(0, 1).toLowerCase() + temp.substring(1);
-            init();
-        }
 
 		@SuppressWarnings("unchecked")
 		private void init() throws ClassNotFoundException {
@@ -126,16 +89,6 @@ public class HubsDescriptor {
 		@Override
 		public String toString() {
 			return "{\"name\": \"" + name + "\", \"procedures\": " + procedures + "}";
-		}
-		
-		String toJS() {
-            StringBuilder sb = new StringBuilder();
-			sb.append("//Start hub: " + name).append(CRLF);
-			for(Procedure proc : procedures) {
-				sb.append(proc.toJS(hub)).append(CRLF);
-			}
-			sb.append("//End hub: " + name).append(CRLF);
-			return sb.toString();
 		}
 		
 		public class Procedure {
@@ -191,40 +144,9 @@ public class HubsDescriptor {
 				sb.append("}");
 				return sb.toString();
 			}
-			
-			String toJS(Class<? extends HubDescriptor> hub) {
-                StringBuilder sb = new StringBuilder();
-				sb.append("function ").append(lowerCaseFirstChar(hub.getSimpleName())).append("_").append(name).append("(");
-				for(Parameter p : parameters.values()) {
-					sb.append(p.getSimpleName().toLowerCase()).append("_").append(p.index);
-					if(p.index != parameters.values().size() - 1) sb.append(", ");
-				}
-				if(!returnType.toString().equalsIgnoreCase("void")) {
-					sb.append(", callback");
-				}
-				sb.append(") {").append(CRLF);
-				sb.append("var j = {type: 'execute', hub: '").append(hub.getName()).append("', ");
-				sb.append("method: '").append(name).append("', ");
-				sb.append("returnType: '").append(returnType).append("', ");
-				sb.append("parameters: [");
-				for(Parameter p : parameters.values()) {
-					sb.append("{ value: ").append(p.getSimpleName().toLowerCase()).append("_").append(p.index);
-					sb.append(", type: '").append(p.getName()).append("'}");
-					if(p.index != parameters.values().size() - 1) sb.append(", ");
-				}
-				sb.append("]};").append(CRLF);
-				sb.append("systemsend(j");
-				if(!returnType.toString().equalsIgnoreCase("void")) {
-					sb.append(", callback");
-				}
-				sb.append(");").append(CRLF);
-				sb.append("}").append(CRLF);
-				return sb.toString();
-			}
 		}
 		
 		public class Parameter {
-			//private final Class<?> type;
             private final String typeName;
             private final String simpleName;
 			private final int index;
