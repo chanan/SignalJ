@@ -2,6 +2,9 @@
 
 @chatmain(username) {
 
+    <script src="/signalj/jquery.signalR.js"></script>
+    <script type="text/javascript" charset="utf-8" src="/signalj/hubs.js"></script>
+
     <div class="page-header">
         <h1>Welcome to the chat room <small>You are chatting as @username</small></h1>
     </div>
@@ -24,9 +27,6 @@
             </ul>
         </div>
     </div>
-
-    <script src="http://ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.1.0.min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="/signalj/hubs.js"></script>
 
     <script type="text/javascript">
         $(function () {

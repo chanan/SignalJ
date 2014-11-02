@@ -1,87 +1,78 @@
-function getSocket() {
-	var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
-    var url;
-    if(window.location.protocol === "https:") url = "wss://";
-    else url = "ws://"
-    url = url + window.location.host;
-    //if(window.location.port != 80) url = url + ":" + window.location.port;
-    url = url + "/signalJ/Join";
-    var socket = new WS(url);
-	return socket;
-}
+(function ($, window, undefined) {
+    /// <param name="$" type="jQuery" />
+    "use strict";
 
-var socket = getSocket();
-var uuid;
-var id = 0;
-var callbacks = {};
-
-var receiveEvent = function(event) {
-    var data = JSON.parse(event.data);
-    if (uuid == null) uuid = data.uuid;
-    
-    // Handle errors
-    if(data.error) {
-        chatSocket.close();
-        console.log("Error: " + data.error);
-        return;
+    if (typeof ($.signalR) !== "function") {
+        throw new Error("SignalR: SignalR is not loaded. Please ensure jquery.signalR-x.js is referenced before ~/signalr/js.");
     }
-    if(data.type === "init") {
-    	uuid = data.uuid;
-    	oninit(uuid);  //TODO: This should be done with promises. currently this causes an error when oninit is not defined
+
+    var signalR = $.signalR;
+
+    function makeProxyCallback(hub, callback) {
+        return function () {
+            // Call the client hub method
+            callback.apply(hub, $.makeArray(arguments));
+        };
     }
-    if(data.type === "methodReturn") {
-    	var f = callbacks[data.id];
-    	if(f != undefined) f(data.returnValue);
+
+    function registerHubProxies(instance, shouldSubscribe) {
+        var key, hub, memberKey, memberValue, subscriptionMethod;
+
+        for (key in instance) {
+            if (instance.hasOwnProperty(key)) {
+                hub = instance[key];
+
+                if (!(hub.hubName)) {
+                    // Not a client hub
+                    continue;
+                }
+
+                if (shouldSubscribe) {
+                    // We want to subscribe to the hub events
+                    subscriptionMethod = hub.on;
+                } else {
+                    // We want to unsubscribe from the hub events
+                    subscriptionMethod = hub.off;
+                }
+
+                // Loop through all members on the hub and find client hub functions to subscribe/unsubscribe
+                for (memberKey in hub.client) {
+                    if (hub.client.hasOwnProperty(memberKey)) {
+                        memberValue = hub.client[memberKey];
+
+                        if (!$.isFunction(memberValue)) {
+                            // Not a client hub function
+                            continue;
+                        }
+
+                        subscriptionMethod.call(hub, memberKey, makeProxyCallback(hub, memberValue));
+                    }
+                }
+            }
+        }
     }
-    if(data.type === "clientFunctionCall") {
-    	executeFunctionByName(data.function, window, data.args);
-    }
-    console.log("Message from server: %O", data);
-};
 
-socket.onmessage = receiveEvent;
+    $.hubConnection.prototype.createHubProxies = function () {
+        var proxies = {};
+        this.starting(function () {
+            // Register the hub proxies as subscribed
+            // (instance, shouldSubscribe)
+            registerHubProxies(proxies, true);
 
-function hubs_describe(callback) {
-	var j = {type: 'describe'};
-	systemsend(j, callback);
-} 
+            this._registerSubscribedHubs();
+        }).disconnected(function () {
+            // Unsubscribe all hub proxies when we "disconnect".  This is to ensure that we do not re-add functional call backs.
+            // (instance, shouldSubscribe)
+            registerHubProxies(proxies, false);
+        });
 
-function systemsend(message, callback) {
-	id = id + 1;
-	if(callback != undefined) {
-		callbacks[id] = callback;
-	}
-	message.uuid = uuid;
-	message.id = '' + id;
-	var str = JSON.stringify(message);
-	console.log("Message to server: %O", message);
-	socket.send(str);
-}
+        /*hubs*/
 
-function executeFunctionByName(functionName, context /*, args */) {
-	var vals = new Array();
-	var k = 0;
-	var args = [].slice.call(arguments).splice(2);
-	for(var i = 0; i < args.length; i++) {
-		for(var j = 0; j < args[i].length; j++) {
-			vals[k] = args[i][j].value;
-			k++;
-		}
-	}
-	var namespaces = functionName.split(".");
-	var func = namespaces.pop();
-	for(var i = 0; i < namespaces.length; i++) {
-		context = context[namespaces[i]];
-	}
-	return context[func].apply(this, vals);
-}
+        return proxies;
+    };
 
-function groupAdd(group) {
-	var j = {type: 'groupAdd', group: group};
-	systemsend(j);
-}
+    //signalR.hub = $.hubConnection("{serviceUrl}", { useDefaultPath: false });
+    signalR.hub = $.hubConnection("/signalj", { useDefaultPath: false });
+    $.extend(signalR, signalR.hub.createHubProxies());
 
-function groupRemove(group) {
-	var j = {type: 'groupRemove', group: group};
-	systemsend(j);
-}
+}(window.jQuery, window));

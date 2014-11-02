@@ -13,6 +13,7 @@ import signalJ.SignalJPlugin;
 import signalJ.models.Messages;
 import signalJ.models.NegotiationResponse;
 
+import java.io.File;
 import java.util.UUID;
 
 import static akka.pattern.Patterns.ask;
@@ -68,11 +69,19 @@ public class SignalJ extends Controller {
     }
 
     public Promise<Result> hubs() {
+        response().setContentType("application/javascript");
         return Promise.wrap(ask(signalJActor, new Messages.GetJavaScript(), 5000)).map(new Function<Object, Result>() {
             @Override
             public Result apply(Object response) throws Throwable {
                 return ok(response.toString());
             }
         });
+    }
+
+    public Result script() {
+        if(SignalJPlugin.isDev())
+            return redirect("/signalj/jquery.signalR-2.1.2.js");
+        else
+            return redirect("/signalj/jquery.signalR-2.1.2.min.js");
     }
 }

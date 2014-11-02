@@ -44,4 +44,16 @@ public class SignalJPlugin extends Plugin {
     public void onStart() {
         signalJActor = Akka.system().actorOf(Props.create(SignalJActor.class, protectedData), "signalJ");
     }
+
+    public static boolean isDev() {
+        return plugin().application.isDev();
+    }
+
+    public static boolean isProd() {
+        return plugin().application.isProd();
+    }
+
+    public static boolean isTest() {
+        return plugin().application.isTest();
+    }
 }

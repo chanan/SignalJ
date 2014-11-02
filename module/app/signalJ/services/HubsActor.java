@@ -67,7 +67,7 @@ class HubsActor extends AbstractActor {
             first = false;
         }
         if (sb.length() > 0) sb.append(";");
-        final String script = signalJ.views.js.hubs2.render() + newline;
+        final String script = signalJ.views.js.hubs.render() + newline;
         return script.replace("/*hubs*/", sb.toString());
         //return javaScriptMinifier.Minify(script);
     }

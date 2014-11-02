@@ -7,11 +7,7 @@ import static org.reflections.ReflectionUtils.withModifier;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HubsDescriptor {
 	private final Map<String, HubDescriptor> hubs = new HashMap<>();
@@ -70,9 +66,21 @@ public class HubsDescriptor {
 		private void init() throws ClassNotFoundException {
 			for(final Method m : getMethods(hub, withModifier(Modifier.PUBLIC))) {
 				final Procedure procedure = new Procedure(m);
-				procedures.add(procedure);
+				addProcedure(procedure);
 			}
 		}
+
+        private void addProcedure(Procedure procedure) {
+            Optional<Procedure> proc = procedures.stream()
+                    .filter(p -> p.getName().equals(procedure.getName())).findFirst();
+            proc.ifPresent(p -> {
+                if(procedure.getParameters().size() < p.getParameters().size()) {
+                    procedures.remove(p);
+                    procedures.add(procedure);
+                }
+            });
+            if(!proc.isPresent()) procedures.add(procedure);
+        }
 
         public String getJsonName() {
             return jsonName;
