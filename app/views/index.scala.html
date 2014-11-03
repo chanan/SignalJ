@@ -11,7 +11,7 @@ resolvers += "release repository" at "http://chanan.github.io/maven-repo/release
 
 resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"
         </code></pre><p>Add to your libraryDependencies:</p>
-        <pre><code>"signalJ" %% "signalj" % "0.4.0"
+        <pre><code>"signalJ" %% "signalj" % "0.4.1"
         </code></pre><h2>Instructions</h2><p><em>Note:</em> This is a work in progress! These are not the full instructions</p><h3>Interface</h3><p>Create an interface for the javascript functions in your page (all functions should return void). The method params can be complex types.</p><p>For example see: ChatPage.java or FirstTestPage.java in the hubs package.</p><h3>Hubs</h3><p>Create a hub class that extends <code>Hub&lt;TInterface&gt;</code> where TInterface is the interface created above. You must also override <code>getInterface()</code> and return the interface class.</p><h3>Javascript</h3><p>On your javascript page you must first make a connection to the hub. For example: <code>test.scala.html</code>:</p>
         <pre><code>var hub = $.connection.helloWorld;
         </code></pre><p>You can use <code>hub.client</code> to setup the callback that the server will use into your page:</p>
@@ -62,7 +62,6 @@ GlobalHost.setDependencyResolver(resolver);
         </code></pre><h2>Future changes</h2>
         <ul>
             <li>Add supervision</li>
-            <li>groups at the hub level</li>
             <li>better exceptions</li>
             <li>SSE</li>
             <li>Long polling</li>
