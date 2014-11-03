@@ -2,7 +2,10 @@ package signalJ.services;
 
 import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.JsonNode;
+import controllers.AssetsBuilder;
 import play.Logger;
+import play.api.mvc.Action;
+import play.api.mvc.AnyContent;
 import play.libs.F.Function;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -78,10 +81,10 @@ public class SignalJ extends Controller {
         });
     }
 
-    public Result script() {
-        if(SignalJPlugin.isDev())
-            return redirect("/signalj/jquery.signalR-2.1.2.js");
-        else
-            return redirect("/signalj/jquery.signalR-2.1.2.min.js");
+    private static AssetsBuilder delegate = new AssetsBuilder();
+
+    public Action<AnyContent> script() {
+        final String script = SignalJPlugin.isDev() ? "jquery.signalR-2.1.2.js" : "jquery.signalR-2.1.2.min.js";
+        return delegate.at("/public", script, true);
     }
 }

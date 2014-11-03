@@ -6,6 +6,3 @@ GET        /signalj/start                    @signalJ.services.SignalJ.start()
 GET        /signalj/ping                     @signalJ.services.SignalJ.ping()
 GET        /signalj/reconnect                @signalJ.services.SignalJ.reconnect()
 GET        /signalj/jquery.signalR.js        @signalJ.services.SignalJ.script()
-
-# This should be last
-GET        /signalj/*file             controllers.Assets.at(path="/public", file)

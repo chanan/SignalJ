@@ -1,5 +1,7 @@
 package signalJ.models;
 
+import signalJ.GlobalHost;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -54,7 +56,7 @@ public class HubsDescriptor {
 
 		@SuppressWarnings("unchecked")
 		public HubDescriptor(String name, String hubName) throws ClassNotFoundException {
-			hub = (Class<? extends HubDescriptor>) Class.forName(name);
+			hub = (Class<? extends HubDescriptor>) Class.forName(name, false, GlobalHost.getClassLoader());
 			this.name = name;
             this.jsonName = hubName.substring(0, 1).toLowerCase() + hubName.substring(1);
 			init();

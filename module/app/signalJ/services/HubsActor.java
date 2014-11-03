@@ -57,7 +57,11 @@ class HubsActor extends AbstractActor {
                 Logger.error("Error creating hubs", e);
             }
 		}
-        js = generateProxy(hubsDescriptor);
+        try {
+            js = generateProxy(hubsDescriptor);
+        } catch (Exception e) {
+            Logger.error("Error generating hub proxy", e);
+        }
         GlobalHost.setDescriptors(hubsDescriptor);
 	}
 
