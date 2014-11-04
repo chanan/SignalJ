@@ -65,6 +65,9 @@ class UsersActor extends AbstractActor {
             }).match(Messages.Reconnect.class, reconnect -> {
                 final ActorRef user = getUser(reconnect.uuid);
                 user.forward(reconnect, context());
+            }).match(Messages.StateChange.class, state -> {
+                final ActorRef user = getUser(state.uuid);
+                user.forward(state, context());
             }).build()
         );
     }

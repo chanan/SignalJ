@@ -19,6 +19,7 @@ import signalJ.models.RequestContext;
 import signalJ.models.TransportMessage;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 public class WebsocketTransport extends AbstractActor {
@@ -50,20 +51,40 @@ public class WebsocketTransport extends AbstractActor {
         context().setReceiveTimeout(Duration.create("10 seconds"));
 
         receive(
-            ReceiveBuilder.match(Messages.Join.class, r -> writeConnect()
-            ).match(Messages.MethodReturn.class, methodReturn -> {
-                writeMethodReturn(methodReturn);
-                sendAck(methodReturn);
-            }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
-                writeClientFunctionCall(clientFunctionCall);
-                sendAck(clientFunctionCall);
-            }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
-                writeConfirm(clientCallEnd.context);
-                sendAck(clientCallEnd);
-            }).match(ReceiveTimeout.class, r -> writeHeartbeat()
-            ).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect Websocket " + r.uuid)
-            ).build()
+                ReceiveBuilder.match(Messages.Join.class, r -> writeConnect()
+                ).match(Messages.MethodReturn.class, methodReturn -> {
+                    writeMethodReturn(methodReturn);
+                    sendAck(methodReturn);
+                }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
+                    writeClientFunctionCall(clientFunctionCall);
+                    sendAck(clientFunctionCall);
+                }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
+                    writeConfirm(clientCallEnd.context);
+                    sendAck(clientCallEnd);
+                }).match(ReceiveTimeout.class, r -> writeHeartbeat()
+                ).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect Websocket " + r.uuid)
+                ).match(Messages.StateChange.class, state -> {
+                    writeState(state);
+                    sendAck(state);
+                }).build()
         );
+    }
+
+    private void writeState(Messages.StateChange state) throws IOException {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("{\"S\":{");
+        boolean first = true;
+        for(final Map.Entry<String, String> entry : state.changes.entrySet()) {
+            if (!first) sb.append(',');
+            first = false;
+            sb.append(String.format("\"%s\": \"%s\"", entry.getKey(), entry.getValue()));
+        }
+        sb.append('}');
+        sb.append(",\"I\":\"").append(state.messageId).append('"');
+        sb.append('}');
+        final JsonNode j = mapper.readTree(sb.toString());
+        out.write(j);
+        Logger.debug("State Change: " + j);
     }
 
     private void sendAck(TransportMessage transportMessage) {
@@ -117,7 +138,8 @@ public class WebsocketTransport extends AbstractActor {
                 sb.append(Json.toJson(obj));
             }
         }
-        sb.append("]}]}");
+        sb.append("]}]");
+        sb.append('}');
         final JsonNode j = mapper.readTree(sb.toString());
         out.write(j);
         Logger.debug("ClientFunctionCall Value: " + j);

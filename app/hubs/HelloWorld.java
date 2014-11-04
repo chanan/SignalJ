@@ -21,7 +21,14 @@ public class HelloWorld extends Hub<FirstTestPage> {
 	}
 	
 	public void sayHello() {
-		Logger.debug("A client made me say hello!");
+		Logger.debug("A client made me say hello! Below are some tests of my functionality");
+
+        Logger.debug("State:");
+
+        clients().callerState.forEach((k, v) -> Logger.debug(k + ": " + v));
+        clients().callerState.put("prop", "Server side change");
+        clients().callerState.put("ServerProp", "Added on the server");
+
 		clients().all.firstTestFunction();
 		clients().others.firstTestFunctionWithParam(service.capitalize("Hello there!"));
 		clients().caller.twoParams(2, 3);
@@ -33,8 +40,6 @@ public class HelloWorld extends Hub<FirstTestPage> {
         List<Person> list = new ArrayList<>();
         list.add(new Person("John", "Smith"));
         clients().caller.complexList(list);
-        Logger.debug("State");
-        clients().callerState.forEach((k, v) -> Logger.debug(k + ": " + v));
 	}
 	
 	public void saySomethingANumberOfTimes(String something, int number) {

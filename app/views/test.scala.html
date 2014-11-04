@@ -3,7 +3,7 @@
 Do not use for now till fix asset loading problem in plugins
 <script src="/signalj/jquery.signalR.js"></script>
 -->
-<script type="text/javascript" src="//ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.1.0.min.js"></script>
+<script type="text/javascript" src="//ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.1.0.js"></script>
 <script src="/signalj/hubs.js"></script>
 <h1>SignalJ Test Page</h1>
 <button id="btnHello">Say Hello on the server!</button>
@@ -23,10 +23,14 @@ Person full name (Press first button): <span id="fullname"></span><br>
     $(function () {
         $.connection.hub.logging = true;
         var hub = $.connection.test;
+
         hub.state.prop = "test";
         hub.state.prop2 = "another test";
+
         hub.client.firstTestFunction = function() {
             console.log("Called from server!");
+            //Check modified state
+            console.log("State: %O", hub.state);
         };
 
         hub.client.firstTestFunctionWithParam = function(param) {

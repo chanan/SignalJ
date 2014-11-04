@@ -7,6 +7,7 @@ import signalJ.services.Hub;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.UUID;
 
 public class Messages {
@@ -219,6 +220,23 @@ public class Messages {
 
         public Ack(long messageId) {
             MessageId = messageId;
+        }
+    }
+
+    public static class StateChange implements TransportMessage {
+        public final UUID uuid;
+        public final Map<String, String> changes;
+        public final long messageId;
+
+        public StateChange(UUID uuid, Map<String, String> changes, long messageId) {
+            this.uuid = uuid;
+            this.changes = changes;
+            this.messageId = messageId;
+        }
+
+        @Override
+        public long getMessageId() {
+            return messageId;
         }
     }
 }

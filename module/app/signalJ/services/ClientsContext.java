@@ -1,6 +1,7 @@
 package signalJ.services;
 
 import akka.actor.ActorRef;
+import signalJ.models.CallerState;
 import signalJ.models.Messages;
 import signalJ.models.RequestContext;
 
@@ -11,14 +12,14 @@ public class ClientsContext<S> {
 	public final S all;
 	public final S others;
 	public final S caller;
-    public final Map<String, String> callerState;
+    public final CallerState callerState;
 	private final Class<S> clazz;
 	private final RequestContext context;
     private final ActorRef signalJActor;
     private final String hubName;
 
     @SuppressWarnings("unchecked")
-	ClientsContext(Class<S> clazz, String hubName, RequestContext context, ActorRef signalJActor, Map<String, String> callerState) {
+	ClientsContext(Class<S> clazz, String hubName, RequestContext context, ActorRef signalJActor, CallerState callerState) {
         this.clazz = clazz;
 		this.context = context;
 		this.all = (S) new SenderProxy(signalJActor, Messages.SendType.All, clazz, hubName, context).createProxy();

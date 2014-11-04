@@ -8,6 +8,7 @@ import signalJ.models.RequestContext;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Map;
 import java.util.UUID;
 
 class SenderProxy implements InvocationHandler {

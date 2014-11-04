@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import play.Logger;
 import signalJ.GlobalHost;
 import signalJ.SignalJPlugin;
+import signalJ.models.CallerState;
 import signalJ.models.HubsDescriptor;
 import signalJ.models.Messages;
 import signalJ.models.RequestContext;
@@ -41,6 +42,7 @@ class HubActor extends AbstractActor {
                     final String methodName = execute.json.get("M").textValue();
                     final Method m = getMethod(instance, methodName, execute.json.get("A"));
                     final Object ret = m.invoke(instance, getParams(m, execute.json.get("A")));
+                    instance.getCallerState().getChanges().ifPresent(changes -> signalJActor.tell(new Messages.StateChange(uuid, changes, context.messageId), self()));
                     if(ret == null)
                         signalJActor.tell(new Messages.ClientCallEnd(context), self());
                     else
@@ -49,14 +51,14 @@ class HubActor extends AbstractActor {
         );
     }
 
-    private Map<String,String> getState(JsonNode json) {
-        final Map<String, String> state = new HashMap<>();
+    private CallerState getState(JsonNode json) {
+        final Map<String, String> map = new HashMap<>();
         final Iterator<Map.Entry<String, JsonNode>> iter = json.fields();
         while(iter.hasNext()) {
             final Map.Entry<String, JsonNode> entry = iter.next();
-            state.put(entry.getKey(), entry.getValue().textValue());
+            map.put(entry.getKey(), entry.getValue().textValue());
         }
-        return state;
+        return new CallerState(map);
     }
 
     private Method getMethod(Hub<?> instance, String methodName, JsonNode args) {

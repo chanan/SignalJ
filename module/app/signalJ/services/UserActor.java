@@ -27,15 +27,15 @@ class UserActor extends AbstractActor {
                 }).match(Messages.MethodReturn.class, methodReturn -> {
                     final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.context, methodReturn.returnValue, messageId++);
                     messages.put(messageId, message);
-                    if(connected) transport.tell(message, self());
+                    if (connected) transport.tell(message, self());
                 }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
                     final Messages.ClientFunctionCall message = new Messages.ClientFunctionCall(clientFunctionCall.method, clientFunctionCall.hubName, clientFunctionCall.context, clientFunctionCall.sendType, clientFunctionCall.name, clientFunctionCall.args, clientFunctionCall.clients, clientFunctionCall.allExcept, clientFunctionCall.groupName, messageId++);
                     messages.put(messageId, message);
-                    if(connected) transport.tell(message, self());
+                    if (connected) transport.tell(message, self());
                 }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
                     final Messages.ClientCallEnd message = new Messages.ClientCallEnd(clientCallEnd.context, messageId++);
                     messages.put(messageId, message);
-                    if(connected) transport.tell(message, self());
+                    if (connected) transport.tell(message, self());
                 }).match(Messages.Reconnect.class, reconnect -> {
                     attemptStopTransport();
                     final Messages.Join join = new Messages.Join(reconnect.out, reconnect.in, reconnect.uuid);
@@ -53,6 +53,8 @@ class UserActor extends AbstractActor {
                 }).match(Terminated.class, t -> t.actor().equals(transport), t -> {
                     transport = null;
                     connected = false;
+                }).match(Messages.StateChange.class, state -> {
+                    if (connected) transport.tell(state, self());
                 }).build()
         );
     }
