@@ -44,7 +44,7 @@ public class WebsocketTransport extends AbstractActor {
         });
         in.onMessage(json -> {
             Logger.debug("Message from user: " + uuid + " : " + json);
-            self.tell(new InternalMessage(json), self);
+            signalJActor.tell(new Messages.Execute(uuid, json), self);
         });
 
         context().setReceiveTimeout(Duration.create("10 seconds"));
@@ -57,10 +57,6 @@ public class WebsocketTransport extends AbstractActor {
             }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
                 writeClientFunctionCall(clientFunctionCall);
                 sendAck(clientFunctionCall);
-            }).match(InternalMessage.class, internalMessage -> {
-                if (internalMessage.json.hasNonNull("H")) {
-                    signalJActor.tell(new Messages.Execute(uuid, internalMessage.json), self());
-                }
             }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
                 writeConfirm(clientCallEnd.context);
                 sendAck(clientCallEnd);
@@ -132,13 +128,5 @@ public class WebsocketTransport extends AbstractActor {
         sb.append("{\"I\":\"").append(context.messageId).append("\"}");
         final JsonNode event = mapper.readTree(sb.toString());
         out.write(event);
-    }
-
-    private static class InternalMessage {
-        final JsonNode json;
-
-        public InternalMessage(JsonNode json) {
-            this.json = json;
-        }
     }
 }

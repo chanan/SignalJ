@@ -33,6 +33,8 @@ public class HelloWorld extends Hub<FirstTestPage> {
         List<Person> list = new ArrayList<>();
         list.add(new Person("John", "Smith"));
         clients().caller.complexList(list);
+        Logger.debug("State");
+        clients().callerState.forEach((k, v) -> Logger.debug(k + ": " + v));
 	}
 	
 	public void saySomethingANumberOfTimes(String something, int number) {

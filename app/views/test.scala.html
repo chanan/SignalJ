@@ -23,6 +23,8 @@ Person full name (Press first button): <span id="fullname"></span><br>
     $(function () {
         $.connection.hub.logging = true;
         var hub = $.connection.test;
+        hub.state.prop = "test";
+        hub.state.prop2 = "another test";
         hub.client.firstTestFunction = function() {
             console.log("Called from server!");
         };

@@ -18,9 +18,7 @@ import signalJ.models.RequestContext;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 class HubActor extends AbstractActor {
 	private final static ObjectMapper mapper = new ObjectMapper();
@@ -39,6 +37,7 @@ class HubActor extends AbstractActor {
                     final Hub<?> instance = (Hub<?>)GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
                     final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt());
                     instance.setContext(context);
+                    instance.setCallerState(getState(execute.json.get("S")));
                     final String methodName = execute.json.get("M").textValue();
                     final Method m = getMethod(instance, methodName, execute.json.get("A"));
                     final Object ret = m.invoke(instance, getParams(m, execute.json.get("A")));
@@ -48,6 +47,16 @@ class HubActor extends AbstractActor {
                         signalJActor.tell(new Messages.MethodReturn(context, ret), self());
                 }).build()
         );
+    }
+
+    private Map<String,String> getState(JsonNode json) {
+        final Map<String, String> state = new HashMap<>();
+        final Iterator<Map.Entry<String, JsonNode>> iter = json.fields();
+        while(iter.hasNext()) {
+            final Map.Entry<String, JsonNode> entry = iter.next();
+            state.put(entry.getKey(), entry.getValue().textValue());
+        }
+        return state;
     }
 
     private Method getMethod(Hub<?> instance, String methodName, JsonNode args) {
