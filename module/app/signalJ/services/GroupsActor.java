@@ -8,6 +8,7 @@ import signalJ.SignalJPlugin;
 import signalJ.models.Messages;
 
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class GroupsActor extends AbstractActor {
@@ -29,9 +30,11 @@ public class GroupsActor extends AbstractActor {
                 leaveGroup(groupLeave.hubname, groupLeave.uuid, groupLeave.groupname);
                 Logger.debug(groupLeave.uuid + " left group: " + groupLeave.groupname);
             }).match(Messages.Quit.class, quit -> {
-                groups.keySet().stream().forEach(hubname ->
-                    groups.get(hubname).keySet().forEach(group -> leaveGroup(hubname, quit.uuid, group))
-                );
+                final Set<String> hubs = getKeys(groups.keySet());
+                hubs.stream().forEach(hubname -> {
+                    final Set<String> groupnames = getKeys(groups.get(hubname).keySet());
+                    groupnames.forEach(group -> leaveGroup(hubname, quit.uuid, group));
+                });
             }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
                 switch (clientFunctionCall.sendType) {
                     case All:
@@ -76,6 +79,10 @@ public class GroupsActor extends AbstractActor {
                 }
             }).build()
         );
+    }
+
+    private Set<String> getKeys(Set<String> strings) {
+        return strings.stream().collect(Collectors.toSet());
     }
 
     private void leaveGroup(String hubname, UUID uuid, String group) {
