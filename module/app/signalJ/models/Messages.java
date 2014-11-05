@@ -216,10 +216,10 @@ public class Messages {
     }
 
     public static class Ack {
-        public final long MessageId;
+        public final TransportMessage message;
 
-        public Ack(long messageId) {
-            MessageId = messageId;
+        public Ack(TransportMessage message) {
+            this.message = message;
         }
     }
 

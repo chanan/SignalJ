@@ -65,9 +65,10 @@ public class WebsocketTransport extends AbstractActor {
                 ).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect Websocket " + r.uuid)
                 ).match(Messages.StateChange.class, state -> {
                     writeState(state);
-                    //sendAck(state);
+                    sendAck(state);
                 }).match(Messages.Error.class, error -> {
                     writeError(error);
+                    sendAck(error);
                 }).build()
         );
     }
@@ -98,7 +99,7 @@ public class WebsocketTransport extends AbstractActor {
     }
 
     private void sendAck(TransportMessage transportMessage) {
-        context().parent().tell(new Messages.Ack(transportMessage.getMessageId()), self());
+        context().parent().tell(new Messages.Ack(transportMessage), self());
     }
 
     @Override

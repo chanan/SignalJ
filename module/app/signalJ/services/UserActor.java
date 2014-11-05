@@ -8,11 +8,13 @@ import signalJ.models.Messages;
 import signalJ.models.TransportMessage;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 class UserActor extends AbstractActor {
     private final ProtectedData protectedData;
-    private final Map<Long, TransportMessage> messages = new HashMap<>();
+    private final Map<Long, Set<TransportMessage>> messages = new HashMap<>();
     private long messageId = 0;
     private ActorRef transport;
     private boolean connected = false;
@@ -27,15 +29,15 @@ class UserActor extends AbstractActor {
                     context().watch(transport);
                 }).match(Messages.MethodReturn.class, methodReturn -> {
                     final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.context, methodReturn.returnValue, messageId++);
-                    messages.put(messageId, message);
+                    storeMessage(message);
                     if (connected) transport.tell(message, self());
                 }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
                     final Messages.ClientFunctionCall message = new Messages.ClientFunctionCall(clientFunctionCall.method, clientFunctionCall.hubName, clientFunctionCall.context, clientFunctionCall.sendType, clientFunctionCall.name, clientFunctionCall.args, clientFunctionCall.clients, clientFunctionCall.allExcept, clientFunctionCall.groupName, messageId++);
-                    messages.put(messageId, message);
+                    storeMessage(message);
                     if (connected) transport.tell(message, self());
                 }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
                     final Messages.ClientCallEnd message = new Messages.ClientCallEnd(clientCallEnd.context, messageId++);
-                    messages.put(messageId, message);
+                    storeMessage(message);
                     if (connected) transport.tell(message, self());
                 }).match(Messages.Reconnect.class, reconnect -> {
                     attemptStopTransport();
@@ -50,20 +52,29 @@ class UserActor extends AbstractActor {
                 }).match(ReceiveTimeout.class, r -> {
                     context().stop(self());
                 }).match(Messages.Ack.class, ack -> {
-                    messages.remove(ack.MessageId);
+                    messages.get(ack.message.getMessageId()).remove(ack.message);
+                    if(messages.get(ack.message.getMessageId()).isEmpty()) messages.remove(ack.message.getMessageId());
                 }).match(Terminated.class, t -> t.actor().equals(transport), t -> {
                     transport = null;
                     connected = false;
                 }).match(Messages.StateChange.class, state -> {
+                    storeMessage(state);
                     if (connected) transport.tell(state, self());
                 }).match(Messages.Error.class, error -> {
+                    storeMessage(error);
                     if (connected) transport.tell(error, self());
                 }).build()
         );
     }
 
+    private void storeMessage(TransportMessage message) {
+        messages.putIfAbsent(message.getMessageId(), new HashSet<>());
+        messages.get(message.getMessageId()).add(message);
+    }
+
     private void resendMessages() {
-        messages.keySet().stream().sorted().map(l -> messages.get(l)).forEach(m -> transport.tell(m, self()));
+        messages.keySet().stream().sorted().map(l -> messages.get(l))
+                .forEach(set -> set.stream().forEach(m -> transport.tell(m, self())));
     }
 
     private void attemptStopTransport() {
