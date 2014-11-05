@@ -35,18 +35,23 @@ class HubActor extends AbstractActor {
                     Logger.debug("Registered hub actor: " + hubDescriptor.getJsonName());
                 }).match(Messages.Execute.class, execute -> {
                     final UUID uuid = execute.uuid;
-                    final Hub<?> instance = (Hub<?>)GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-                    final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt());
-                    instance.setContext(context);
-                    instance.setCallerState(getState(execute.json.get("S")));
                     final String methodName = execute.json.get("M").textValue();
-                    final Method m = getMethod(instance, methodName, execute.json.get("A"));
-                    final Object ret = m.invoke(instance, getParams(m, execute.json.get("A")));
-                    instance.getCallerState().getChanges().ifPresent(changes -> signalJActor.tell(new Messages.StateChange(uuid, changes, context.messageId), self()));
-                    if(ret == null)
-                        signalJActor.tell(new Messages.ClientCallEnd(context), self());
-                    else
-                        signalJActor.tell(new Messages.MethodReturn(context, ret), self());
+                    try {
+                        final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
+                        final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt());
+                        instance.setContext(context);
+                        instance.setCallerState(getState(execute.json.get("S")));
+                        final Method m = getMethod(instance, methodName, execute.json.get("A"));
+                        final Object ret = m.invoke(instance, getParams(m, execute.json.get("A")));
+                        instance.getCallerState().getChanges().ifPresent(changes -> signalJActor.tell(new Messages.StateChange(uuid, changes, context.messageId), self()));
+                        if (ret == null)
+                            signalJActor.tell(new Messages.ClientCallEnd(context), self());
+                        else
+                            signalJActor.tell(new Messages.MethodReturn(context, ret), self());
+                    } catch (Exception e) {
+                        Logger.error("Error in executing hub method", e);
+                        signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), methodName)), self());
+                    }
                 }).build()
         );
     }

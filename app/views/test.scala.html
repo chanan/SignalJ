@@ -73,6 +73,10 @@ Person full name (Press first button): <span id="fullname"></span><br>
 
             $('#btnHello').click(function() {
                 hub.server.sayHello();
+
+                hub.server.causeError( ).fail(function(error) {
+                    console.log('Error: ' + error);
+                });
             });
 
             $('#btnHello2').click(function() {

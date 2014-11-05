@@ -65,9 +65,19 @@ public class WebsocketTransport extends AbstractActor {
                 ).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect Websocket " + r.uuid)
                 ).match(Messages.StateChange.class, state -> {
                     writeState(state);
-                    sendAck(state);
+                    //sendAck(state);
+                }).match(Messages.Error.class, error -> {
+                    writeError(error);
                 }).build()
         );
+    }
+
+    private void writeError(Messages.Error error) throws IOException {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(String.format("{\"I\":\"%s\",\"E\":\"%s\"}", error.messageId, error.error));
+        final JsonNode j = mapper.readTree(sb.toString());
+        out.write(j);
+        Logger.debug("Error: " + j);
     }
 
     private void writeState(Messages.StateChange state) throws IOException {

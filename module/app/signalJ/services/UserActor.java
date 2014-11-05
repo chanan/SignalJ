@@ -7,7 +7,8 @@ import signalJ.infrastructure.ProtectedData;
 import signalJ.models.Messages;
 import signalJ.models.TransportMessage;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 class UserActor extends AbstractActor {
     private final ProtectedData protectedData;
@@ -55,6 +56,8 @@ class UserActor extends AbstractActor {
                     connected = false;
                 }).match(Messages.StateChange.class, state -> {
                     if (connected) transport.tell(state, self());
+                }).match(Messages.Error.class, error -> {
+                    if (connected) transport.tell(error, self());
                 }).build()
         );
     }

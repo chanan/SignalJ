@@ -47,6 +47,7 @@ public class SignalJActor extends AbstractActor {
             ).match(Messages.ClientCallEnd.class, clientCallEnd -> usersActor.forward(clientCallEnd, context())
             ).match(Messages.Reconnect.class, reconnect -> usersActor.forward(reconnect, context())
             ).match(Messages.StateChange.class, state -> usersActor.forward(state, context())
+            ).match(Messages.Error.class, error -> usersActor.forward(error, context())
             ).build()
         );
     }

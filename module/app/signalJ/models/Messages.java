@@ -239,4 +239,27 @@ public class Messages {
             return messageId;
         }
     }
+
+    public static class Error implements TransportMessage {
+        public final UUID uuid;
+        public final String error;
+        public final long messageId;
+
+        public Error(UUID uuid, String error) {
+            this.uuid = uuid;
+            this.error = error;
+            this.messageId = 1;
+        }
+
+        public Error(UUID uuid, String error, long messageId) {
+            this.uuid = uuid;
+            this.error = error;
+            this.messageId = messageId;
+        }
+
+        @Override
+        public long getMessageId() {
+            return 0;
+        }
+    }
 }

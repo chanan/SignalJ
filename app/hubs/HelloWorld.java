@@ -92,6 +92,10 @@ public class HelloWorld extends Hub<FirstTestPage> {
         groups().remove(connectionId, group);
     }
 
+    public void causeError() throws Exception {
+        throw new Exception("Boom");
+    }
+
 	@Override
 	protected Class<FirstTestPage> getInterface() {
 		return FirstTestPage.class;
