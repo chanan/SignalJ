@@ -52,6 +52,17 @@ class HubActor extends AbstractActor {
                         Logger.error("Error in executing hub method", e);
                         signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), methodName)), self());
                     }
+                }).match(Messages.Connection.class, connection ->{
+                    final UUID uuid = connection.uuid;
+                    try {
+                        final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
+                        final RequestContext context = new RequestContext(uuid, -1);
+                        instance.setContext(context);
+                        instance.onConnected();
+                    } catch (Exception e) {
+                        Logger.error("Error in executing hub onConnected", e);
+                        signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), "onConnected")), self());
+                    }
                 }).build()
         );
     }

@@ -49,4 +49,9 @@ public abstract class Hub<T> implements HubContext<T> {
     CallerState getCallerState() {
         return callerState;
     }
+
+    @Override
+    public void onConnected() {
+
+    }
 }

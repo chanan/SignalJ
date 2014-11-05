@@ -33,10 +33,12 @@ class HubsActor extends AbstractActor {
         }
         receive(
                 ReceiveBuilder.match(Messages.GetJavaScript.class, request -> sender().tell(js, self())
-                ).match(Messages.HubJoin.class, hubJoin -> getContext().getChildren().forEach(hub -> hub.tell(hubJoin, self()))
                 ).match(Messages.Execute.class, execute -> {
                     final ActorRef hub = getHub(execute.json.get("H").textValue());
                     hub.forward(execute, getContext());
+                }).match(Messages.Connection.class, connection -> {
+                    final ActorRef hub = getHub(connection.hubName);
+                    hub.forward(connection, getContext());
                 }).build()
         );
     }

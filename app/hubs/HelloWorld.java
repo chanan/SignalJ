@@ -100,4 +100,10 @@ public class HelloWorld extends Hub<FirstTestPage> {
 	protected Class<FirstTestPage> getInterface() {
 		return FirstTestPage.class;
 	}
+
+    @Override
+    public void onConnected() {
+        Logger.debug("Connected! " + context().connectionId);
+        clients().all.calledFromOnConnected();
+    }
 }

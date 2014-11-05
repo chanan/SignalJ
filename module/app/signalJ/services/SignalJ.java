@@ -64,7 +64,16 @@ public class SignalJ extends Controller {
     }
 
     public Result start() {
+        final String connectionToken = request().getQueryString("connectionToken");
+        final UUID uuid = UUID.fromString(connectionToken.substring(0, connectionToken.lastIndexOf(':')));
+        final String connectionData = request().getQueryString("connectionData");
+        signalJActor.tell(new Messages.Connection(uuid, getHubName(connectionData)), ActorRef.noSender());
         return ok(startStringPayload);
+    }
+
+    private String getHubName(String connectionData) {
+        final JsonNode root = Json.parse(connectionData);
+        return root.findValue("name").textValue();
     }
 
     public Result ping() {
