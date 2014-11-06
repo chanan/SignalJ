@@ -142,7 +142,7 @@ class HubsActor extends AbstractActor {
 
     private ActorRef getHub(String hubName) {
         final String name = hubName.toLowerCase();
-        return Optional.ofNullable(getContext().getChild(name)).orElseThrow(() -> new IllegalArgumentException());
+        return Optional.ofNullable(getContext().getChild(name)).orElseThrow(() -> new IllegalArgumentException(String.format("No such hub: %s", hubName)));
     }
 
     private ActorRef createHub(String hubName) {

@@ -74,6 +74,7 @@ class HubActor extends AbstractActor {
     }
 
     private CallerState getState(JsonNode json) {
+        if(json == null) return new CallerState();
         final Map<String, String> map = new HashMap<>();
         final Iterator<Map.Entry<String, JsonNode>> iter = json.fields();
         while(iter.hasNext()) {
