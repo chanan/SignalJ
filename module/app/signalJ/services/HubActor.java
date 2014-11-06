@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import play.Logger;
 import signalJ.GlobalHost;
 import signalJ.SignalJPlugin;
+import signalJ.annotations.HubMethodName;
 import signalJ.models.CallerState;
 import signalJ.models.HubsDescriptor;
 import signalJ.models.Messages;
@@ -103,7 +104,8 @@ class HubActor extends AbstractActor {
         Method ret = null;
         for(Method m : instance.getClass().getDeclaredMethods()) {
             boolean match = false;
-            if(m.getName().equals(methodName) && m.getParameterCount() == args.size()) {
+            if((m.getName().equals(methodName) && m.getParameterCount() == args.size()) ||
+                    (m.getAnnotation(HubMethodName.class) != null && m.getAnnotation(HubMethodName.class).value().equals(methodName) && m.getParameterCount() == args.size())) {
                 boolean parseError = false;
                 for(int i = 0; i < m.getParameterCount(); i++) {
                     final Class<?> clazz = m.getParameterTypes()[i];

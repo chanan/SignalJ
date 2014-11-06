@@ -2,6 +2,7 @@ package hubs;
 import models.Person;
 import play.Logger;
 import services.StringService;
+import signalJ.annotations.HubMethodName;
 import signalJ.annotations.HubName;
 import signalJ.services.Hub;
 
@@ -47,7 +48,8 @@ public class HelloWorld extends Hub<FirstTestPage> {
 			Logger.debug("The client said: " + something);
 		}
 	}
-	
+
+    @HubMethodName("addTwoNumbers")
 	public int add(int a, int b) {
 		return a + b;
 	}

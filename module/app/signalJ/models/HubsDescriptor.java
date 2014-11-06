@@ -1,6 +1,7 @@
 package signalJ.models;
 
 import signalJ.GlobalHost;
+import signalJ.annotations.HubMethodName;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -105,7 +106,7 @@ public class HubsDescriptor {
 			private final Map<Integer, Parameter> parameters = new HashMap<Integer, Parameter>();
 			
 			Procedure(Method method){
-				name = method.getName();
+				name = method.getAnnotation(HubMethodName.class) != null ? method.getAnnotation(HubMethodName.class).value() : method.getName();
 				returnType = method.getReturnType();
 				init(method);
 			}
