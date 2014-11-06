@@ -39,6 +39,12 @@ class HubsActor extends AbstractActor {
                 }).match(Messages.Connection.class, connection -> {
                     final ActorRef hub = getHub(connection.hubName);
                     hub.forward(connection, getContext());
+                }).match(Messages.Reconnection.class, reconnection -> {
+                    final ActorRef hub = getHub(reconnection.hubName);
+                    hub.forward(reconnection, getContext());
+                }).match(Messages.Disconnection.class, disconnection -> {
+                    final ActorRef hub = getHub(disconnection.hubName);
+                    hub.forward(disconnection, getContext());
                 }).build()
         );
     }

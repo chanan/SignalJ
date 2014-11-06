@@ -49,6 +49,8 @@ public class SignalJActor extends AbstractActor {
             ).match(Messages.StateChange.class, state -> usersActor.forward(state, context())
             ).match(Messages.Error.class, error -> usersActor.forward(error, context())
             ).match(Messages.Connection.class, connection -> hubsActor.forward(connection, context())
+            ).match(Messages.Reconnection.class, reconnection -> hubsActor.forward(reconnection, context())
+            ).match(Messages.Disconnection.class, disconnection -> hubsActor.forward(disconnection, context())
             ).build()
         );
     }

@@ -106,4 +106,9 @@ public class HelloWorld extends Hub<FirstTestPage> {
         Logger.debug("Connected! " + context().connectionId);
         clients().all.calledFromOnConnected();
     }
+
+    @Override
+    public void onDisconnected() {
+        Logger.debug("Disconnected: " + context().connectionId);
+    }
 }

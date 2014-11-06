@@ -63,6 +63,28 @@ class HubActor extends AbstractActor {
                         Logger.error("Error in executing hub onConnected", e);
                         signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), "onConnected")), self());
                     }
+                }).match(Messages.Reconnection.class, reconnection ->{
+                    final UUID uuid = reconnection.uuid;
+                    try {
+                        final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
+                        final RequestContext context = new RequestContext(uuid, -1);
+                        instance.setContext(context);
+                        instance.onReconnected();
+                    } catch (Exception e) {
+                        Logger.error("Error in executing hub onConnected", e);
+                        signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), "onConnected")), self());
+                    }
+                }).match(Messages.Disconnection.class, disconnection ->{
+                    final UUID uuid = disconnection.uuid;
+                    try {
+                        final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
+                        final RequestContext context = new RequestContext(uuid, -1);
+                        instance.setContext(context);
+                        instance.onDisconnected();
+                    } catch (Exception e) {
+                        Logger.error("Error in executing hub onConnected", e);
+                        signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), "onConnected")), self());
+                    }
                 }).build()
         );
     }

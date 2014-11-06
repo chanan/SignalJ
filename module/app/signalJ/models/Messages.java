@@ -133,11 +133,13 @@ public class Messages {
         public final UUID uuid;
         public final WebSocket.Out<JsonNode> out;
         public final WebSocket.In<JsonNode> in;
+        public final String hubName;
 
-        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid) {
+        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid, String hubName) {
             this.out = out;
             this.in = in;
             this.uuid = uuid;
+            this.hubName = hubName;
         }
     }
 

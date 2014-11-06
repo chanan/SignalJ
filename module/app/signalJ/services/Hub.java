@@ -54,4 +54,14 @@ public abstract class Hub<T> implements HubContext<T> {
     public void onConnected() {
 
     }
+
+    @Override
+    public void onReconnected() {
+
+    }
+
+    @Override
+    public void onDisconnected() {
+
+    }
 }
