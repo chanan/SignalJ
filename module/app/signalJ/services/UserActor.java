@@ -3,14 +3,12 @@ package signalJ.services;
 import akka.actor.*;
 import akka.japi.pf.ReceiveBuilder;
 import scala.concurrent.duration.Duration;
+import signalJ.SignalJPlugin;
 import signalJ.infrastructure.ProtectedData;
 import signalJ.models.Messages;
 import signalJ.models.TransportMessage;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 class UserActor extends AbstractActor {
     private final ProtectedData protectedData;
@@ -18,15 +16,20 @@ class UserActor extends AbstractActor {
     private long messageId = 0;
     private ActorRef transport;
     private boolean connected = false;
+    private final List<String> hubs = new ArrayList<>();
+    private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
+    private UUID uuid;
 
     UserActor(ProtectedData protectedData) {
         this.protectedData = protectedData;
         receive(
                 ReceiveBuilder.match(Messages.Join.class, join -> {
+                    uuid = join.uuid;
                     transport = context().actorOf(Props.create(WebsocketTransport.class, protectedData, join));
                     transport.tell(join, self());
                     connected = true;
                     context().watch(transport);
+                    hubs.add(join.hubName);
                 }).match(Messages.MethodReturn.class, methodReturn -> {
                     final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.context, methodReturn.returnValue, messageId++);
                     storeMessage(message);
@@ -41,7 +44,7 @@ class UserActor extends AbstractActor {
                     if (connected) transport.tell(message, self());
                 }).match(Messages.Reconnect.class, reconnect -> {
                     attemptStopTransport();
-                    final Messages.Join join = new Messages.Join(reconnect.out, reconnect.in, reconnect.uuid);
+                    final Messages.Join join = new Messages.Join(reconnect.out, reconnect.in, reconnect.uuid, null);
                     transport = context().actorOf(Props.create(WebsocketTransport.class, protectedData, join));
                     transport.tell(reconnect, self());
                     connected = true;
@@ -50,6 +53,7 @@ class UserActor extends AbstractActor {
                     //Wait a minute before shutting down allowing clients to reconnect
                     context().setReceiveTimeout(Duration.create("1 minute"));
                 }).match(ReceiveTimeout.class, r -> {
+                    hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(uuid, hub), self()));
                     context().stop(self());
                 }).match(Messages.Ack.class, ack -> {
                     messages.get(ack.message.getMessageId()).remove(ack.message);

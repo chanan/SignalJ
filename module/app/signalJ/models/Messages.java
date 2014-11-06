@@ -129,25 +129,17 @@ public class Messages {
 
     }
 
-    public static class HubJoin {
-        public final UUID uuid;
-        public final ActorRef user;
-
-        public HubJoin(UUID uuid, ActorRef user) {
-            this.uuid = uuid;
-            this.user = user;
-        }
-    }
-
     public static class Join {
         public final UUID uuid;
         public final WebSocket.Out<JsonNode> out;
         public final WebSocket.In<JsonNode> in;
+        public final String hubName;
 
-        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid) {
+        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid, String hubName) {
             this.out = out;
             this.in = in;
             this.uuid = uuid;
+            this.hubName = hubName;
         }
     }
 
@@ -260,6 +252,36 @@ public class Messages {
         @Override
         public long getMessageId() {
             return 0;
+        }
+    }
+
+    public static class Connection {
+        public final UUID uuid;
+        public final String hubName;
+
+        public Connection(UUID uuid, String hubName) {
+            this.uuid = uuid;
+            this.hubName = hubName;
+        }
+    }
+
+    public static class Reconnection {
+        public final UUID uuid;
+        public final String hubName;
+
+        public Reconnection(UUID uuid, String hubName) {
+            this.uuid = uuid;
+            this.hubName = hubName;
+        }
+    }
+
+    public static class Disconnection {
+        public final UUID uuid;
+        public final String hubName;
+
+        public Disconnection(UUID uuid, String hubName) {
+            this.uuid = uuid;
+            this.hubName = hubName;
         }
     }
 }

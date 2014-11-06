@@ -14,4 +14,5 @@ public interface FirstTestPage {
 	public void sendToGroup(String message);
 	public void thisWillBeCalledFromOutsideTheHub(String message);
     public void complexList(List<Person> people);
+    public void calledFromOnConnected();
 }

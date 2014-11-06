@@ -8,4 +8,10 @@ public interface HubContext<T> {
 	public GroupsContext groups();
 
     public RequestContext context();
+
+    public void onConnected();
+
+    public void onReconnected();
+
+    public void onDisconnected();
 }
