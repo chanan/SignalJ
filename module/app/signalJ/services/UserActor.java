@@ -19,6 +19,7 @@ class UserActor extends AbstractActor {
     private final List<String> hubs = new ArrayList<>();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
     private UUID uuid;
+    private Map<String, String[]> queryString;
 
     UserActor(ProtectedData protectedData) {
         this.protectedData = protectedData;
@@ -44,7 +45,7 @@ class UserActor extends AbstractActor {
                     if (connected) transport.tell(message, self());
                 }).match(Messages.Reconnect.class, reconnect -> {
                     attemptStopTransport();
-                    final Messages.Join join = new Messages.Join(reconnect.out, reconnect.in, reconnect.uuid, null);
+                    final Messages.Join join = new Messages.Join(reconnect.out, reconnect.in, reconnect.uuid, null, queryString);
                     transport = context().actorOf(Props.create(WebsocketTransport.class, protectedData, join));
                     transport.tell(reconnect, self());
                     connected = true;
@@ -53,7 +54,7 @@ class UserActor extends AbstractActor {
                     //Wait a minute before shutting down allowing clients to reconnect
                     context().setReceiveTimeout(Duration.create("1 minute"));
                 }).match(ReceiveTimeout.class, r -> {
-                    hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(uuid, hub), self()));
+                    hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(uuid, hub, queryString), self()));
                     context().stop(self());
                 }).match(Messages.Ack.class, ack -> {
                     messages.get(ack.message.getMessageId()).remove(ack.message);

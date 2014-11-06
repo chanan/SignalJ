@@ -17,7 +17,9 @@ import signalJ.models.Messages;
 import signalJ.models.NegotiationResponse;
 
 import java.io.File;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static akka.pattern.Patterns.ask;
 
@@ -37,10 +39,11 @@ public class SignalJ extends Controller {
         final String connectionToken = request().getQueryString("connectionToken");
         final UUID uuid = UUID.fromString(connectionToken.substring(0, connectionToken.lastIndexOf(':')));
         final String connectionData = request().getQueryString("connectionData");
+        final Map<String, String[]> queryString = getQueryParams(request().queryString());
         return new WebSocket<JsonNode>() {
             public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out){
                 try {
-                    Messages.Join join = new Messages.Join(out, in, uuid, getHubName(connectionData));
+                    Messages.Join join = new Messages.Join(out, in, uuid, getHubName(connectionData), queryString);
                     signalJActor.tell(join, ActorRef.noSender());
                 } catch (Exception ex) {
                     Logger.error("Error creating websocket!", ex);
@@ -53,7 +56,8 @@ public class SignalJ extends Controller {
         final String connectionToken = request().getQueryString("connectionToken");
         final UUID uuid = UUID.fromString(connectionToken.substring(0, connectionToken.lastIndexOf(':')));
         final String connectionData = request().getQueryString("connectionData");
-        signalJActor.tell(new Messages.Reconnection(uuid, getHubName(connectionData)), ActorRef.noSender());
+        final Map<String, String[]> queryString = getQueryParams(request().queryString());
+        signalJActor.tell(new Messages.Reconnection(uuid, getHubName(connectionData), queryString), ActorRef.noSender());
         return new WebSocket<JsonNode>() {
             public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out){
                 try {
@@ -70,8 +74,13 @@ public class SignalJ extends Controller {
         final String connectionToken = request().getQueryString("connectionToken");
         final UUID uuid = UUID.fromString(connectionToken.substring(0, connectionToken.lastIndexOf(':')));
         final String connectionData = request().getQueryString("connectionData");
-        signalJActor.tell(new Messages.Connection(uuid, getHubName(connectionData)), ActorRef.noSender());
+        final Map<String, String[]> queryString = getQueryParams(request().queryString());
+        signalJActor.tell(new Messages.Connection(uuid, getHubName(connectionData), queryString), ActorRef.noSender());
         return ok(startStringPayload);
+    }
+
+    private Map<String, String[]> getQueryParams(Map<String, String[]> queryString) {
+        return queryString.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
     }
 
     private String getHubName(String connectionData) {

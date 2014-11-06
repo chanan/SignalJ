@@ -41,6 +41,7 @@ public class HelloWorld extends Hub<FirstTestPage> {
         List<Person> list = new ArrayList<>();
         list.add(new Person("John", "Smith"));
         clients().caller.complexList(list);
+        Logger.debug("Query Param SomeName: " + context().queryString.get("SomeName"));
 	}
 	
 	public void saySomethingANumberOfTimes(String something, int number) {
@@ -106,6 +107,8 @@ public class HelloWorld extends Hub<FirstTestPage> {
     @Override
     public void onConnected() {
         Logger.debug("Connected! " + context().connectionId);
+        Logger.debug("Query Params: " + context().queryString);
+        Logger.debug("Query Param 'SomeName': " + context().queryString.get("SomeName")[0]);
         clients().all.calledFromOnConnected();
     }
 

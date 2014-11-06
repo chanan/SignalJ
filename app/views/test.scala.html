@@ -27,6 +27,8 @@ Person full name (Press first button): <span id="fullname"></span><br>
         hub.state.prop = "test";
         hub.state.prop2 = "another test";
 
+        $.connection.hub.qs = { 'SomeName' : 'SomeValue' };
+
         hub.client.firstTestFunction = function() {
             console.log("Called from server!");
             //Check modified state

@@ -12,10 +12,7 @@ import play.Logger;
 import signalJ.GlobalHost;
 import signalJ.SignalJPlugin;
 import signalJ.annotations.HubMethodName;
-import signalJ.models.CallerState;
-import signalJ.models.HubsDescriptor;
-import signalJ.models.Messages;
-import signalJ.models.RequestContext;
+import signalJ.models.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -39,7 +36,7 @@ class HubActor extends AbstractActor {
                     final String methodName = execute.json.get("M").textValue();
                     try {
                         final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-                        final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt());
+                        final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt(), execute.queryString);
                         instance.setContext(context);
                         instance.setCallerState(getState(execute.json.get("S")));
                         final Method m = getMethod(instance, methodName, execute.json.get("A"));
@@ -54,40 +51,26 @@ class HubActor extends AbstractActor {
                         signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), methodName)), self());
                     }
                 }).match(Messages.Connection.class, connection ->{
-                    final UUID uuid = connection.uuid;
-                    try {
-                        final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-                        final RequestContext context = new RequestContext(uuid, -1);
-                        instance.setContext(context);
-                        instance.onConnected();
-                    } catch (Exception e) {
-                        Logger.error("Error in executing hub onConnected", e);
-                        signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), "onConnected")), self());
-                    }
+                    executeServerEvent(connection);
                 }).match(Messages.Reconnection.class, reconnection ->{
-                    final UUID uuid = reconnection.uuid;
-                    try {
-                        final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-                        final RequestContext context = new RequestContext(uuid, -1);
-                        instance.setContext(context);
-                        instance.onReconnected();
-                    } catch (Exception e) {
-                        Logger.error("Error in executing hub onConnected", e);
-                        signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), "onConnected")), self());
-                    }
+                    executeServerEvent(reconnection);
                 }).match(Messages.Disconnection.class, disconnection ->{
-                    final UUID uuid = disconnection.uuid;
-                    try {
-                        final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-                        final RequestContext context = new RequestContext(uuid, -1);
-                        instance.setContext(context);
-                        instance.onDisconnected();
-                    } catch (Exception e) {
-                        Logger.error("Error in executing hub onConnected", e);
-                        signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), "onConnected")), self());
-                    }
+                    executeServerEvent(disconnection);
                 }).build()
         );
+    }
+
+    private void executeServerEvent(ServerEventMessage event) {
+        final UUID uuid = event.getUuid();
+        try {
+            final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
+            final RequestContext context = new RequestContext(uuid, -1, event.getQueryString());
+            instance.setContext(context);
+            instance.onConnected();
+        } catch (Exception e) {
+            Logger.error("Error in executing hub onConnected", e);
+            signalJActor.tell(new Messages.Error(uuid, String.format("Error occurred while executing %s.%s", hubDescriptor.getJsonName(), "onConnected")), self());
+        }
     }
 
     private CallerState getState(JsonNode json) {

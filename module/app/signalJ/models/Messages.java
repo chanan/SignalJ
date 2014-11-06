@@ -134,12 +134,14 @@ public class Messages {
         public final WebSocket.Out<JsonNode> out;
         public final WebSocket.In<JsonNode> in;
         public final String hubName;
+        public final Map<String, String[]> queryString;
 
-        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid, String hubName) {
+        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid, String hubName, Map<String, String[]> queryString) {
             this.out = out;
             this.in = in;
             this.uuid = uuid;
             this.hubName = hubName;
+            this.queryString = queryString;
         }
     }
 
@@ -176,10 +178,12 @@ public class Messages {
     public static class Execute {
         public final UUID uuid;
         public final JsonNode json;
+        public final Map<String, String[]> queryString;
 
-        public Execute(UUID uuid, JsonNode json) {
+        public Execute(UUID uuid, JsonNode json, Map<String, String[]> queryString) {
             this.uuid = uuid;
             this.json = json;
+            this.queryString = queryString;
         }
     }
 
@@ -255,33 +259,84 @@ public class Messages {
         }
     }
 
-    public static class Connection {
+    public static class Connection implements ServerEventMessage {
         public final UUID uuid;
         public final String hubName;
+        public final Map<String, String[]> queryString;
 
-        public Connection(UUID uuid, String hubName) {
+        public Connection(UUID uuid, String hubName, Map<String, String[]> queryString) {
             this.uuid = uuid;
             this.hubName = hubName;
+            this.queryString = queryString;
+        }
+
+        @Override
+        public UUID getUuid() {
+            return uuid;
+        }
+
+        @Override
+        public String getHubName() {
+            return hubName;
+        }
+
+        @Override
+        public Map<String, String[]> getQueryString() {
+            return queryString;
         }
     }
 
-    public static class Reconnection {
+    public static class Reconnection implements ServerEventMessage {
         public final UUID uuid;
         public final String hubName;
+        public final Map<String, String[]> queryString;
 
-        public Reconnection(UUID uuid, String hubName) {
+        public Reconnection(UUID uuid, String hubName, Map<String, String[]> queryString) {
             this.uuid = uuid;
             this.hubName = hubName;
+            this.queryString = queryString;
+        }
+
+        @Override
+        public UUID getUuid() {
+            return uuid;
+        }
+
+        @Override
+        public String getHubName() {
+            return hubName;
+        }
+
+        @Override
+        public Map<String, String[]> getQueryString() {
+            return queryString;
         }
     }
 
-    public static class Disconnection {
+    public static class Disconnection implements ServerEventMessage {
         public final UUID uuid;
         public final String hubName;
+        public final Map<String, String[]> queryString;
 
-        public Disconnection(UUID uuid, String hubName) {
+        public Disconnection(UUID uuid, String hubName, Map<String, String[]> queryString) {
             this.uuid = uuid;
             this.hubName = hubName;
+            this.queryString = queryString;
+        }
+
+        @Override
+        public UUID getUuid() {
+            return uuid;
+        }
+
+        @Override
+        public String getHubName() {
+            return hubName;
+        }
+
+        @Override
+        public Map<String, String[]> getQueryString() {
+            return queryString;
         }
     }
 }

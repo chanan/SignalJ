@@ -30,12 +30,14 @@ public class WebsocketTransport extends AbstractActor {
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
     private final ObjectMapper mapper = new ObjectMapper();
     private final ProtectedData protectedData;
+    private final Map<String, String[]> queryString;
 
     public WebsocketTransport(ProtectedData protectedData, Messages.Join join) {
         this.protectedData = protectedData;
         this.uuid = join.uuid;
         this.out = join.out;
         this.in = join.in;
+        this.queryString = join.queryString;
 
         final ActorRef self = getContext().self();
 
@@ -45,7 +47,7 @@ public class WebsocketTransport extends AbstractActor {
         });
         in.onMessage(json -> {
             Logger.debug("Message from user: " + uuid + " : " + json);
-            signalJActor.tell(new Messages.Execute(uuid, json), self);
+            signalJActor.tell(new Messages.Execute(uuid, json, queryString), self);
         });
 
         context().setReceiveTimeout(Duration.create("10 seconds"));
