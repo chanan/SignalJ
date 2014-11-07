@@ -1,4 +1,4 @@
-<script src="@routes.Assets.at("javascripts/jquery-1.9.0.min.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/jquery-1.11.1.min.js")" type="text/javascript"></script>
 <script src="/signalj/jquery.signalR.js"></script>
 <script src="/signalj/hubs.js"></script>
 <h1>SignalJ Test Page</h1>
@@ -70,7 +70,8 @@ Person full name (Press first button): <span id="fullname"></span><br>
             console.log("Called from on connected!");
         };
 
-        $.connection.hub.start().done(function () {
+        //webSockets
+        $.connection.hub.start({ transport: 'serverSentEvents' }).done(function () {
             console.log("Connection Id: " + $.connection.hub.id);
 
             $('#btnHello').click(function() {

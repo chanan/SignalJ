@@ -7,6 +7,7 @@ import akka.japi.pf.ReceiveBuilder;
 import play.Logger;
 import signalJ.infrastructure.ProtectedData;
 import signalJ.models.Messages;
+import signalJ.models.TransportJoinMessage;
 
 public class SignalJActor extends AbstractActor {
     private final ActorRef usersActor;
@@ -16,9 +17,9 @@ public class SignalJActor extends AbstractActor {
     public SignalJActor(ProtectedData protectedData) {
         this.usersActor = context().actorOf(Props.create(UsersActor.class, protectedData), "users");
         receive(
-            ReceiveBuilder.match(Messages.Join.class, join -> {
+            ReceiveBuilder.match(TransportJoinMessage.class, join -> {
                 usersActor.forward(join, context());
-                Logger.debug(join.uuid + " logged on");
+                Logger.debug(join.getConnectionId() + " logged on");
             }).match(Messages.Quit.class, quit -> {
                 usersActor.forward(quit, context());
                 groupsActor.forward(quit, context());
