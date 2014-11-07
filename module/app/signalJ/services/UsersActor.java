@@ -6,6 +6,7 @@ import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
 import signalJ.infrastructure.ProtectedData;
 import signalJ.models.Messages;
+import signalJ.models.TransportJoinMessage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,8 +21,8 @@ class UsersActor extends AbstractActor {
     UsersActor(ProtectedData protectedData) {
         this.protectedData = protectedData;
         receive(
-            ReceiveBuilder.match(Messages.Join.class, join -> {
-                final ActorRef user = getUser(join.uuid);
+            ReceiveBuilder.match(TransportJoinMessage.class, join -> {
+                final ActorRef user = getUser(join.getConnectionId());
                 user.forward(join, context());
             }).match(Messages.Quit.class, quit -> {
                 final ActorRef user = getUser(quit.uuid);

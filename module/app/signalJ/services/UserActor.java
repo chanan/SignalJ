@@ -6,7 +6,12 @@ import scala.concurrent.duration.Duration;
 import signalJ.SignalJPlugin;
 import signalJ.infrastructure.ProtectedData;
 import signalJ.models.Messages;
+import signalJ.models.TransportJoinMessage;
 import signalJ.models.TransportMessage;
+import signalJ.models.TransportType;
+import signalJ.services.transports.ServerSentTransport;
+import signalJ.services.transports.WebsocketTransport;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -25,13 +30,13 @@ class UserActor extends AbstractActor {
     UserActor(ProtectedData protectedData) {
         this.protectedData = protectedData;
         receive(
-                ReceiveBuilder.match(Messages.Join.class, join -> {
-                    uuid = join.uuid;
-                    transport = context().actorOf(Props.create(WebsocketTransport.class, protectedData, join));
+                ReceiveBuilder.match(TransportJoinMessage.class, join -> {
+                    uuid = join.getConnectionId();
+                    transport = context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join));
                     transport.tell(join, self());
                     connected = true;
                     context().watch(transport);
-                    hubs.add(join.hubName);
+                    hubs.add(join.getHubName());
                 }).match(Messages.MethodReturn.class, methodReturn -> {
                     final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.context, methodReturn.returnValue, messageId++);
                     storeMessage(message);
@@ -46,8 +51,9 @@ class UserActor extends AbstractActor {
                     if (connected) transport.tell(message, self());
                 }).match(Messages.Reconnect.class, reconnect -> {
                     attemptStopTransport();
-                    final Messages.Join join = new Messages.Join(reconnect.out, reconnect.in, reconnect.uuid, null, queryString);
-                    transport = context().actorOf(Props.create(WebsocketTransport.class, protectedData, join));
+                    //TODO Fix the below line to be the correct join and not hardcoded to websocket
+                    final Messages.JoinWebsocket join = new Messages.JoinWebsocket(reconnect.out, reconnect.in, reconnect.uuid, null, queryString);
+                    transport = context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join));
                     transport.tell(reconnect, self());
                     connected = true;
                     resendMessages();
@@ -70,6 +76,20 @@ class UserActor extends AbstractActor {
                     if (connected) transport.tell(error, self());
                 }).build()
         );
+    }
+
+    private Class<?> getTransportClass(TransportType transportType) {
+        switch (transportType) {
+            case websocket:
+                return WebsocketTransport.class;
+            case serverSentEvents:
+                return ServerSentTransport.class;
+            case longPolling:
+                throw new NotImplementedException();
+            case foreverFrames:
+                throw new NotImplementedException();
+        }
+        throw new IllegalArgumentException();
     }
 
     private void storeMessage(TransportMessage message) {

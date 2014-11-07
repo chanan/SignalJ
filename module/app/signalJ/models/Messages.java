@@ -2,6 +2,7 @@ package signalJ.models;
 
 import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.JsonNode;
+import play.libs.EventSource;
 import play.mvc.WebSocket;
 import signalJ.services.Hub;
 
@@ -129,19 +130,39 @@ public class Messages {
 
     }
 
-    public static class Join {
+    public static class JoinWebsocket implements TransportJoinMessage {
         public final UUID uuid;
         public final WebSocket.Out<JsonNode> out;
         public final WebSocket.In<JsonNode> in;
         public final String hubName;
         public final Map<String, String[]> queryString;
 
-        public Join(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid, String hubName, Map<String, String[]> queryString) {
+        public JoinWebsocket(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid, String hubName, Map<String, String[]> queryString) {
             this.out = out;
             this.in = in;
             this.uuid = uuid;
             this.hubName = hubName;
             this.queryString = queryString;
+        }
+
+        @Override
+        public UUID getConnectionId() {
+            return uuid;
+        }
+
+        @Override
+        public String getHubName() {
+            return hubName;
+        }
+
+        @Override
+        public Map<String, String[]> getQueryString() {
+            return queryString;
+        }
+
+        @Override
+        public TransportType getTransportType() {
+            return TransportType.websocket;
         }
     }
 
@@ -337,6 +358,40 @@ public class Messages {
         @Override
         public Map<String, String[]> getQueryString() {
             return queryString;
+        }
+    }
+
+    public static class JoinServerSentEvents implements TransportJoinMessage {
+        public final UUID uuid;
+        public final EventSource eventSource;
+        public final String hubName;
+        public final Map<String, String[]> queryString;
+
+        public JoinServerSentEvents(EventSource eventSource, UUID uuid, String hubName, Map<String, String[]> queryString) {
+            this.eventSource = eventSource;
+            this.uuid = uuid;
+            this.hubName = hubName;
+            this.queryString = queryString;
+        }
+
+        @Override
+        public UUID getConnectionId() {
+            return uuid;
+        }
+
+        @Override
+        public String getHubName() {
+            return hubName;
+        }
+
+        @Override
+        public Map<String, String[]> getQueryString() {
+            return queryString;
+        }
+
+        @Override
+        public TransportType getTransportType() {
+            return TransportType.serverSentEvents;
         }
     }
 }
