@@ -38,6 +38,11 @@ public class SignalJ extends Controller {
         return ok(Json.toJson(response));
     }
 
+    public Result connectWebsockets() {
+        Logger.info("Websocket connection!");
+        return TODO;
+    }
+
     public WebSocket<JsonNode> connect() {
         final String connectionToken = request().getQueryString("connectionToken");
         final UUID uuid = UUID.fromString(connectionToken.substring(0, connectionToken.lastIndexOf(':')));

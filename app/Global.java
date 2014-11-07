@@ -1,12 +1,15 @@
 import hubs.GuiceDependencyResolver;
 import play.Application;
 import play.GlobalSettings;
+import play.Logger;
+import play.api.mvc.Handler;
+import play.mvc.Http;
 import signalJ.*;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-public class Global extends GlobalSettings {
+public class Global extends SignalJGlobal {
 	private final Injector injector = Guice.createInjector(new GuiceModule());
 
 	@Override
