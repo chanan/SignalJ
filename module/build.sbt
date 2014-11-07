@@ -5,7 +5,8 @@ version := "0.5.0-SNAPSHOT"
 organization := "signalJ"
 
 libraryDependencies ++= Seq(
-	"org.reflections" % "reflections" % "0.9.9-RC1"
+	"org.reflections" % "reflections" % "0.9.9-RC1",
+  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.4.3"
 )
 
 publishTo <<= version { (v: String) =>

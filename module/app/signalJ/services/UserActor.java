@@ -9,6 +9,7 @@ import signalJ.models.Messages;
 import signalJ.models.TransportMessage;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 class UserActor extends AbstractActor {
     private final ProtectedData protectedData;
@@ -51,8 +52,7 @@ class UserActor extends AbstractActor {
                     connected = true;
                     resendMessages();
                 }).match(Messages.Quit.class, quit -> {
-                    //Wait a minute before shutting down allowing clients to reconnect
-                    context().setReceiveTimeout(Duration.create("1 minute"));
+                    context().setReceiveTimeout(Duration.create(SignalJPlugin.getConfiguration().getDisconnectTimeout(), TimeUnit.SECONDS));
                 }).match(ReceiveTimeout.class, r -> {
                     hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(uuid, hub, queryString), self()));
                     context().stop(self());

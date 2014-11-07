@@ -13,6 +13,7 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.WebSocket;
 import signalJ.SignalJPlugin;
+import signalJ.models.Configuration;
 import signalJ.models.Messages;
 import signalJ.models.NegotiationResponse;
 
@@ -23,7 +24,6 @@ import java.util.stream.Collectors;
 
 import static akka.pattern.Patterns.ask;
 
-//TODO Use Play 2.3 syntax
 public class SignalJ extends Controller {
 	private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
     private final String startStringPayload = "{ \"Response\": \"started\" }";
@@ -31,7 +31,10 @@ public class SignalJ extends Controller {
 
     public Result negotiate() {
         final UUID connectionId = UUID.randomUUID();
-        final NegotiationResponse response = new NegotiationResponse("/signalj", connectionId + ":", connectionId, 20, 20, 20, true, "1.4", 20, 20);
+        final Configuration config = SignalJPlugin.getConfiguration();
+        final NegotiationResponse response = new NegotiationResponse("/signalj", connectionId + ":", connectionId,
+                config.getKeepAliveTimeout(), config.getDisconnectTimeout(), config.getConnectionTimeout(),
+                true, "1.4", 20, 20);
         return ok(Json.toJson(response));
     }
 

@@ -21,6 +21,7 @@ import signalJ.models.TransportMessage;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class WebsocketTransport extends AbstractActor {
     private final UUID uuid;
@@ -50,7 +51,7 @@ public class WebsocketTransport extends AbstractActor {
             signalJActor.tell(new Messages.Execute(uuid, json, queryString), self);
         });
 
-        context().setReceiveTimeout(Duration.create("10 seconds"));
+        context().setReceiveTimeout(Duration.create(SignalJPlugin.getConfiguration().getKeepAliveTimeout() / 2, TimeUnit.SECONDS));
 
         receive(
                 ReceiveBuilder.match(Messages.Join.class, r -> writeConnect()
