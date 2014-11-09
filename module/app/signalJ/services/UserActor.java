@@ -9,9 +9,9 @@ import signalJ.models.Messages;
 import signalJ.models.TransportJoinMessage;
 import signalJ.models.TransportMessage;
 import signalJ.models.TransportType;
+import signalJ.services.transports.LongPollingTransport;
 import signalJ.services.transports.ServerSentTransport;
 import signalJ.services.transports.WebsocketTransport;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -26,19 +26,21 @@ class UserActor extends AbstractActor {
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
     private UUID uuid;
     private Map<String, String[]> queryString;
+    private TransportType transportType;
 
     UserActor(ProtectedData protectedData) {
         this.protectedData = protectedData;
         receive(
                 ReceiveBuilder.match(TransportJoinMessage.class, join -> {
                     uuid = join.getConnectionId();
+                    transportType = join.getTransportType();
                     transport = context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join));
                     transport.tell(join, self());
                     connected = true;
                     context().watch(transport);
                     hubs.add(join.getHubName());
                 }).match(Messages.MethodReturn.class, methodReturn -> {
-                    final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.context, methodReturn.returnValue, messageId++);
+                    final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.out, methodReturn.context, methodReturn.returnValue, messageId++);
                     storeMessage(message);
                     if (connected) transport.tell(message, self());
                 }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
@@ -46,7 +48,7 @@ class UserActor extends AbstractActor {
                     storeMessage(message);
                     if (connected) transport.tell(message, self());
                 }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
-                    final Messages.ClientCallEnd message = new Messages.ClientCallEnd(clientCallEnd.context, messageId++);
+                    final Messages.ClientCallEnd message = new Messages.ClientCallEnd(clientCallEnd.out, clientCallEnd.context, messageId++);
                     storeMessage(message);
                     if (connected) transport.tell(message, self());
                 }).match(Messages.Reconnect.class, reconnect -> {
@@ -63,8 +65,11 @@ class UserActor extends AbstractActor {
                     hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(uuid, hub, queryString), self()));
                     context().stop(self());
                 }).match(Messages.Ack.class, ack -> {
-                    messages.get(ack.message.getMessageId()).remove(ack.message);
-                    if(messages.get(ack.message.getMessageId()).isEmpty()) messages.remove(ack.message.getMessageId());
+                    if(messages.containsKey(ack.message.getMessageId()) && messages.get(ack.message.getMessageId()).contains(ack.message)) {
+                        messages.get(ack.message.getMessageId()).remove(ack.message);
+                        if (messages.get(ack.message.getMessageId()).isEmpty())
+                            messages.remove(ack.message.getMessageId());
+                    }
                 }).match(Terminated.class, t -> t.actor().equals(transport), t -> {
                     transport = null;
                     connected = false;
@@ -74,20 +79,24 @@ class UserActor extends AbstractActor {
                 }).match(Messages.Error.class, error -> {
                     storeMessage(error);
                     if (connected) transport.tell(error, self());
+                }).match(Messages.PollForMessages.class, poll -> {
+                    if(connected && transportType == TransportType.longPolling) transport.forward(poll, context());
+                }).match(Messages.LongPollingSend.class, lps -> {
+                    if(connected && transportType == TransportType.longPolling) transport.forward(lps, context());
                 }).build()
         );
     }
 
-    private Class<?> getTransportClass(TransportType transportType) {
+    private Class<?> getTransportClass(TransportType transportType) throws Exception {
         switch (transportType) {
             case websocket:
                 return WebsocketTransport.class;
             case serverSentEvents:
                 return ServerSentTransport.class;
             case longPolling:
-                throw new NotImplementedException();
+                return LongPollingTransport.class;
             case foreverFrames:
-                throw new NotImplementedException();
+                throw new Exception("Not Implemented");
         }
         throw new IllegalArgumentException();
     }

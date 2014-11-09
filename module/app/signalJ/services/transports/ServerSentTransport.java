@@ -5,12 +5,9 @@ import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.ReceiveTimeout;
 import akka.japi.pf.ReceiveBuilder;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import play.Logger;
 import play.libs.EventSource;
 import play.libs.F;
-import play.mvc.WebSocket;
 import scala.concurrent.duration.Duration;
 import signalJ.SignalJPlugin;
 import signalJ.infrastructure.Cursor;
@@ -27,7 +24,6 @@ public class ServerSentTransport extends AbstractActor {
     private final EventSource eventSource;
     private final String prefix = Cursor.GetCursorPrefix();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
-    private final ObjectMapper mapper = new ObjectMapper();
     private final ProtectedData protectedData;
     private final Map<String, String[]> queryString;
 

@@ -3,12 +3,14 @@ package signalJ.models;
 import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.JsonNode;
 import play.libs.EventSource;
+import play.mvc.Results;
 import play.mvc.WebSocket;
 import signalJ.services.Hub;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Messages {
@@ -87,17 +89,48 @@ public class Messages {
         public final RequestContext context;
         public final Object returnValue;
         public final long messageId;
+        public final Optional<Results.Chunks.Out<String>> out;
 
         public MethodReturn(RequestContext context, Object returnValue) {
             this.context = context;
             this.returnValue = returnValue;
             this.messageId = -1;
+            this.out = Optional.empty();
         }
 
         public MethodReturn(RequestContext context, Object returnValue, long messageId) {
             this.context = context;
             this.returnValue = returnValue;
             this.messageId = messageId;
+            this.out = Optional.empty();
+        }
+
+        public MethodReturn(Results.Chunks.Out<String> out, RequestContext context, Object returnValue) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = -1;
+            this.out = Optional.of(out);
+        }
+
+        public MethodReturn(Results.Chunks.Out<String> out, RequestContext context, Object returnValue, long messageId) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = -messageId;
+            this.out = Optional.of(out);
+        }
+
+        public MethodReturn(Optional<Results.Chunks.Out<String>> out, RequestContext context, Object returnValue) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = -1;
+            this.out = out;
+        }
+
+        public MethodReturn(Optional<Results.Chunks.Out<String>> out, RequestContext context, Object returnValue, long messageId) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = -messageId;
+            this.out = out;
         }
 
         @Override
@@ -109,15 +142,42 @@ public class Messages {
     public static class ClientCallEnd implements TransportMessage {
         public final RequestContext context;
         public final long messageId;
+        public final Optional<Results.Chunks.Out<String>> out;
 
         public ClientCallEnd(RequestContext context) {
             this.context = context;
             this.messageId = -1;
+            this.out = Optional.empty();
         }
 
         public ClientCallEnd(RequestContext context, long messageId) {
             this.context = context;
             this.messageId = messageId;
+            this.out = Optional.empty();
+        }
+
+        public ClientCallEnd(Results.Chunks.Out<String> out, RequestContext context) {
+            this.context = context;
+            this.messageId = -1;
+            this.out = Optional.of(out);
+        }
+
+        public ClientCallEnd(Results.Chunks.Out<String> out, RequestContext context, long messageId) {
+            this.context = context;
+            this.messageId = messageId;
+            this.out = Optional.of(out);
+        }
+
+        public ClientCallEnd(Optional<Results.Chunks.Out<String>> out, RequestContext context) {
+            this.context = context;
+            this.messageId = -1;
+            this.out = out;
+        }
+
+        public ClientCallEnd(Optional<Results.Chunks.Out<String>> out, RequestContext context, long messageId) {
+            this.context = context;
+            this.messageId = messageId;
+            this.out = out;
         }
 
         @Override
@@ -200,11 +260,20 @@ public class Messages {
         public final UUID uuid;
         public final JsonNode json;
         public final Map<String, String[]> queryString;
+        public final Optional<Results.Chunks.Out<String>> out;
 
         public Execute(UUID uuid, JsonNode json, Map<String, String[]> queryString) {
             this.uuid = uuid;
             this.json = json;
             this.queryString = queryString;
+            this.out = Optional.empty();
+        }
+
+        public Execute(Results.Chunks.Out<String> out, UUID uuid, JsonNode json, Map<String, String[]> queryString) {
+            this.uuid = uuid;
+            this.json = json;
+            this.queryString = queryString;
+            this.out = Optional.of(out);
         }
     }
 
@@ -244,11 +313,27 @@ public class Messages {
         public final UUID uuid;
         public final Map<String, String> changes;
         public final long messageId;
+        public final Optional<Results.Chunks.Out<String>> out;
 
         public StateChange(UUID uuid, Map<String, String> changes, long messageId) {
             this.uuid = uuid;
             this.changes = changes;
             this.messageId = messageId;
+            this.out = Optional.empty();
+        }
+
+        public StateChange(Results.Chunks.Out<String> out, UUID uuid, Map<String, String> changes, long messageId) {
+            this.uuid = uuid;
+            this.changes = changes;
+            this.messageId = messageId;
+            this.out = Optional.of(out);
+        }
+
+        public StateChange(Optional<Results.Chunks.Out<String>> out, UUID uuid, Map<String, String> changes, long messageId) {
+            this.uuid = uuid;
+            this.changes = changes;
+            this.messageId = messageId;
+            this.out = out;
         }
 
         @Override
@@ -261,22 +346,53 @@ public class Messages {
         public final UUID uuid;
         public final String error;
         public final long messageId;
+        public final Optional<Results.Chunks.Out<String>> out;
 
         public Error(UUID uuid, String error) {
             this.uuid = uuid;
             this.error = error;
             this.messageId = 1;
+            this.out = Optional.empty();
         }
 
         public Error(UUID uuid, String error, long messageId) {
             this.uuid = uuid;
             this.error = error;
             this.messageId = messageId;
+            this.out = Optional.empty();
+        }
+
+        public Error(Results.Chunks.Out<String> out, UUID uuid, String error) {
+            this.uuid = uuid;
+            this.error = error;
+            this.messageId = 1;
+            this.out = Optional.of(out);
+        }
+
+        public Error(Results.Chunks.Out<String> out, UUID uuid, String error, long messageId) {
+            this.uuid = uuid;
+            this.error = error;
+            this.messageId = messageId;
+            this.out = Optional.of(out);
+        }
+
+        public Error(Optional<Results.Chunks.Out<String>> out, UUID uuid, String error) {
+            this.uuid = uuid;
+            this.error = error;
+            this.messageId = 1;
+            this.out = out;
+        }
+
+        public Error(Optional<Results.Chunks.Out<String>> out, UUID uuid, String error, long messageId) {
+            this.uuid = uuid;
+            this.error = error;
+            this.messageId = messageId;
+            this.out = out;
         }
 
         @Override
         public long getMessageId() {
-            return 0;
+            return messageId;
         }
     }
 
@@ -393,5 +509,67 @@ public class Messages {
         public TransportType getTransportType() {
             return TransportType.serverSentEvents;
         }
+    }
+
+    public static class JoinLongPolling implements TransportJoinMessage {
+        public final UUID uuid;
+        public final Results.Chunks.Out<String> out;
+        public final String hubName;
+        public final Map<String, String[]> queryString;
+
+        public JoinLongPolling(Results.Chunks.Out<String> out, UUID uuid, String hubName, Map<String, String[]> queryString) {
+            this.out = out;
+            this.uuid = uuid;
+            this.hubName = hubName;
+            this.queryString = queryString;
+        }
+
+        @Override
+        public UUID getConnectionId() {
+            return uuid;
+        }
+
+        @Override
+        public String getHubName() {
+            return hubName;
+        }
+
+        @Override
+        public Map<String, String[]> getQueryString() {
+            return queryString;
+        }
+
+        @Override
+        public TransportType getTransportType() {
+            return TransportType.longPolling;
+        }
+    }
+
+    public static class PollForMessages {
+        public final UUID uuid;
+        public final Results.Chunks.Out<String> out;
+        public final String hubName;
+        public final Map<String, String[]> queryString;
+
+        public PollForMessages(Results.Chunks.Out<String> out, UUID uuid, String hubName, Map<String, String[]> queryString) {
+            this.out = out;
+            this.uuid = uuid;
+            this.hubName = hubName;
+            this.queryString = queryString;
+        }
+    }
+
+    public static class LongPollingSend {
+        public final UUID uuid;
+        public final Results.Chunks.Out<String> out;
+
+        public LongPollingSend(UUID uuid, Results.Chunks.Out<String> out) {
+            this.uuid = uuid;
+            this.out = out;
+        }
+    }
+
+    public static class LongPollingBeat {
+
     }
 }

@@ -72,6 +72,12 @@ class UsersActor extends AbstractActor {
             }).match(Messages.Error.class, error -> {
                 final ActorRef user = getUser(error.uuid);
                 user.forward(error, context());
+            }).match(Messages.PollForMessages.class, poll -> {
+                final ActorRef user = getUser(poll.uuid);
+                user.forward(poll, context());
+            }).match(Messages.LongPollingSend.class, lps -> {
+                final ActorRef user = getUser(lps.uuid);
+                user.forward(lps, context());
             }).build()
         );
     }

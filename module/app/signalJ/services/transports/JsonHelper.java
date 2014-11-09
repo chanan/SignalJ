@@ -5,8 +5,10 @@ import play.Logger;
 import play.libs.Json;
 import signalJ.models.Messages;
 import signalJ.models.RequestContext;
+import signalJ.models.TransportMessage;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class JsonHelper {
@@ -64,6 +66,15 @@ public class JsonHelper {
 
         sb.append('"').append(prefix).append('"');
         sb.append(",\"M\":[");
+        sb.append(writeClientFunctionCall(clientFunctionCall));
+        sb.append("]}");
+        final JsonNode j = Json.parse(sb.toString());
+        Logger.debug("ClientFunctionCall Value: " + j);
+        return j;
+    }
+
+    private static String writeClientFunctionCall(Messages.ClientFunctionCall clientFunctionCall) {
+        StringBuilder sb = new StringBuilder();
         sb.append('{');
         sb.append("\"H\":").append('"').append(clientFunctionCall.hubName).append('"').append(',');
         sb.append("\"M\":").append('"').append(clientFunctionCall.method.getName()).append('"').append(',');
@@ -76,10 +87,40 @@ public class JsonHelper {
                 sb.append(Json.toJson(obj));
             }
         }
-        sb.append("]}]");
-        sb.append('}');
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    public static JsonNode writeList(List<TransportMessage> list, String prefix) throws IOException {
+        final StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        sb.append("\"C\":");
+        sb.append('"').append(prefix).append('"');
+        sb.append(",\"M\":[");
+        boolean firstCall = true;
+        for(TransportMessage m : list) {
+            if (!firstCall) sb.append(',');
+            firstCall = false;
+
+            if(m instanceof Messages.ClientFunctionCall) {
+                sb.append(writeClientFunctionCall((Messages.ClientFunctionCall)m));
+            }
+
+            if(m instanceof Messages.StateChange) {
+                sb.append(writeState((Messages.StateChange)m));
+            }
+
+            if(m instanceof Messages.Error) {
+                sb.append(writeError((Messages.Error)m));
+            }
+
+            if(m instanceof Messages.MethodReturn) {
+                sb.append(writeMethodReturn((Messages.MethodReturn)m));
+            }
+        }
+        sb.append("]}");
         final JsonNode j = Json.parse(sb.toString());
-        Logger.debug("ClientFunctionCall Value: " + j);
+        Logger.debug("List ClientFunctionCall Value: " + j);
         return j;
     }
 

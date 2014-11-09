@@ -16,6 +16,7 @@ import signalJ.exceptions.ExceptionsHelper;
 import signalJ.models.HubsDescriptor;
 import signalJ.models.HubsDescriptor.HubDescriptor;
 import signalJ.models.Messages;
+import signalJ.models.ServerEventMessage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,15 +37,9 @@ class HubsActor extends AbstractActor {
                 ).match(Messages.Execute.class, execute -> {
                     final ActorRef hub = getHub(execute.json.get("H").textValue());
                     hub.forward(execute, getContext());
-                }).match(Messages.Connection.class, connection -> {
-                    final ActorRef hub = getHub(connection.hubName);
-                    hub.forward(connection, getContext());
-                }).match(Messages.Reconnection.class, reconnection -> {
-                    final ActorRef hub = getHub(reconnection.hubName);
-                    hub.forward(reconnection, getContext());
-                }).match(Messages.Disconnection.class, disconnection -> {
-                    final ActorRef hub = getHub(disconnection.hubName);
-                    hub.forward(disconnection, getContext());
+                }).match(ServerEventMessage.class, event -> {
+                    final ActorRef hub = getHub(event.getHubName());
+                    hub.forward(event, getContext());
                 }).build()
         );
     }

@@ -21,6 +21,7 @@ import signalJ.models.Messages;
 import signalJ.models.NegotiationResponse;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -37,7 +38,7 @@ public class SignalJ extends Controller {
         final Configuration config = SignalJPlugin.getConfiguration();
         final NegotiationResponse response = new NegotiationResponse("/signalj", connectionId + ":", connectionId,
                 config.getKeepAliveTimeout(), config.getDisconnectTimeout(), config.getConnectionTimeout(),
-                true, "1.4", 20, 20);
+                true, "1.4", 5, 0);
         return ok(Json.toJson(response));
     }
 
@@ -73,8 +74,16 @@ public class SignalJ extends Controller {
     }
 
     public Result connectLongPolling() {
-        Logger.info("Long Polling Connection!");
-        return TODO;
+        final String connectionToken = request().getQueryString("connectionToken");
+        final UUID uuid = UUID.fromString(connectionToken.substring(0, connectionToken.lastIndexOf(':')));
+        final String connectionData = request().getQueryString("connectionData");
+        final Map<String, String[]> queryString = getQueryParams(request().queryString());
+        Chunks<String> chunks = StringChunks.whenReady(out -> {
+            Messages.JoinLongPolling join = new Messages.JoinLongPolling(out, uuid, getHubName(connectionData), queryString);
+            signalJActor.tell(join, ActorRef.noSender());
+        });
+        response().setContentType("application/json");
+        return ok(chunks);
     }
 
     //Default connect action when other transports aren't enabled in the Global object
@@ -128,7 +137,6 @@ public class SignalJ extends Controller {
         return delegate.at("/public", script, true);
     }
 
-    //http://localhost:9000/signalj/send?transport=serverSentEvents&clientProtocol=1.4&SomeName=SomeValue&connectionToken=392b5561-b0be-45d3-8d08-ecab9952188f%3A&connectionData=%5B%7B%22name%22%3A%22test%22%7D%5D
     public Result send() {
         final String connectionToken = request().getQueryString("connectionToken");
         final UUID uuid = UUID.fromString(connectionToken.substring(0, connectionToken.lastIndexOf(':')));
@@ -136,8 +144,30 @@ public class SignalJ extends Controller {
         final Map<String, String[]> queryString = getQueryParams(request().queryString());
         final DynamicForm requestData = Form.form().bindFromRequest();
         final JsonNode data = Json.parse(requestData.get("data"));
-        signalJActor.tell(new Messages.Execute(uuid, data, queryString), ActorRef.noSender());
-        return ok();
+        if(request().getQueryString("transport").equalsIgnoreCase("longPolling")) {
+            Chunks<String> chunks = StringChunks.whenReady(out -> {
+                //signalJActor.tell(new Messages.LongPollingSend(uuid, out), ActorRef.noSender());
+                signalJActor.tell(new Messages.Execute(out, uuid, data, queryString), ActorRef.noSender());
+            });
+            response().setContentType("application/json");
+            return ok(chunks);
+        } else {
+            signalJActor.tell(new Messages.Execute(uuid, data, queryString), ActorRef.noSender());
+            return ok();
+        }
+    }
+
+    public Result poll() {
+        final String connectionToken = request().getQueryString("connectionToken");
+        final UUID uuid = UUID.fromString(connectionToken.substring(0, connectionToken.lastIndexOf(':')));
+        final String connectionData = request().getQueryString("connectionData");
+        final Map<String, String[]> queryString = getQueryParams(request().queryString());
+        Chunks<String> chunks = StringChunks.whenReady(out -> {
+            Messages.PollForMessages poll = new Messages.PollForMessages(out, uuid, getHubName(connectionData), queryString);
+            signalJActor.tell(poll, ActorRef.noSender());
+        });
+        response().setContentType("application/json");
+        return ok(chunks);
     }
 
     private Map<String, String[]> getQueryParams(Map<String, String[]> queryString) {

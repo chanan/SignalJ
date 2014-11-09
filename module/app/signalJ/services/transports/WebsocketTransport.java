@@ -6,19 +6,15 @@ import akka.actor.PoisonPill;
 import akka.actor.ReceiveTimeout;
 import akka.japi.pf.ReceiveBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import play.Logger;
-import play.libs.Json;
 import play.mvc.WebSocket;
 import scala.concurrent.duration.Duration;
 import signalJ.SignalJPlugin;
 import signalJ.infrastructure.Cursor;
 import signalJ.infrastructure.ProtectedData;
 import signalJ.models.Messages;
-import signalJ.models.RequestContext;
 import signalJ.models.TransportMessage;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +25,6 @@ public class WebsocketTransport extends AbstractActor {
     private final WebSocket.In<JsonNode> in;
     private final String prefix = Cursor.GetCursorPrefix();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
-    private final ObjectMapper mapper = new ObjectMapper();
     private final ProtectedData protectedData;
     private final Map<String, String[]> queryString;
 
