@@ -70,10 +70,10 @@ Person full name (Press first button): <span id="fullname"></span><br>
             console.log("Called from on connected!");
         };
 
-        //webSockets
-        //longPolling
-        //serverSentEvents
-        $.connection.hub.start({ transport: 'webSockets' }).done(function () {
+        //{ transport: 'webSockets' }
+        //{ transport: 'longPolling' }
+        //{ transport: 'serverSentEvents' }
+        $.connection.hub.start().done(function () {
             console.log("Connection Id: " + $.connection.hub.id);
 
             $('#btnHello').click(function() {

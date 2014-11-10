@@ -55,6 +55,7 @@ public class SignalJActor extends AbstractActor {
                 ).match(Messages.PollForMessages.class, poll -> usersActor.forward(poll, context())
                 ).match(Messages.LongPollingSend.class, lps -> usersActor.forward(lps, context())
                 ).match(ServerEventMessage.class, event -> hubsActor.forward(event, context())
+                ).match(Messages.Abort.class, abort -> usersActor.forward(abort, context())
                 ).build()
         );
     }

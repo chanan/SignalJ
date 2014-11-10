@@ -476,4 +476,12 @@ public class Messages {
             this.out = out;
         }
     }
+
+    public static class Abort {
+        public final RequestContext context;
+
+        public Abort(RequestContext context) {
+            this.context = context;
+        }
+    }
 }

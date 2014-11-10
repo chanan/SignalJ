@@ -12,6 +12,7 @@ import play.libs.EventSource;
 import play.libs.F.Function;
 import play.libs.F.Promise;
 import play.libs.Json;
+import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.WebSocket;
@@ -63,6 +64,7 @@ public class SignalJ extends Controller {
                 signalJActor.tell(join, ActorRef.noSender());
             }
         });
+        return badRequest();
     }
 
     public Result connectLongPolling() {
@@ -146,7 +148,10 @@ public class SignalJ extends Controller {
         return ok(chunks);
     }
 
+    @BodyParser.Of(value = BodyParser.Text.class)
     public Result abort() {
-        return TODO;
+        final RequestContext context = new RequestContext(request());
+        signalJActor.tell(new Messages.Abort(context), ActorRef.noSender());
+        return ok();
     }
 }

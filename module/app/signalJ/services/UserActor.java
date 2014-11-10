@@ -17,8 +17,7 @@ class UserActor extends AbstractActor {
     private final ProtectedData protectedData;
     private final Map<Long, Set<TransportMessage>> messages = new HashMap<>();
     private long messageId = 0;
-    private ActorRef transport;
-    private boolean connected = false;
+    private Optional<ActorRef> transport = Optional.empty();
     private final List<String> hubs = new ArrayList<>();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
     private UUID uuid;
@@ -32,30 +31,28 @@ class UserActor extends AbstractActor {
                     uuid = join.getContext().connectionId;
                     queryString = join.getContext().queryString;
                     transportType = join.getTransportType();
-                    transport = context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join));
-                    transport.tell(join, self());
-                    connected = true;
-                    context().watch(transport);
+                    transport = Optional.of(context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join)));
+                    transport.get().forward(join, context());
+                    context().watch(transport.get());
                     hubs.add(join.getContext().hubName);
                 }).match(Messages.MethodReturn.class, methodReturn -> {
                     final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.out, methodReturn.context, methodReturn.returnValue, messageId++);
                     storeMessage(message);
-                    if (connected) transport.tell(message, self());
+                    transport.ifPresent(t -> t.forward(message, context()));
                 }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {
                     final Messages.ClientFunctionCall message = new Messages.ClientFunctionCall(clientFunctionCall.method, clientFunctionCall.hubName, clientFunctionCall.context, clientFunctionCall.sendType, clientFunctionCall.name, clientFunctionCall.args, clientFunctionCall.clients, clientFunctionCall.allExcept, clientFunctionCall.groupName, messageId++);
                     storeMessage(message);
-                    if (connected) transport.tell(message, self());
+                    transport.ifPresent(t -> t.forward(message, context()));
                 }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
                     final Messages.ClientCallEnd message = new Messages.ClientCallEnd(clientCallEnd.out, clientCallEnd.context, messageId++);
                     storeMessage(message);
-                    if (connected) transport.tell(message, self());
+                    transport.ifPresent(t -> t.forward(message, context()));
                 }).match(Messages.Reconnect.class, reconnect -> {
                     attemptStopTransport();
                     //TODO Fix the below line to be the correct join and not hardcoded to websocket
                     final Messages.JoinWebsocket join = new Messages.JoinWebsocket(reconnect.out, reconnect.in, reconnect.context);
-                    transport = context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join));
-                    transport.tell(reconnect, self());
-                    connected = true;
+                    transport = Optional.of(context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join)));
+                    transport.get().forward(reconnect, context());
                     resendMessages();
                 }).match(Messages.Quit.class, quit -> {
                     context().setReceiveTimeout(Duration.create(SignalJPlugin.getConfiguration().getDisconnectTimeout(), TimeUnit.SECONDS));
@@ -63,24 +60,29 @@ class UserActor extends AbstractActor {
                     hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(new RequestContext(uuid, queryString, hub)), self()));
                     context().stop(self());
                 }).match(Messages.Ack.class, ack -> {
-                    if(messages.containsKey(ack.message.getMessageId()) && messages.get(ack.message.getMessageId()).contains(ack.message)) {
+                    if (messages.containsKey(ack.message.getMessageId()) && messages.get(ack.message.getMessageId()).contains(ack.message)) {
                         messages.get(ack.message.getMessageId()).remove(ack.message);
                         if (messages.get(ack.message.getMessageId()).isEmpty())
                             messages.remove(ack.message.getMessageId());
                     }
                 }).match(Terminated.class, t -> t.actor().equals(transport), t -> {
-                    transport = null;
-                    connected = false;
+                    transport = Optional.empty();
+                    context().setReceiveTimeout(Duration.create(SignalJPlugin.getConfiguration().getDisconnectTimeout(), TimeUnit.SECONDS));
                 }).match(Messages.StateChange.class, state -> {
                     storeMessage(state);
-                    if (connected) transport.tell(state, self());
+                    transport.ifPresent(t -> t.forward(state, context()));
                 }).match(Messages.Error.class, error -> {
                     storeMessage(error);
-                    if (connected) transport.tell(error, self());
+                    transport.ifPresent(t -> t.forward(error, context()));
                 }).match(Messages.PollForMessages.class, poll -> {
-                    if(connected && transportType == TransportType.longPolling) transport.forward(poll, context());
+                    if (transportType == TransportType.longPolling) transport.ifPresent(t -> t.forward(poll, context()));
                 }).match(Messages.LongPollingSend.class, lps -> {
-                    if(connected && transportType == TransportType.longPolling) transport.forward(lps, context());
+                    if (transportType == TransportType.longPolling) transport.ifPresent(t -> t.forward(lps, context()));
+                }).match(Messages.Abort.class, abort -> {
+                    if(transport.isPresent()) {
+                        attemptStopTransport();
+                        transport = Optional.empty();
+                    }
                 }).build()
         );
     }
@@ -106,12 +108,12 @@ class UserActor extends AbstractActor {
 
     private void resendMessages() {
         messages.keySet().stream().sorted().map(l -> messages.get(l))
-                .forEach(set -> set.stream().forEach(m -> transport.tell(m, self())));
+                .forEach(set -> set.stream().forEach(m -> transport.ifPresent(t -> t.tell(m, self()))));
     }
 
     private void attemptStopTransport() {
         try {
-            if (connected) transport.tell(PoisonPill.getInstance(), self());
+            transport.ifPresent(t -> t.tell(PoisonPill.getInstance(), self()));
         } catch (Exception e) { }
     }
 }

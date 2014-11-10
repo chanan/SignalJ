@@ -50,4 +50,14 @@ public class RequestContext {
         final JsonNode root = Json.parse(connectionData);
         return root.findValue("name").textValue();
     }
+
+    @Override
+    public String toString() {
+        return "RequestContext{" +
+                "connectionId=" + connectionId +
+                ", messageId=" + messageId +
+                ", queryString=" + queryString +
+                ", hubName='" + hubName + '\'' +
+                '}';
+    }
 }
