@@ -64,7 +64,6 @@ public class SignalJ extends Controller {
                 signalJActor.tell(join, ActorRef.noSender());
             }
         });
-        return badRequest();
     }
 
     public Result connectLongPolling() {
