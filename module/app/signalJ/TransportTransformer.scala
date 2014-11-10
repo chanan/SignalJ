@@ -1,7 +1,6 @@
 package signalJ
 
 import play.api.mvc.RequestHeader
-import play.mvc.Http.{RequestHeader => JavaHeader}
 
 object TransportTransformer {
   def transform(request: RequestHeader): RequestHeader = {

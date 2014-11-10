@@ -21,7 +21,7 @@ public class SignalJActor extends AbstractActor {
         receive(
                 ReceiveBuilder.match(TransportJoinMessage.class, join -> {
                     usersActor.forward(join, context());
-                    Logger.debug(join.getConnectionId() + " logged on");
+                    Logger.debug(join.getContext().connectionId + " logged on");
                 }).match(Messages.Quit.class, quit -> {
                     usersActor.forward(quit, context());
                     groupsActor.forward(quit, context());
@@ -55,6 +55,7 @@ public class SignalJActor extends AbstractActor {
                 ).match(Messages.PollForMessages.class, poll -> usersActor.forward(poll, context())
                 ).match(Messages.LongPollingSend.class, lps -> usersActor.forward(lps, context())
                 ).match(ServerEventMessage.class, event -> hubsActor.forward(event, context())
+                ).match(Messages.Abort.class, abort -> usersActor.forward(abort, context())
                 ).build()
         );
     }

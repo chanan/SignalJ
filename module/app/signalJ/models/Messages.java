@@ -1,6 +1,5 @@
 package signalJ.models;
 
-import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.JsonNode;
 import play.libs.EventSource;
 import play.mvc.Results;
@@ -191,33 +190,19 @@ public class Messages {
     }
 
     public static class JoinWebsocket implements TransportJoinMessage {
-        public final UUID uuid;
+        public final RequestContext context;
         public final WebSocket.Out<JsonNode> out;
         public final WebSocket.In<JsonNode> in;
-        public final String hubName;
-        public final Map<String, String[]> queryString;
 
-        public JoinWebsocket(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid, String hubName, Map<String, String[]> queryString) {
+        public JoinWebsocket(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, RequestContext context) {
             this.out = out;
             this.in = in;
-            this.uuid = uuid;
-            this.hubName = hubName;
-            this.queryString = queryString;
+            this.context = context;
         }
 
         @Override
-        public UUID getConnectionId() {
-            return uuid;
-        }
-
-        @Override
-        public String getHubName() {
-            return hubName;
-        }
-
-        @Override
-        public Map<String, String[]> getQueryString() {
-            return queryString;
+        public RequestContext getContext() {
+            return context;
         }
 
         @Override
@@ -227,14 +212,14 @@ public class Messages {
     }
 
     public static class Reconnect {
-        public final UUID uuid;
+        public final RequestContext context;
         public final WebSocket.Out<JsonNode> out;
         public final WebSocket.In<JsonNode> in;
 
-        public Reconnect(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, UUID uuid) {
+        public Reconnect(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, RequestContext context) {
             this.out = out;
             this.in = in;
-            this.uuid = uuid;
+            this.context = context;
         }
     }
 
@@ -257,22 +242,19 @@ public class Messages {
     }
 
     public static class Execute {
-        public final UUID uuid;
+        public final RequestContext context;
         public final JsonNode json;
-        public final Map<String, String[]> queryString;
         public final Optional<Results.Chunks.Out<String>> out;
 
-        public Execute(UUID uuid, JsonNode json, Map<String, String[]> queryString) {
-            this.uuid = uuid;
-            this.json = json;
-            this.queryString = queryString;
+        public Execute(RequestContext context, JsonNode data) {
+            this.context = context;
+            this.json = data;
             this.out = Optional.empty();
         }
 
-        public Execute(Results.Chunks.Out<String> out, UUID uuid, JsonNode json, Map<String, String[]> queryString) {
-            this.uuid = uuid;
-            this.json = json;
-            this.queryString = queryString;
+        public Execute(Results.Chunks.Out<String> out, RequestContext context, JsonNode data) {
+            this.context = context;
+            this.json = data;
             this.out = Optional.of(out);
         }
     }
@@ -397,112 +379,56 @@ public class Messages {
     }
 
     public static class Connection implements ServerEventMessage {
-        public final UUID uuid;
-        public final String hubName;
-        public final Map<String, String[]> queryString;
+        public final RequestContext context;
 
-        public Connection(UUID uuid, String hubName, Map<String, String[]> queryString) {
-            this.uuid = uuid;
-            this.hubName = hubName;
-            this.queryString = queryString;
+        public Connection(RequestContext context) {
+            this.context = context;
         }
 
         @Override
-        public UUID getUuid() {
-            return uuid;
-        }
-
-        @Override
-        public String getHubName() {
-            return hubName;
-        }
-
-        @Override
-        public Map<String, String[]> getQueryString() {
-            return queryString;
+        public RequestContext getContext() {
+            return context;
         }
     }
 
     public static class Reconnection implements ServerEventMessage {
-        public final UUID uuid;
-        public final String hubName;
-        public final Map<String, String[]> queryString;
+        public final RequestContext context;
 
-        public Reconnection(UUID uuid, String hubName, Map<String, String[]> queryString) {
-            this.uuid = uuid;
-            this.hubName = hubName;
-            this.queryString = queryString;
+        public Reconnection(RequestContext context) {
+            this.context = context;
         }
 
         @Override
-        public UUID getUuid() {
-            return uuid;
-        }
-
-        @Override
-        public String getHubName() {
-            return hubName;
-        }
-
-        @Override
-        public Map<String, String[]> getQueryString() {
-            return queryString;
+        public RequestContext getContext() {
+            return context;
         }
     }
 
     public static class Disconnection implements ServerEventMessage {
-        public final UUID uuid;
-        public final String hubName;
-        public final Map<String, String[]> queryString;
+        public final RequestContext context;
 
-        public Disconnection(UUID uuid, String hubName, Map<String, String[]> queryString) {
-            this.uuid = uuid;
-            this.hubName = hubName;
-            this.queryString = queryString;
+        public Disconnection(RequestContext context) {
+            this.context = context;
         }
 
         @Override
-        public UUID getUuid() {
-            return uuid;
-        }
-
-        @Override
-        public String getHubName() {
-            return hubName;
-        }
-
-        @Override
-        public Map<String, String[]> getQueryString() {
-            return queryString;
+        public RequestContext getContext() {
+            return context;
         }
     }
 
     public static class JoinServerSentEvents implements TransportJoinMessage {
-        public final UUID uuid;
+        public final RequestContext context;
         public final EventSource eventSource;
-        public final String hubName;
-        public final Map<String, String[]> queryString;
 
-        public JoinServerSentEvents(EventSource eventSource, UUID uuid, String hubName, Map<String, String[]> queryString) {
+        public JoinServerSentEvents(EventSource eventSource, RequestContext context) {
             this.eventSource = eventSource;
-            this.uuid = uuid;
-            this.hubName = hubName;
-            this.queryString = queryString;
+            this.context = context;
         }
 
         @Override
-        public UUID getConnectionId() {
-            return uuid;
-        }
-
-        @Override
-        public String getHubName() {
-            return hubName;
-        }
-
-        @Override
-        public Map<String, String[]> getQueryString() {
-            return queryString;
+        public RequestContext getContext() {
+            return context;
         }
 
         @Override
@@ -512,31 +438,17 @@ public class Messages {
     }
 
     public static class JoinLongPolling implements TransportJoinMessage {
-        public final UUID uuid;
+        public final RequestContext context;
         public final Results.Chunks.Out<String> out;
-        public final String hubName;
-        public final Map<String, String[]> queryString;
 
-        public JoinLongPolling(Results.Chunks.Out<String> out, UUID uuid, String hubName, Map<String, String[]> queryString) {
+        public JoinLongPolling(Results.Chunks.Out<String> out, RequestContext context) {
             this.out = out;
-            this.uuid = uuid;
-            this.hubName = hubName;
-            this.queryString = queryString;
+            this.context = context;
         }
 
         @Override
-        public UUID getConnectionId() {
-            return uuid;
-        }
-
-        @Override
-        public String getHubName() {
-            return hubName;
-        }
-
-        @Override
-        public Map<String, String[]> getQueryString() {
-            return queryString;
+        public RequestContext getContext() {
+            return context;
         }
 
         @Override
@@ -546,16 +458,12 @@ public class Messages {
     }
 
     public static class PollForMessages {
-        public final UUID uuid;
         public final Results.Chunks.Out<String> out;
-        public final String hubName;
-        public final Map<String, String[]> queryString;
+        public final RequestContext context;
 
-        public PollForMessages(Results.Chunks.Out<String> out, UUID uuid, String hubName, Map<String, String[]> queryString) {
+        public PollForMessages(Results.Chunks.Out<String> out, RequestContext context) {
+            this.context = context;
             this.out = out;
-            this.uuid = uuid;
-            this.hubName = hubName;
-            this.queryString = queryString;
         }
     }
 
@@ -569,7 +477,11 @@ public class Messages {
         }
     }
 
-    public static class LongPollingBeat {
+    public static class Abort {
+        public final RequestContext context;
 
+        public Abort(RequestContext context) {
+            this.context = context;
+        }
     }
 }

@@ -11,3 +11,5 @@ GET         /signalj/jquery.signalR.js               @signalJ.services.SignalJ.s
 GET         /signalj/connect                         @signalJ.services.SignalJ.connect()
 POST        /signalj/send                            @signalJ.services.SignalJ.send()
 GET         /signalj/poll                            @signalJ.services.SignalJ.poll()
+POST        /signalj/abort                           @signalJ.services.SignalJ.abort()
+GET         /signalj/abort                           @signalJ.services.SignalJ.abort()

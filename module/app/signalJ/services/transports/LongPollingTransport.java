@@ -22,7 +22,6 @@ public class LongPollingTransport extends AbstractActor {
     private final String prefix = Cursor.GetCursorPrefix();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
     private final ProtectedData protectedData;
-    private final Map<String, String[]> queryString;
     private List<TransportMessage> messages = new ArrayList<>();
 
     private int count = 0;
@@ -30,8 +29,7 @@ public class LongPollingTransport extends AbstractActor {
 
     public LongPollingTransport(ProtectedData protectedData, Messages.JoinLongPolling join) {
         this.protectedData = protectedData;
-        this.uuid = join.uuid;
-        this.queryString = join.queryString;
+        this.uuid = join.context.connectionId;
 
         context().setReceiveTimeout(Duration.create("1 second"));
 
@@ -50,7 +48,7 @@ public class LongPollingTransport extends AbstractActor {
                 }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
                     clientCallEnd.out.ifPresent(o -> writeOneMessage(clientCallEnd, o));
                     if (!clientCallEnd.out.isPresent()) if (!out.isPresent()) messages.add(clientCallEnd);
-                }).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect Longpolling " + r.uuid)
+                }).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect Longpolling " + r.context.connectionId)
                 ).match(Messages.StateChange.class, state -> {
                     state.out.ifPresent(o -> writeOneMessage(state, o));
                     if (!state.out.isPresent()) messages.add(state);
