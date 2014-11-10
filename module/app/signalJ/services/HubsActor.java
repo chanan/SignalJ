@@ -38,7 +38,7 @@ class HubsActor extends AbstractActor {
                     final ActorRef hub = getHub(execute.json.get("H").textValue());
                     hub.forward(execute, getContext());
                 }).match(ServerEventMessage.class, event -> {
-                    final ActorRef hub = getHub(event.getHubName());
+                    final ActorRef hub = getHub(event.getContext().hubName);
                     hub.forward(event, getContext());
                 }).build()
         );

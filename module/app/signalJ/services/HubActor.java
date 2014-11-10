@@ -33,11 +33,11 @@ class HubActor extends AbstractActor {
                     clazz = registerHub.hub;
                     Logger.debug("Registered hub actor: " + hubDescriptor.getJsonName());
                 }).match(Messages.Execute.class, execute -> {
-                    final UUID uuid = execute.uuid;
+                    final UUID uuid = execute.context.connectionId;
                     final String methodName = execute.json.get("M").textValue();
                     try {
                         final Hub<?> instance = (Hub<?>) GlobalHost.getHub(clazz.getName());//   .getDependencyResolver().getHubInstance(hub, _classLoader);
-                        final RequestContext context = new RequestContext(uuid, execute.json.get("I").asInt(), execute.queryString);
+                        final RequestContext context = execute.context.setMessageId(execute.json.get("I").asInt());
                         instance.setContext(context);
                         instance.setCallerState(getState(execute.json.get("S")));
                         final Method m = getMethod(instance, methodName, execute.json.get("A"));
@@ -46,10 +46,10 @@ class HubActor extends AbstractActor {
                             if (!instance.getCallerState().getChanges().isPresent()) {
                                 signalJActor.tell(new Messages.ClientCallEnd(execute.out, context), self());
                             } else {
-                                instance.getCallerState().getChanges().ifPresent(changes -> signalJActor.tell(new Messages.StateChange(execute.out, uuid, changes, context.messageId), self()));
+                                instance.getCallerState().getChanges().ifPresent(changes -> signalJActor.tell(new Messages.StateChange(execute.out, uuid, changes, context.messageId.get()), self()));
                             }
                         } else {
-                            instance.getCallerState().getChanges().ifPresent(changes -> signalJActor.tell(new Messages.StateChange(uuid, changes, context.messageId), self()));
+                            instance.getCallerState().getChanges().ifPresent(changes -> signalJActor.tell(new Messages.StateChange(uuid, changes, context.messageId.get()), self()));
                             signalJActor.tell(new Messages.MethodReturn(execute.out, context, ret), self());
                         }
                     } catch (Exception e) {
@@ -70,10 +70,9 @@ class HubActor extends AbstractActor {
     }
 
     private void executeServerEvent(ServerEventMessage event, Hub<?> instance, Consumer<Hub<?>> hubEvent, String eventName) {
-        final UUID uuid = event.getUuid();
+        final UUID uuid = event.getContext().connectionId;
         try {
-            final RequestContext context = new RequestContext(uuid, -1, event.getQueryString());
-            instance.setContext(context);
+            instance.setContext(event.getContext());
             hubEvent.accept(instance);
         } catch (Exception e) {
             Logger.error(String.format("Error in executing hub %s", eventName), e);

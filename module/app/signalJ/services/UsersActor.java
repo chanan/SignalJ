@@ -22,7 +22,7 @@ class UsersActor extends AbstractActor {
         this.protectedData = protectedData;
         receive(
             ReceiveBuilder.match(TransportJoinMessage.class, join -> {
-                final ActorRef user = getUser(join.getConnectionId());
+                final ActorRef user = getUser(join.getContext().connectionId);
                 user.forward(join, context());
             }).match(Messages.Quit.class, quit -> {
                 final ActorRef user = getUser(quit.uuid);
@@ -64,7 +64,7 @@ class UsersActor extends AbstractActor {
                         break;
                 }
             }).match(Messages.Reconnect.class, reconnect -> {
-                final ActorRef user = getUser(reconnect.uuid);
+                final ActorRef user = getUser(reconnect.context.connectionId);
                 user.forward(reconnect, context());
             }).match(Messages.StateChange.class, state -> {
                 final ActorRef user = getUser(state.uuid);
@@ -73,7 +73,7 @@ class UsersActor extends AbstractActor {
                 final ActorRef user = getUser(error.uuid);
                 user.forward(error, context());
             }).match(Messages.PollForMessages.class, poll -> {
-                final ActorRef user = getUser(poll.uuid);
+                final ActorRef user = getUser(poll.context.connectionId);
                 user.forward(poll, context());
             }).match(Messages.LongPollingSend.class, lps -> {
                 final ActorRef user = getUser(lps.uuid);

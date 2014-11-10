@@ -5,10 +5,7 @@ import akka.japi.pf.ReceiveBuilder;
 import scala.concurrent.duration.Duration;
 import signalJ.SignalJPlugin;
 import signalJ.infrastructure.ProtectedData;
-import signalJ.models.Messages;
-import signalJ.models.TransportJoinMessage;
-import signalJ.models.TransportMessage;
-import signalJ.models.TransportType;
+import signalJ.models.*;
 import signalJ.services.transports.LongPollingTransport;
 import signalJ.services.transports.ServerSentTransport;
 import signalJ.services.transports.WebsocketTransport;
@@ -32,13 +29,14 @@ class UserActor extends AbstractActor {
         this.protectedData = protectedData;
         receive(
                 ReceiveBuilder.match(TransportJoinMessage.class, join -> {
-                    uuid = join.getConnectionId();
+                    uuid = join.getContext().connectionId;
+                    queryString = join.getContext().queryString;
                     transportType = join.getTransportType();
                     transport = context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join));
                     transport.tell(join, self());
                     connected = true;
                     context().watch(transport);
-                    hubs.add(join.getHubName());
+                    hubs.add(join.getContext().hubName);
                 }).match(Messages.MethodReturn.class, methodReturn -> {
                     final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.out, methodReturn.context, methodReturn.returnValue, messageId++);
                     storeMessage(message);
@@ -54,7 +52,7 @@ class UserActor extends AbstractActor {
                 }).match(Messages.Reconnect.class, reconnect -> {
                     attemptStopTransport();
                     //TODO Fix the below line to be the correct join and not hardcoded to websocket
-                    final Messages.JoinWebsocket join = new Messages.JoinWebsocket(reconnect.out, reconnect.in, reconnect.uuid, null, queryString);
+                    final Messages.JoinWebsocket join = new Messages.JoinWebsocket(reconnect.out, reconnect.in, reconnect.context);
                     transport = context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join));
                     transport.tell(reconnect, self());
                     connected = true;
@@ -62,7 +60,7 @@ class UserActor extends AbstractActor {
                 }).match(Messages.Quit.class, quit -> {
                     context().setReceiveTimeout(Duration.create(SignalJPlugin.getConfiguration().getDisconnectTimeout(), TimeUnit.SECONDS));
                 }).match(ReceiveTimeout.class, r -> {
-                    hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(uuid, hub, queryString), self()));
+                    hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(new RequestContext(uuid, queryString, hub)), self()));
                     context().stop(self());
                 }).match(Messages.Ack.class, ack -> {
                     if(messages.containsKey(ack.message.getMessageId()) && messages.get(ack.message.getMessageId()).contains(ack.message)) {

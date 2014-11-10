@@ -53,7 +53,7 @@ public class JsonHelper {
         final StringBuilder sb = new StringBuilder();
         sb.append("{").append("\"R\":");
         sb.append(Json.toJson(methodReturn.returnValue));
-        sb.append(",\"I\":\"").append(methodReturn.context.messageId).append("\"}");
+        sb.append(",\"I\":\"").append(methodReturn.context.messageId.get()).append("\"}");
         final JsonNode event = Json.parse(sb.toString());
         Logger.debug("Return Value: " + event);
         return event;
@@ -126,7 +126,7 @@ public class JsonHelper {
 
     public static JsonNode writeConfirm(RequestContext context) throws IOException {
         final StringBuilder sb = new StringBuilder();
-        sb.append("{\"I\":\"").append(context.messageId).append("\"}");
+        sb.append("{\"I\":\"").append(context.messageId.get()).append("\"}");
         return Json.parse(sb.toString());
 
     }

@@ -21,7 +21,7 @@ public class SignalJActor extends AbstractActor {
         receive(
                 ReceiveBuilder.match(TransportJoinMessage.class, join -> {
                     usersActor.forward(join, context());
-                    Logger.debug(join.getConnectionId() + " logged on");
+                    Logger.debug(join.getContext().connectionId + " logged on");
                 }).match(Messages.Quit.class, quit -> {
                     usersActor.forward(quit, context());
                     groupsActor.forward(quit, context());
