@@ -16,8 +16,6 @@ import signalJ.models.Messages;
 import signalJ.models.RequestContext;
 import signalJ.models.TransportMessage;
 
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class WebsocketTransport extends AbstractActor {
@@ -59,7 +57,7 @@ public class WebsocketTransport extends AbstractActor {
                     out.write(JsonHelper.writeConfirm(clientCallEnd.context));
                     sendAck(clientCallEnd);
                 }).match(ReceiveTimeout.class, r -> out.write(JsonHelper.writeHeartbeat())
-                ).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect Websocket " + r.context.connectionId)
+                ).match(Messages.ReconnectWebsocket.class, r -> Logger.debug("Reconnect Websocket " + r.context.connectionId)
                 ).match(Messages.StateChange.class, state -> {
                     out.write(JsonHelper.writeState(state));
                     sendAck(state);

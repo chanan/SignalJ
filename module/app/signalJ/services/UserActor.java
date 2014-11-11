@@ -47,10 +47,9 @@ class UserActor extends AbstractActor {
                     final Messages.ClientCallEnd message = new Messages.ClientCallEnd(clientCallEnd.out, clientCallEnd.context, messageId++);
                     storeMessage(message);
                     transport.ifPresent(t -> t.forward(message, context()));
-                }).match(Messages.Reconnect.class, reconnect -> {
+                }).match(TransportReconnectMessage.class, reconnect -> {
                     attemptStopTransport();
-                    //TODO Fix the below line to be the correct join and not hardcoded to websocket
-                    final Messages.JoinWebsocket join = new Messages.JoinWebsocket(reconnect.out, reconnect.in, reconnect.context);
+                    final TransportJoinMessage join = getJoinFromReconnect(reconnect);
                     transport = Optional.of(context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join)));
                     transport.get().forward(reconnect, context());
                     resendMessages();
@@ -75,11 +74,10 @@ class UserActor extends AbstractActor {
                     storeMessage(error);
                     transport.ifPresent(t -> t.forward(error, context()));
                 }).match(Messages.PollForMessages.class, poll -> {
-                    if (transportType == TransportType.longPolling) transport.ifPresent(t -> t.forward(poll, context()));
-                }).match(Messages.LongPollingSend.class, lps -> {
-                    if (transportType == TransportType.longPolling) transport.ifPresent(t -> t.forward(lps, context()));
+                    if (transportType == TransportType.longPolling)
+                        transport.ifPresent(t -> t.forward(poll, context()));
                 }).match(Messages.Abort.class, abort -> {
-                    if(transport.isPresent()) {
+                    if (transport.isPresent()) {
                         attemptStopTransport();
                         transport = Optional.empty();
                     }
@@ -95,6 +93,23 @@ class UserActor extends AbstractActor {
                 return ServerSentTransport.class;
             case longPolling:
                 return LongPollingTransport.class;
+            case foreverFrames:
+                throw new Exception("Not Implemented");
+        }
+        throw new IllegalArgumentException();
+    }
+
+    private TransportJoinMessage getJoinFromReconnect(TransportReconnectMessage reconnect) throws Exception {
+        switch (reconnect.getTransportType()) {
+            case websocket:
+                final Messages.ReconnectWebsocket rw = (Messages.ReconnectWebsocket) reconnect;
+                return new Messages.JoinWebsocket(rw.out, rw.in, rw.context);
+            case serverSentEvents:
+                final Messages.ReconnectServerSentEvents rs = (Messages.ReconnectServerSentEvents) reconnect;
+                return new Messages.JoinServerSentEvents(rs.eventSource, rs.context);
+            case longPolling:
+                final Messages.ReconnectLongPolling rl = (Messages.ReconnectLongPolling) reconnect;
+                return new Messages.JoinLongPolling(rl.out, rl.context);
             case foreverFrames:
                 throw new Exception("Not Implemented");
         }

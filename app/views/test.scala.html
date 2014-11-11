@@ -73,7 +73,7 @@ Person full name (Press first button): <span id="fullname"></span><br>
         //{ transport: 'webSockets' }
         //{ transport: 'longPolling' }
         //{ transport: 'serverSentEvents' }
-        $.connection.hub.start().done(function () {
+        $.connection.hub.start({ transport: 'serverSentEvents' }).done(function () {
             console.log("Connection Id: " + $.connection.hub.id);
 
             $('#btnHello').click(function() {

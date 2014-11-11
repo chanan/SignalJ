@@ -1,6 +1,6 @@
 package signalJ.models;
 
-public interface TransportJoinMessage {
+public interface TransportReconnectMessage {
     public RequestContext getContext();
     public TransportType getTransportType();
 }

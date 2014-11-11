@@ -7,6 +7,7 @@ import akka.japi.pf.ReceiveBuilder;
 import signalJ.infrastructure.ProtectedData;
 import signalJ.models.Messages;
 import signalJ.models.TransportJoinMessage;
+import signalJ.models.TransportReconnectMessage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -63,9 +64,6 @@ class UsersActor extends AbstractActor {
                             });
                             break;
                     }
-                }).match(Messages.Reconnect.class, reconnect -> {
-                    final ActorRef user = getUser(reconnect.context.connectionId);
-                    user.forward(reconnect, context());
                 }).match(Messages.StateChange.class, state -> {
                     final ActorRef user = getUser(state.uuid);
                     user.forward(state, context());
@@ -75,12 +73,12 @@ class UsersActor extends AbstractActor {
                 }).match(Messages.PollForMessages.class, poll -> {
                     final ActorRef user = getUser(poll.context.connectionId);
                     user.forward(poll, context());
-                }).match(Messages.LongPollingSend.class, lps -> {
-                    final ActorRef user = getUser(lps.uuid);
-                    user.forward(lps, context());
                 }).match(Messages.Abort.class, abort -> {
                     final ActorRef user = getUser(abort.context.connectionId);
                     user.forward(abort, context());
+                }).match(TransportReconnectMessage.class, reconnect -> {
+                    final ActorRef user = getUser(reconnect.getContext().connectionId);
+                    user.forward(reconnect, context());
                 }).build()
         );
     }

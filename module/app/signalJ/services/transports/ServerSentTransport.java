@@ -53,7 +53,7 @@ public class ServerSentTransport extends AbstractActor {
                     eventSource.send(EventSource.Event.event(JsonHelper.writeConfirm(clientCallEnd.context)));
                     sendAck(clientCallEnd);
                 }).match(ReceiveTimeout.class, r -> eventSource.send(EventSource.Event.event(JsonHelper.writeHeartbeat()))
-                ).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect ServerSentEvents " + r.context.connectionId)
+                ).match(Messages.ReconnectServerSentEvents.class, r -> Logger.debug("Reconnect ServerSentEvents " + r.context.connectionId)
                 ).match(Messages.StateChange.class, state -> {
                     eventSource.send(EventSource.Event.event(JsonHelper.writeState(state)));
                     sendAck(state);

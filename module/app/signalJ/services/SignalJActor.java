@@ -6,10 +6,7 @@ import akka.actor.Props;
 import akka.japi.pf.ReceiveBuilder;
 import play.Logger;
 import signalJ.infrastructure.ProtectedData;
-import signalJ.models.Messages;
-import signalJ.models.ServerEventMessage;
-import signalJ.models.TransportJoinMessage;
-import signalJ.models.TransportMessage;
+import signalJ.models.*;
 
 public class SignalJActor extends AbstractActor {
     private final ActorRef usersActor;
@@ -48,14 +45,13 @@ public class SignalJActor extends AbstractActor {
                 }).match(Messages.MethodReturn.class, methodReturn -> usersActor.forward(methodReturn, context())
                 ).match(Messages.GetJavaScript.class, getJavaScript -> hubsActor.forward(getJavaScript, context())
                 ).match(Messages.ClientCallEnd.class, clientCallEnd -> usersActor.forward(clientCallEnd, context())
-                ).match(Messages.Reconnect.class, reconnect -> usersActor.forward(reconnect, context())
                 ).match(Messages.StateChange.class, state -> usersActor.forward(state, context())
                 ).match(Messages.Error.class, error -> usersActor.forward(error, context())
                 ).match(TransportMessage.class, msg -> hubsActor.forward(msg, context())
                 ).match(Messages.PollForMessages.class, poll -> usersActor.forward(poll, context())
-                ).match(Messages.LongPollingSend.class, lps -> usersActor.forward(lps, context())
                 ).match(ServerEventMessage.class, event -> hubsActor.forward(event, context())
                 ).match(Messages.Abort.class, abort -> usersActor.forward(abort, context())
+                ).match(TransportReconnectMessage.class, reconnect -> usersActor.forward(reconnect, context())
                 ).build()
         );
     }

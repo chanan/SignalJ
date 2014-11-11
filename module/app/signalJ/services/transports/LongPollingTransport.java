@@ -14,7 +14,10 @@ import signalJ.models.Messages;
 import signalJ.models.TransportMessage;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class LongPollingTransport extends AbstractActor {
     private final UUID uuid;
@@ -48,7 +51,7 @@ public class LongPollingTransport extends AbstractActor {
                 }).match(Messages.ClientCallEnd.class, clientCallEnd -> {
                     clientCallEnd.out.ifPresent(o -> writeOneMessage(clientCallEnd, o));
                     if (!clientCallEnd.out.isPresent()) if (!out.isPresent()) messages.add(clientCallEnd);
-                }).match(Messages.Reconnect.class, r -> Logger.debug("Reconnect Longpolling " + r.context.connectionId)
+                }).match(Messages.ReconnectLongPolling.class, r -> Logger.debug("Reconnect Longpolling " + r.context.connectionId)
                 ).match(Messages.StateChange.class, state -> {
                     state.out.ifPresent(o -> writeOneMessage(state, o));
                     if (!state.out.isPresent()) messages.add(state);

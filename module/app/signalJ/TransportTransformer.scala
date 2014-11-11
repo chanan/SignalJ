@@ -8,6 +8,10 @@ object TransportTransformer {
       val maybeTransport = request.getQueryString("transport")
       val transportPath = maybeTransport.fold(request.path) { transport => request.path + "/" + transport}
       return request.copy(path = transportPath)
+    } else if(request.path.toLowerCase().endsWith("/reconnect") && request.getQueryString("transport") != null) {
+      val maybeTransport = request.getQueryString("transport")
+      val transportPath = maybeTransport.fold(request.path) { transport => request.path + "/" + transport}
+      return request.copy(path = transportPath)
     }
     request
   }

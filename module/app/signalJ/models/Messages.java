@@ -211,18 +211,6 @@ public class Messages {
         }
     }
 
-    public static class Reconnect {
-        public final RequestContext context;
-        public final WebSocket.Out<JsonNode> out;
-        public final WebSocket.In<JsonNode> in;
-
-        public Reconnect(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, RequestContext context) {
-            this.out = out;
-            this.in = in;
-            this.context = context;
-        }
-    }
-
     public static class Quit {
         public final UUID uuid;
 
@@ -467,21 +455,73 @@ public class Messages {
         }
     }
 
-    public static class LongPollingSend {
-        public final UUID uuid;
-        public final Results.Chunks.Out<String> out;
-
-        public LongPollingSend(UUID uuid, Results.Chunks.Out<String> out) {
-            this.uuid = uuid;
-            this.out = out;
-        }
-    }
-
     public static class Abort {
         public final RequestContext context;
 
         public Abort(RequestContext context) {
             this.context = context;
+        }
+    }
+
+    public static class ReconnectWebsocket implements TransportReconnectMessage {
+        public final RequestContext context;
+        public final WebSocket.Out<JsonNode> out;
+        public final WebSocket.In<JsonNode> in;
+
+        public ReconnectWebsocket(WebSocket.Out<JsonNode> out, WebSocket.In<JsonNode> in, RequestContext context) {
+            this.out = out;
+            this.in = in;
+            this.context = context;
+        }
+
+        @Override
+        public RequestContext getContext() {
+            return context;
+        }
+
+        @Override
+        public TransportType getTransportType() {
+            return TransportType.websocket;
+        }
+    }
+
+    public static class ReconnectServerSentEvents implements TransportReconnectMessage {
+        public final RequestContext context;
+        public final EventSource eventSource;
+
+        public ReconnectServerSentEvents(EventSource eventSource, RequestContext context) {
+            this.eventSource = eventSource;
+            this.context = context;
+        }
+
+        @Override
+        public RequestContext getContext() {
+            return context;
+        }
+
+        @Override
+        public TransportType getTransportType() {
+            return TransportType.serverSentEvents;
+        }
+    }
+
+    public static class ReconnectLongPolling implements TransportReconnectMessage {
+        public final RequestContext context;
+        public final Results.Chunks.Out<String> out;
+
+        public ReconnectLongPolling(Results.Chunks.Out<String> out, RequestContext context) {
+            this.out = out;
+            this.context = context;
+        }
+
+        @Override
+        public RequestContext getContext() {
+            return context;
+        }
+
+        @Override
+        public TransportType getTransportType() {
+            return TransportType.longPolling;
         }
     }
 }

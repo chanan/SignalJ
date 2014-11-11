@@ -76,24 +76,33 @@ public class SignalJ extends Controller {
         return ok(chunks);
     }
 
-    //Default connect action when other transports aren't enabled in the Global object
-    public WebSocket<JsonNode> connect() {
-        return connectWebsockets();
-    }
-
-    public WebSocket<JsonNode> reconnect() {
+    public WebSocket<JsonNode> reconnectWebsockets() {
         final RequestContext context = new RequestContext(request());
-        signalJActor.tell(new Messages.Reconnection(context), ActorRef.noSender());
         return new WebSocket<JsonNode>() {
             public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out){
                 try {
-                    Messages.Reconnect reconnect = new Messages.Reconnect(out, in, context);
-                    signalJActor.tell(reconnect, ActorRef.noSender());
+                    signalJActor.tell(new Messages.Reconnection(context), ActorRef.noSender());
+                    signalJActor.tell(new Messages.ReconnectWebsocket(out, in, context), ActorRef.noSender());
                 } catch (Exception ex) {
                     Logger.error("Error creating reconnecting websocket!", ex);
                 }
             }
         };
+    }
+
+    public Result reconnectServerSentEvents() {
+        final RequestContext context = new RequestContext(request());
+        return ok(new EventSource() {
+            @Override
+            public void onConnected() {
+                signalJActor.tell(new Messages.Reconnection(context), ActorRef.noSender());
+                signalJActor.tell(new Messages.ReconnectServerSentEvents(this, context), ActorRef.noSender());
+            }
+        });
+    }
+
+    public Result reconnectLongPolling() {
+        return TODO;
     }
 
     public Result start() {
