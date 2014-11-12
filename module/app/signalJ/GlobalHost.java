@@ -1,7 +1,7 @@
 package signalJ;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import play.libs.Json;
+import signalJ.infrastructure.CorsPolicy;
+import signalJ.infrastructure.impl.DisallowAllCorsPolicy;
 import signalJ.models.HubsDescriptor;
 import signalJ.services.Hub;
 import signalJ.services.HubContext;
@@ -11,6 +11,10 @@ public class GlobalHost {
 	private static DependencyResolver _dependencyResolver;
     private static ClassLoader _classLoader;
     private static HubsDescriptor descriptors;
+
+    static {
+        setDefaultServices(_defaultDependencyResolver);
+    }
 
     public static HubsDescriptor getDescriptors() {
         return descriptors;
@@ -26,9 +30,17 @@ public class GlobalHost {
 
 	public static void setDependencyResolver(DependencyResolver dependencyResolver) {
 		_dependencyResolver = dependencyResolver;
+        setDefaultServices(_dependencyResolver);
 	}
-	
-	@SuppressWarnings("unchecked")
+
+    private static void setDefaultServices(DependencyResolver dependencyResolver) {
+        if(dependencyResolver.getService(CorsPolicy.class) == null) {
+            final CorsPolicy corsPolicy = new DisallowAllCorsPolicy();
+            dependencyResolver.Register(CorsPolicy.class, () -> corsPolicy);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
 	public static<TInterface> HubContext<TInterface> getHub(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		return (HubContext<TInterface>)getInstance(className);
 	}
@@ -59,9 +71,5 @@ public class GlobalHost {
 
     public static ClassLoader getClassLoader() {
         return _classLoader;
-    }
-
-    public static void setObjectMapper(ObjectMapper mapper) {
-        Json.setObjectMapper(mapper);
     }
 }
