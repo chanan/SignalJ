@@ -1,5 +1,7 @@
 package signalJ;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import play.libs.Json;
 import signalJ.models.HubsDescriptor;
 import signalJ.services.Hub;
 import signalJ.services.HubContext;
@@ -57,5 +59,9 @@ public class GlobalHost {
 
     public static ClassLoader getClassLoader() {
         return _classLoader;
+    }
+
+    public static void setObjectMapper(ObjectMapper mapper) {
+        Json.setObjectMapper(mapper);
     }
 }
