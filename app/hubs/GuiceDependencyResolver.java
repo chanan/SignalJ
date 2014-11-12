@@ -1,11 +1,15 @@
 package hubs;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.ConfigurationException;
+import com.google.inject.Injector;
 import signalJ.DependencyResolver;
 import signalJ.services.Hub;
 
-import com.google.inject.Injector;
+import java.util.function.Supplier;
 
 public class GuiceDependencyResolver implements DependencyResolver {
-	private final Injector injector;
+	private Injector injector;
 	
 	public GuiceDependencyResolver(Injector injector) {
 		this.injector = injector;
@@ -16,4 +20,23 @@ public class GuiceDependencyResolver implements DependencyResolver {
 		Class<?> clazz = Class.forName(className, true, _classLoader);
 		return (Hub<?>) injector.getInstance(clazz);
 	}
+
+    @Override
+    public <T> void Register(Class<T> serviceClass, Supplier<T> supplier) {
+        injector = injector.createChildInjector(new AbstractModule() {
+            @Override
+            protected void configure() {
+                bind(serviceClass).toInstance(supplier.get());
+            }
+        });
+    }
+
+    @Override
+    public <T> T getService(Class<T> serviceClass) {
+        try {
+            return injector.getInstance(serviceClass);
+        } catch (ConfigurationException e) {
+            return null;
+        }
+    }
 }

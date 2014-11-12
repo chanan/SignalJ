@@ -2,6 +2,7 @@ package signalJ;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import com.typesafe.config.Config;
 import play.Application;
 import play.Logger;
 import play.Play;
@@ -44,6 +45,10 @@ public class SignalJPlugin extends Plugin {
         } catch (Exception e) {
             Logger.error("Could not construct the SignalJ plugin", e);
         }
+    }
+
+    public static play.Configuration getConfig() {
+        return plugin().application.configuration();
     }
 
     @Override

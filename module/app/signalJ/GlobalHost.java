@@ -1,7 +1,7 @@
 package signalJ;
 
 import signalJ.infrastructure.CorsPolicy;
-import signalJ.infrastructure.impl.DefaultCorsPolicy;
+import signalJ.infrastructure.impl.DisallowAllCorsPolicy;
 import signalJ.models.HubsDescriptor;
 import signalJ.services.Hub;
 import signalJ.services.HubContext;
@@ -35,7 +35,7 @@ public class GlobalHost {
 
     private static void setDefaultServices(DependencyResolver dependencyResolver) {
         if(dependencyResolver.getService(CorsPolicy.class) == null) {
-            final CorsPolicy corsPolicy = new DefaultCorsPolicy();
+            final CorsPolicy corsPolicy = new DisallowAllCorsPolicy();
             dependencyResolver.Register(CorsPolicy.class, () -> corsPolicy);
         }
     }

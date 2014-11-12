@@ -20,11 +20,8 @@ class CORSFilter extends Filter {
     )
 
   def isOriginAllowed(request: RequestHeader) = {
-    if(policy.isDomainAlllowed(request.headers.get(ORIGIN).getOrElse(""))) {
-      request.headers.get(ORIGIN)
-    } else {
-      ""
-    }
+    request.headers.get(ORIGIN)
+    .flatMap(o => if (policy.isDomainAllowed(request.headers.get(ORIGIN).getOrElse(""))) request.headers.get(ORIGIN) else None)
   }
 
   def headers(request: RequestHeader) = {
@@ -41,13 +38,10 @@ class CORSFilter extends Filter {
   def isCORS(request: RequestHeader) = request.headers.get(ORIGIN).fold(false)(_ => true)
 
   def apply(f: (RequestHeader) => Future[Result])(request: RequestHeader): Future[Result] = {
-    Logger.trace("[cors] filtering request to add cors")
     if (isCORS(request)) {
       if (isPreFlight(request)) {
-        Logger.trace("[cors] request is preflight")
         Future.successful(Default.Ok.withHeaders(headers(request):_*))
       } else {
-        Logger.trace("[cors] request is normal")
         f(request).map{_.withHeaders(defaultPreFlightResponseHeaders(request):_*)}
       }
     } else {

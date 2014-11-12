@@ -1,7 +1,8 @@
 import com.google.inject.{Injector, Guice}
 import hubs.GuiceDependencyResolver
 import play.api.{Application, GlobalSettings}
-import play.api.mvc.{Handler, RequestHeader}
+import play.api.mvc.{Filters, EssentialAction, Handler, RequestHeader}
+import signalJ.infrastructure.CORSFilter
 import signalJ.{GlobalHost, TransportTransformer}
 
 object Global extends GlobalSettings {
@@ -19,5 +20,9 @@ object Global extends GlobalSettings {
     //This is an example of setting your own resolver
     val resolver: GuiceDependencyResolver = new GuiceDependencyResolver(injector);
     GlobalHost.setDependencyResolver(resolver);
+  }
+
+  override def doFilter(next: EssentialAction): EssentialAction = {
+    Filters(super.doFilter(next), new CORSFilter)
   }
 }
