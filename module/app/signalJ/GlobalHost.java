@@ -1,5 +1,7 @@
 package signalJ;
 
+import signalJ.infrastructure.CorsPolicy;
+import signalJ.infrastructure.impl.DefaultCorsPolicy;
 import signalJ.models.HubsDescriptor;
 import signalJ.services.Hub;
 import signalJ.services.HubContext;
@@ -9,6 +11,10 @@ public class GlobalHost {
 	private static DependencyResolver _dependencyResolver;
     private static ClassLoader _classLoader;
     private static HubsDescriptor descriptors;
+
+    static {
+        setDefaultServices(_defaultDependencyResolver);
+    }
 
     public static HubsDescriptor getDescriptors() {
         return descriptors;
@@ -24,9 +30,17 @@ public class GlobalHost {
 
 	public static void setDependencyResolver(DependencyResolver dependencyResolver) {
 		_dependencyResolver = dependencyResolver;
+        setDefaultServices(_dependencyResolver);
 	}
-	
-	@SuppressWarnings("unchecked")
+
+    private static void setDefaultServices(DependencyResolver dependencyResolver) {
+        if(dependencyResolver.getService(CorsPolicy.class) == null) {
+            final CorsPolicy corsPolicy = new DefaultCorsPolicy();
+            dependencyResolver.Register(CorsPolicy.class, () -> corsPolicy);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
 	public static<TInterface> HubContext<TInterface> getHub(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		return (HubContext<TInterface>)getInstance(className);
 	}
