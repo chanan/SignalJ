@@ -5,13 +5,21 @@ import play.api.Logger
 import play.api.mvc.{Result, RequestHeader, Filter}
 import play.api.http.HeaderNames._
 import signalJ.GlobalHost
+import signalJ.infrastructure.impl.DisallowAllCorsPolicy
 
-object CORSFilter extends Filter {
+class CORSFilter extends Filter {
 
   import scala.concurrent._
   import ExecutionContext.Implicits.global
 
-  val policy: CorsPolicy = GlobalHost.getDependencyResolver().getService(classOf[CorsPolicy]).asInstanceOf[CorsPolicy];
+  val policy: CorsPolicy = getPolicy
+
+  private def getPolicy() = {
+    if(GlobalHost.getDependencyResolver().getService(classOf[CorsPolicy]) != null)
+      GlobalHost.getDependencyResolver().getService(classOf[CorsPolicy]).asInstanceOf[CorsPolicy]
+    else
+      new DisallowAllCorsPolicy
+  }
 
   def isPreFlight(r: RequestHeader) =(
     r.method.toLowerCase.equals("options")

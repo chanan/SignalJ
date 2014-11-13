@@ -38,10 +38,6 @@ public class GlobalHost {
 	}
 
     private static void setDefaultServices(DependencyResolver dependencyResolver) {
-        if(dependencyResolver.getService(CorsPolicy.class) == null) {
-            final CorsPolicy corsPolicy = new DisallowAllCorsPolicy();
-            dependencyResolver.register(CorsPolicy.class, () -> corsPolicy);
-        }
         if(dependencyResolver.getService(ProtectedData.class) == null) {
             final ProtectedData protectedData = new DefaultProtectedData(SignalJPlugin.getConfig().getString("application.secret"));
             dependencyResolver.register(ProtectedData.class, () -> protectedData);
