@@ -7,7 +7,7 @@ public interface DependencyResolver  {
 	
 	public Hub<?> getHubInstance(String className, ClassLoader classLoader) throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 
-    <T> void Register(Class<T> serviceClass, Supplier<T> supplier);
+    <T> void register(Class<T> serviceClass, Supplier<T> supplier);
 
     <T> T getService(Class<T> serviceClass);
 }

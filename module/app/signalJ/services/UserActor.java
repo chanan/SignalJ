@@ -14,24 +14,24 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 class UserActor extends AbstractActor {
-    private final ProtectedData protectedData;
     private final Map<Long, Set<TransportMessage>> messages = new HashMap<>();
     private long messageId = 0;
     private Optional<ActorRef> transport = Optional.empty();
     private final List<String> hubs = new ArrayList<>();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
-    private UUID uuid;
+    private UUID connectionId;
+    private String username;
     private Map<String, String[]> queryString;
     private TransportType transportType;
 
-    UserActor(ProtectedData protectedData) {
-        this.protectedData = protectedData;
+    UserActor() {
         receive(
                 ReceiveBuilder.match(TransportJoinMessage.class, join -> {
-                    uuid = join.getContext().connectionId;
+                    connectionId = join.getContext().connectionId;
                     queryString = join.getContext().queryString;
+                    username = join.getContext().username;
                     transportType = join.getTransportType();
-                    transport = Optional.of(context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join)));
+                    transport = Optional.of(context().actorOf(Props.create(getTransportClass(join.getTransportType()), join)));
                     transport.get().forward(join, context());
                     context().watch(transport.get());
                     hubs.add(join.getContext().hubName);
@@ -50,13 +50,13 @@ class UserActor extends AbstractActor {
                 }).match(TransportReconnectMessage.class, reconnect -> {
                     attemptStopTransport();
                     final TransportJoinMessage join = getJoinFromReconnect(reconnect);
-                    transport = Optional.of(context().actorOf(Props.create(getTransportClass(join.getTransportType()), protectedData, join)));
+                    transport = Optional.of(context().actorOf(Props.create(getTransportClass(join.getTransportType()), join)));
                     transport.get().forward(reconnect, context());
                     resendMessages();
                 }).match(Messages.Quit.class, quit -> {
                     context().setReceiveTimeout(Duration.create(SignalJPlugin.getConfiguration().getDisconnectTimeout(), TimeUnit.SECONDS));
                 }).match(ReceiveTimeout.class, r -> {
-                    hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(new RequestContext(uuid, queryString, hub)), self()));
+                    hubs.stream().forEach(hub -> signalJActor.tell(new Messages.Disconnection(new RequestContext(connectionId, username, queryString, hub)), self()));
                     context().stop(self());
                 }).match(Messages.Ack.class, ack -> {
                     if (messages.containsKey(ack.message.getMessageId()) && messages.get(ack.message.getMessageId()).contains(ack.message)) {

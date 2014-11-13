@@ -24,14 +24,12 @@ public class LongPollingTransport extends AbstractActor {
     private Optional<Results.Chunks.Out<String>> out = Optional.empty();
     private final String prefix = Cursor.GetCursorPrefix();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
-    private final ProtectedData protectedData;
     private List<TransportMessage> messages = new ArrayList<>();
 
     private int count = 0;
     private final int maxCount = 30;
 
-    public LongPollingTransport(ProtectedData protectedData, Messages.JoinLongPolling join) {
-        this.protectedData = protectedData;
+    public LongPollingTransport(Messages.JoinLongPolling join) {
         this.uuid = join.context.connectionId;
 
         context().setReceiveTimeout(Duration.create("1 second"));

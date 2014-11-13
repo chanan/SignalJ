@@ -1,4 +1,5 @@
 package controllers;
+import actions.BasicAuth;
 import hubs.FirstTestPage;
 import hubs.HelloWorld;
 import play.mvc.Controller;
@@ -11,7 +12,7 @@ public class Application extends Controller {
     public static Result index() {
         return ok(views.html.index.render("Your new application is ready."));
     }
-    
+
     public static Result test() {
     	return ok(views.html.test.render());
     }

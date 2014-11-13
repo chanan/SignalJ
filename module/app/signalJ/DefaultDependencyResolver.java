@@ -14,7 +14,7 @@ class DefaultDependencyResolver implements DependencyResolver {
 	}
 
     @Override
-    public <T> void Register(Class<T> serviceClass, Supplier<T> supplier) {
+    public <T> void register(Class<T> serviceClass, Supplier<T> supplier) {
         services.put(serviceClass, supplier);
     }
 

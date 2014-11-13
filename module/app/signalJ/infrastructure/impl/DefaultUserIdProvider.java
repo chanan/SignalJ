@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public class DefaultUserIdProvider implements UserIdProvider {
     @Override
-    public Optional<String> getUserId(Http.Request request) {
-        return request.username() != null ? Optional.of(request.username()) : Optional.empty();
+    public Optional<String> getUserId(Http.Context request) {
+        return Optional.empty();
     }
 }

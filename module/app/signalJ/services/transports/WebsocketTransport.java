@@ -23,11 +23,9 @@ public class WebsocketTransport extends AbstractActor {
     private final WebSocket.In<JsonNode> in;
     private final String prefix = Cursor.GetCursorPrefix();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
-    private final ProtectedData protectedData;
     private final RequestContext context;
 
-    public WebsocketTransport(ProtectedData protectedData, Messages.JoinWebsocket join) {
-        this.protectedData = protectedData;
+    public WebsocketTransport(Messages.JoinWebsocket join) {
         this.out = join.out;
         this.in = join.in;
         this.context = join.context;

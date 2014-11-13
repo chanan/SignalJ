@@ -22,10 +22,8 @@ public class ServerSentTransport extends AbstractActor {
     private final EventSource eventSource;
     private final String prefix = Cursor.GetCursorPrefix();
     private final ActorRef signalJActor = SignalJPlugin.getSignalJActor();
-    private final ProtectedData protectedData;
 
-    public ServerSentTransport(ProtectedData protectedData, Messages.JoinServerSentEvents join) {
-        this.protectedData = protectedData;
+    public ServerSentTransport(Messages.JoinServerSentEvents join) {
         this.eventSource = join.eventSource;
 
         final ActorRef self = getContext().self();

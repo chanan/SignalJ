@@ -16,7 +16,11 @@ import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.WebSocket;
+import signalJ.GlobalHost;
 import signalJ.SignalJPlugin;
+import signalJ.infrastructure.ProtectedData;
+import signalJ.infrastructure.Purposes;
+import signalJ.infrastructure.UserIdProvider;
 import signalJ.models.Configuration;
 import signalJ.models.Messages;
 import signalJ.models.NegotiationResponse;
@@ -31,11 +35,16 @@ public class SignalJ extends Controller {
     private final String startStringPayload = "{ \"Response\": \"started\" }";
     private final String pongStringPayload = "{ \"Response\": \"pong\" }";
     private final AssetsBuilder delegate = new AssetsBuilder();
+    private final UserIdProvider userIdProvider = GlobalHost.getDependencyResolver().getService(UserIdProvider.class);
+    private final ProtectedData protectedData = GlobalHost.getDependencyResolver().getService(ProtectedData.class);
 
-    public Result negotiate() {
+    public Result negotiate() throws Exception {
         final UUID connectionId = UUID.randomUUID();
         final Configuration config = SignalJPlugin.getConfiguration();
-        final NegotiationResponse response = new NegotiationResponse("/signalj", connectionId + ":", connectionId,
+        final String userId = userIdProvider.getUserId(ctx()).orElse("");
+        final String connectionToken = protectedData.protect(String.format("%s:%s", connectionId, userId), Purposes.ConnectionToken)
+                .orElseThrow(() -> new Exception("Cannot create connection token"));
+        final NegotiationResponse response = new NegotiationResponse("/signalj", connectionToken, connectionId,
                 config.getKeepAliveTimeout(), config.getDisconnectTimeout(), config.getConnectionTimeout(),
                 true, "1.4", 5, 0);
         return ok(Json.toJson(response));
@@ -43,6 +52,7 @@ public class SignalJ extends Controller {
 
     public WebSocket<JsonNode> connectWebsockets() {
         final RequestContext context = new RequestContext(request());
+        Logger.debug("Context: " + context);
         return new WebSocket<JsonNode>() {
             public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out){
                 try {

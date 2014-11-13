@@ -13,8 +13,8 @@ public class SignalJActor extends AbstractActor {
 	private final ActorRef hubsActor = context().actorOf(Props.create(HubsActor.class), "hubs");
     private final ActorRef groupsActor = context().actorOf(Props.create(GroupsActor.class), "groups");
 
-    public SignalJActor(ProtectedData protectedData) {
-        this.usersActor = context().actorOf(Props.create(UsersActor.class, protectedData), "users");
+    public SignalJActor() {
+        this.usersActor = context().actorOf(Props.create(UsersActor.class), "users");
         receive(
                 ReceiveBuilder.match(TransportJoinMessage.class, join -> {
                     usersActor.forward(join, context());

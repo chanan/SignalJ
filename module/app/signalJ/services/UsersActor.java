@@ -16,11 +16,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 class UsersActor extends AbstractActor {
-    private final ProtectedData protectedData;
 	//TODO: Make this a supervisor
 
-    UsersActor(ProtectedData protectedData) {
-        this.protectedData = protectedData;
+    UsersActor() {
         receive(
                 ReceiveBuilder.match(TransportJoinMessage.class, join -> {
                     final ActorRef user = getUser(join.getContext().connectionId);
@@ -88,6 +86,6 @@ class UsersActor extends AbstractActor {
     }
 
     private ActorRef getUser(UUID uuid) {
-        return Optional.ofNullable(getContext().getChild(uuid.toString())).orElseGet(() -> context().actorOf(Props.create(UserActor.class, protectedData), uuid.toString()));
+        return Optional.ofNullable(getContext().getChild(uuid.toString())).orElseGet(() -> context().actorOf(Props.create(UserActor.class), uuid.toString()));
     }
 }

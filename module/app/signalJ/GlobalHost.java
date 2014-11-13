@@ -1,6 +1,10 @@
 package signalJ;
 
 import signalJ.infrastructure.CorsPolicy;
+import signalJ.infrastructure.ProtectedData;
+import signalJ.infrastructure.UserIdProvider;
+import signalJ.infrastructure.impl.DefaultProtectedData;
+import signalJ.infrastructure.impl.DefaultUserIdProvider;
 import signalJ.infrastructure.impl.DisallowAllCorsPolicy;
 import signalJ.models.HubsDescriptor;
 import signalJ.services.Hub;
@@ -36,7 +40,15 @@ public class GlobalHost {
     private static void setDefaultServices(DependencyResolver dependencyResolver) {
         if(dependencyResolver.getService(CorsPolicy.class) == null) {
             final CorsPolicy corsPolicy = new DisallowAllCorsPolicy();
-            dependencyResolver.Register(CorsPolicy.class, () -> corsPolicy);
+            dependencyResolver.register(CorsPolicy.class, () -> corsPolicy);
+        }
+        if(dependencyResolver.getService(ProtectedData.class) == null) {
+            final ProtectedData protectedData = new DefaultProtectedData(SignalJPlugin.getConfig().getString("application.secret"));
+            dependencyResolver.register(ProtectedData.class, () -> protectedData);
+        }
+        if(dependencyResolver.getService(UserIdProvider.class) == null) {
+            final UserIdProvider userIdProvider = new DefaultUserIdProvider();
+            dependencyResolver.register(UserIdProvider.class, () -> userIdProvider);
         }
     }
 

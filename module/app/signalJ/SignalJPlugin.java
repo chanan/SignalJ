@@ -2,14 +2,11 @@ package signalJ;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import com.typesafe.config.Config;
 import play.Application;
 import play.Logger;
 import play.Play;
 import play.Plugin;
 import play.libs.Akka;
-import signalJ.infrastructure.DefaultProtectedData;
-import signalJ.infrastructure.ProtectedData;
 import signalJ.models.Configuration;
 import signalJ.services.SignalJActor;
 
@@ -21,7 +18,6 @@ import java.util.Optional;
 public class SignalJPlugin extends Plugin {
     private final Application application;
     private ActorRef signalJActor;
-    private ProtectedData protectedData;
     private final Configuration config;
 
     private static SignalJPlugin plugin() {
@@ -32,15 +28,10 @@ public class SignalJPlugin extends Plugin {
         return plugin().signalJActor;
     }
 
-    public static ProtectedData getProtectedDataProvider() {
-        return plugin().protectedData;
-    }
-
     public SignalJPlugin(Application application) {
         this.application = application;
         config = loadConfig(application);
         try {
-            this.protectedData = new DefaultProtectedData(application.configuration().getString("application.secret"));
             GlobalHost.setClassLoader(application.classloader());
         } catch (Exception e) {
             Logger.error("Could not construct the SignalJ plugin", e);
@@ -53,7 +44,7 @@ public class SignalJPlugin extends Plugin {
 
     @Override
     public void onStart() {
-        signalJActor = Akka.system().actorOf(Props.create(SignalJActor.class, protectedData), "signalJ");
+        signalJActor = Akka.system().actorOf(Props.create(SignalJActor.class), "signalJ");
     }
 
     public static boolean isDev() {

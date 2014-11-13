@@ -1,7 +1,8 @@
-package signalJ.infrastructure;
+package signalJ.infrastructure.impl;
 
 import org.apache.commons.codec.binary.Base64;
 import play.Logger;
+import signalJ.infrastructure.ProtectedData;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;

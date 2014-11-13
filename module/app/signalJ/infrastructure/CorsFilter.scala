@@ -6,7 +6,7 @@ import play.api.mvc.{Result, RequestHeader, Filter}
 import play.api.http.HeaderNames._
 import signalJ.GlobalHost
 
-class CORSFilter extends Filter {
+object CORSFilter extends Filter {
 
   import scala.concurrent._
   import ExecutionContext.Implicits.global

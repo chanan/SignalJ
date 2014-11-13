@@ -22,7 +22,7 @@ public class GuiceDependencyResolver implements DependencyResolver {
 	}
 
     @Override
-    public <T> void Register(Class<T> serviceClass, Supplier<T> supplier) {
+    public <T> void register(Class<T> serviceClass, Supplier<T> supplier) {
         injector = injector.createChildInjector(new AbstractModule() {
             @Override
             protected void configure() {
