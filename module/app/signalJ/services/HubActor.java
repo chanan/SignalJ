@@ -49,8 +49,10 @@ class HubActor extends AbstractActor {
                                 instance.getCallerState().getChanges().ifPresent(changes -> signalJActor.tell(new Messages.StateChange(execute.out, uuid, changes, context.messageId.get()), self()));
                             }
                         } else {
-                            instance.getCallerState().getChanges().ifPresent(changes -> signalJActor.tell(new Messages.StateChange(uuid, changes, context.messageId.get()), self()));
-                            signalJActor.tell(new Messages.MethodReturn(execute.out, context, ret), self());
+                            instance.getCallerState().getChanges().ifPresent(changes ->
+                                    signalJActor.tell(new Messages.MethodReturn(context, ret, execute.out, changes), self()));
+
+                            signalJActor.tell(new Messages.MethodReturn(context, ret, execute.out), self());
                         }
                     } catch (Exception e) {
                         Logger.error("Error in executing hub method", e);

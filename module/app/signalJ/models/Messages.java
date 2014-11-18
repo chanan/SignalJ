@@ -89,47 +89,87 @@ public class Messages {
         public final Object returnValue;
         public final long messageId;
         public final Optional<Results.Chunks.Out<String>> out;
+        public final Optional<Map<String, String>> changes;
 
-        public MethodReturn(RequestContext context, Object returnValue) {
-            this.context = context;
-            this.returnValue = returnValue;
-            this.messageId = -1;
-            this.out = Optional.empty();
-        }
 
-        public MethodReturn(RequestContext context, Object returnValue, long messageId) {
+        public MethodReturn(RequestContext context, Object returnValue, long messageId, Results.Chunks.Out<String> out, Optional<Map<String, String>> changes) {
             this.context = context;
             this.returnValue = returnValue;
             this.messageId = messageId;
+            this.out = Optional.of(out);
+            this.changes = changes;
+        }
+
+        public MethodReturn(RequestContext context, Object returnValue, long messageId, Optional<Results.Chunks.Out<String>> out, Map<String, String> changes) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = messageId;
+            this.out = out;
+            this.changes = Optional.of(changes);
+        }
+
+        public MethodReturn(RequestContext context, Object returnValue, long messageId, Optional<Results.Chunks.Out<String>> out, Optional<Map<String, String>> changes) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = messageId;
+            this.out = out;
+            this.changes = changes;
+        }
+
+        public MethodReturn(RequestContext context, Object returnValue, long messageId, Map<String, String> changes) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = messageId;
+            this.changes = Optional.of(changes);
             this.out = Optional.empty();
         }
 
-        public MethodReturn(Results.Chunks.Out<String> out, RequestContext context, Object returnValue) {
+        public MethodReturn(RequestContext context, Object returnValue, long messageId, Optional<Map<String, String>> changes) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = messageId;
+            this.changes = changes;
+            this.out = Optional.empty();
+        }
+
+        public MethodReturn(RequestContext context, Object returnValue, Results.Chunks.Out<String> out, Optional<Map<String, String>> changes) {
             this.context = context;
             this.returnValue = returnValue;
             this.messageId = -1;
             this.out = Optional.of(out);
+            this.changes = changes;
         }
 
-        public MethodReturn(Results.Chunks.Out<String> out, RequestContext context, Object returnValue, long messageId) {
-            this.context = context;
-            this.returnValue = returnValue;
-            this.messageId = -messageId;
-            this.out = Optional.of(out);
-        }
-
-        public MethodReturn(Optional<Results.Chunks.Out<String>> out, RequestContext context, Object returnValue) {
+        public MethodReturn(RequestContext context, Object returnValue, Optional<Results.Chunks.Out<String>> out, Map<String, String> changes) {
             this.context = context;
             this.returnValue = returnValue;
             this.messageId = -1;
             this.out = out;
+            this.changes = Optional.of(changes);
         }
 
-        public MethodReturn(Optional<Results.Chunks.Out<String>> out, RequestContext context, Object returnValue, long messageId) {
+        public MethodReturn(RequestContext context, Object returnValue, Optional<Results.Chunks.Out<String>> out) {
             this.context = context;
             this.returnValue = returnValue;
-            this.messageId = -messageId;
+            this.messageId = -1;
             this.out = out;
+            this.changes = Optional.empty();
+        }
+
+        public MethodReturn(RequestContext context, Object returnValue, Optional<Results.Chunks.Out<String>> out, Optional<Map<String, String>> changes) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = -1;
+            this.out = out;
+            this.changes = changes;
+        }
+
+        public MethodReturn(RequestContext context, Object returnValue, Map<String, String> changes) {
+            this.context = context;
+            this.returnValue = returnValue;
+            this.messageId = -1;
+            this.changes = Optional.of(changes);
+            this.out = Optional.empty();
         }
 
         @Override

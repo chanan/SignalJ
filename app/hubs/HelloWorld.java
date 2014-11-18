@@ -52,6 +52,7 @@ public class HelloWorld extends Hub<FirstTestPage> {
 
     @HubMethodName("addTwoNumbers")
 	public int add(int a, int b) {
+        clients().callerState.put("setWithReturn", "(Three)");
 		return a + b;
 	}
 	

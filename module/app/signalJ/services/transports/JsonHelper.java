@@ -30,19 +30,26 @@ public class JsonHelper {
 
     public static JsonNode writeState(Messages.StateChange state) throws IOException {
         final StringBuilder sb = new StringBuilder();
-        sb.append("{\"S\":{");
-        boolean first = true;
-        for(final Map.Entry<String, String> entry : state.changes.entrySet()) {
-            if (!first) sb.append(',');
-            first = false;
-            sb.append(String.format("\"%s\": \"%s\"", entry.getKey(), entry.getValue()));
-        }
-        sb.append('}');
+        sb.append('{');
+        sb.append(writeStateChanges(state.changes));
         sb.append(",\"I\":\"").append(state.messageId).append('"');
         sb.append('}');
         final JsonNode j = Json.parse(sb.toString());
         Logger.debug("State Change: " + j);
         return j;
+    }
+
+    private static String writeStateChanges(Map<String, String> changes) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("\"S\":{");
+        boolean first = true;
+        for(final Map.Entry<String, String> entry : changes.entrySet()) {
+            if (!first) sb.append(',');
+            first = false;
+            sb.append(String.format("\"%s\": \"%s\"", entry.getKey(), entry.getValue()));
+        }
+        sb.append('}');
+        return sb.toString();
     }
 
     public static JsonNode writeHeartbeat() throws IOException {
@@ -51,7 +58,9 @@ public class JsonHelper {
 
     public static JsonNode writeMethodReturn(Messages.MethodReturn methodReturn) throws IOException {
         final StringBuilder sb = new StringBuilder();
-        sb.append("{").append("\"R\":");
+        sb.append('{');
+        methodReturn.changes.ifPresent(changes -> sb.append(writeStateChanges(changes)).append(','));
+        sb.append("\"R\":");
         sb.append(Json.toJson(methodReturn.returnValue));
         sb.append(",\"I\":\"").append(methodReturn.context.messageId.get()).append("\"}");
         final JsonNode event = Json.parse(sb.toString());

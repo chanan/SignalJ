@@ -36,7 +36,7 @@ class UserActor extends AbstractActor {
                     context().watch(transport.get());
                     hubs.add(join.getContext().hubName);
                 }).match(Messages.MethodReturn.class, methodReturn -> {
-                    final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.out, methodReturn.context, methodReturn.returnValue, messageId++);
+                    final Messages.MethodReturn message = new Messages.MethodReturn(methodReturn.context, methodReturn.returnValue, messageId++, methodReturn.out, methodReturn.changes);
                     storeMessage(message);
                     transport.ifPresent(t -> t.forward(message, context()));
                 }).match(Messages.ClientFunctionCall.class, clientFunctionCall -> {

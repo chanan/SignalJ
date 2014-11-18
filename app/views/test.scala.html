@@ -90,7 +90,7 @@ Person full name (Press first button): <span id="fullname"></span><br>
 
             $('#btnAdd').click(function() {
                 hub.server.addTwoNumbers(1, 2).done(function(result) {
-                    $('#result').html(result);
+                    $('#result').html(result + ' ' + hub.state.setWithReturn);
                 });
             });
 
