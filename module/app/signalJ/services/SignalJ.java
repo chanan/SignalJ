@@ -52,7 +52,6 @@ public class SignalJ extends Controller {
 
     public WebSocket<JsonNode> connectWebsockets() {
         final RequestContext context = new RequestContext(request());
-        Logger.debug("Context: " + context);
         return new WebSocket<JsonNode>() {
             public void onReady(WebSocket.In<JsonNode> in, WebSocket.Out<JsonNode> out){
                 try {
