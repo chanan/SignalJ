@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>SignalJ Activator Tutorial</title>
+</head>
+<body>
+    <a href="https://github.com/chanan/SignalJ"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/8b6b8ccc6da3aa5722903da7b58eb5ab1081adee/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"></a>
+    <a href="http://www.reactivemanifesto.org/"> <img style="border: 0; position: fixed; right: 0; top:0; z-index: 9000" src="//d379ifj7s9wntv.cloudfront.net/reactivemanifesto/images/ribbons/we-are-reactive-orange-right.png"> </a>
+    <div id="container">
+      <div class="inner">
+    <div>
+        <h1>SignalJ Tutorial</h1>
+        <h2>SignalJ Activator Template</h2>
+        <p>This tutorial is available as a <a href="http://typesafe.com/activator">Typesafe Activator template</a>. To run it,
+        <a href="http://typesafe.com/platform/getstarted">download Activator</a>. Once download, do the following: </p>
+        <ol>
+            <li>Run 'activator new' on the command line</li>
+            <li>Type in 'signalj-chat-java' as the template name</li>
+            <li>Choose a name for your new application</li>
+            <li>Change folders into the newly created application folder</li>
+            <li>Run 'activator ui' from the command line</li>
+        </ol>
+        <p>Below is the full text of the tutorial.</p>
+        <h2>SignalJ Overview</h2>
+        <p>SignalJ is a port of <a href="http://asp.net/signalr">ASP.Net SignalR</a> to PlayFramework and Akka. SignalJ provides an abstraction for client-server and server-client
+        message based communication. The client is usually a browser. In that case, the communication mechanism is chosen automatically based on the browser's capabilities: Websockets, ServerSentEvents, and
+        Ajax Longpolling. For older versions of IE, SignalR provides ForeverFrames but that features has not been ported to SignalJ yet. Other clients for SignalR exist as well, such as: iOS, Andriod, and
+        .net framework. This allows the same server code to be easily used by both browsers and native clients. In this tutorial we will be dealing with javascript/browser clients.</p>
+        <p>Another benefit of using SignalJ is that the communication is abstracted away from the developer. This allows for very easy and concise syntax both on the server and on the client. For example:
+        to send execute client side code on all connected clients you would write this code on the server: </p>
+        <pre><code>
+clients().all.myClientFunction(someParam);
+        </code></pre>
+        <p>and in your javascript you would handle it:</p>
+        <pre><code>
+hub.client.userJoined = myClientFunction(param) {
+    console.log("Param: " + param);
+};
+        </code></pre>
+        <p>Lastly, SignalR (and therefore SignalJ) gracefully handles, client side connection problems. It can reconnect if disconnected. Handle slow connections, letting you handle an event to notify the
+        user if you wish, and negotiate transports as mentioned above.</p>
+        <p>Although, SignalJ is not a chat server, the example most used is building one, so in the next sections of the tutorial we will see how we can build a chat server with a login screen and rooms.</p>
+        <p><strong>Note:</strong> Some parts of the code are for demo purposes only. For example, the login method. Another example is saving
+        state as a static variable in the Hub class. This is not thread safe. A better solution would be to call a database or to a "singleton" actor.</p>
+    </div>
+    <div>
+        <h2>Server Side Setup</h2>
+        <p>First, include the following lines in your <a href="#code/build.sbt">build.sbt</a>:</p>
+        <pre><code>
+resolvers += "release repository" at "http://chanan.github.io/maven-repo/releases/"
+
+resolvers += "snapshot repository" at "http://chanan.github.io/maven-repo/snapshots/"
+
+libraryDependencies ++= Seq(
+    javaJdbc,
+    javaEbean,
+    cache,
+    javaWs,
+    "signalJ" %% "signalj" % "0.5.0",
+    "org.webjars" %% "webjars-play" % "2.3.0-2"
+    "org.webjars" % "jquery" % "2.1.1"
+)
+        </code></pre>
+        <p><strong>Note:</strong> SignalJ is a JQuery plugin and requires JQuery to work. It can work with either JQuery 1.x to support older browsers, or with 2.x. This example shows including JQuery via
+        Webjars, but you may include JQuery in your project via other means or by pointing to a CDN.</p>
+        <p>SignalJ is a play plugin therefore it needs to be registered in <a href="#code/conf/play.plugins">conf/play.plugins</a>. Eitehr create or edit the file and add the line:</p>
+        <pre><code>
+10000:signalJ.SignalJPlugin
+        </code></pre>
+        <p><strong>Note:</strong> The number at the start of the line is the plugin load number. You can change that number if you have other plugins and want to load SignalJ before or after them.</p>
+        <p>Next you will need to add the SignalJ routes to your <a href="#code/conf/routes">routes</a> files:</p>
+        <pre><code>
+->     /      signalJ.Routes
+        </code></pre>
+        <p>The next two step are <em>optional</em>. First, if you wish to use the ServerSentEvents or AJAX LongPolling transports you will need to extend your
+        <a href="#code/app/Global.java">Global</a> from SignalJ's Global (<code>signalJ.SignalJGlobal</code>). (Note: in the event you cannot do so, there are other options. Please see the documentation at
+        <a href="http://signalj.io">the SignalJ website</a>). If you plan to only support Websockets, this step is not needed.</p>
+        <p>The second optional step is only required if want to load the SignalR's JQuery plugin (and therefore SignalJ's) from inside the the plugin itself. This options & benefits of different ways of loading
+        the JQuery plugin are discussed in the next step of the tutorial (Client Side Setup). However, if you do chose to use this option then two changes need to be made. First, you will need to include sbt-web version 1.1
+        or above in your <a href="#code/project/plugins.sbt">plugins.sbt</a>: </p>
+        <pre><code>
+addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.1.1")
+        </code></pre>
+        <p></p>Second, you will need to add the following line to
+        <a href="#code/build.sbt">build.sbt</a>:</p>
+        <pre><code>
+WebKeys.directWebModules in Assets += "signalj"
+        </code></pre>
+    </div>
+    <div>
+        <h2>Client Side Setup</h2>
+        <p>Three script files are needed for SignalJ to work: JQuery, SignalR's JQuery plugin, and SignalJ's hubs javascript file.</p>
+        <p>First, include JQuery in your project. Use JQuery 1.x if you plan to support older browsers. In this example, I included JQuery 2 via <a href="http://webjars.org">Webjars</a>.
+        This can be found in <a href="#code/app/views/main.scala.html">/app/views/main.scala.html</a>: </p>
+        <code><pre>
+&lt;script type='text/javascript' src='@routes.WebJarAssets.at(WebJarAssets.locate("jquery.min.js"))'&gt;&lt;/script&gt;
+        </pre></code>
+        <p>Next you will need to include SignalR's JQuery plugin. There are 3 main options for this step:</p>
+        <ol>
+            <li>You can use a CDN to include either the un-minified version:
+            <code><pre>
+&lt;script src="//ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.1.0.js"&gt;&lt;/script&gt;
+            </pre></code> or the minified version:
+            <code><pre>
+&lt;script src="//ajax.aspnetcdn.com/ajax/signalr/jquery.signalr-2.1.0.min.js"&gt;&lt;/script&gt;<
+            </pre></code></li>
+            <li>You can download the plugins from the links above and save them in your project and then added them to your page</li>
+            <li>Or, you can link to the /signalj/jquery.signalR.js route inside of the SignalJ plugin. The benefit of this option is that it will use the un-minified version of the file in development mode and the
+            minified version in production mode. The draw back of this is that changes to plugins.sbt and build.sbt must be made as specified in the "Server Side Setup" step of this tutorial outlined</li>
+        </ol>
+        <p>In this tutorial, I used the third option as can be seen in <a href="#code/app/views/main.scala.html">/app/views/main.scala.html</a>: </p>
+<code><pre>
+&lt;script src="/signalj/jquery.signalR.js"&gt;&lt;/script&gt;
+</pre></code>
+        <p>Lastly, you must include the auto-generated hub script:</p>
+        <code><pre>
+&lt;script type="text/javascript" charset="utf-8" src="/signalj/hubs.js"&gt;&lt;/script&gt;
+        </pre></code>
+        <p>After those 3 script files are included, you application specifc script files would be included, in this example:</p>
+        <code><pre>
+&lt;script type="text/javascript" charset="utf-8" src="@routes.Assets.at("javascripts/chat.js")"&gt;&lt;/script&gt;
+        </pre></code>
+    </div>
+    <div>
+        <h2>Writing Your First Hub Class</h2>
+        <p>Before looking in detail at the Chat server, lets learn some basics of using SignalJ</p>
+        <p>The hub classes are the classes that the client can invoke on the server. A hub class can be in any package, in this case I place mine in the hubs package. A hub class extends
+        <code>signalJ.services.Hub</code>. This class is a generic type that requires an interface as its parameter. The interface are the functions that should be present on the client and can be
+        called from the server. In the Chat example you can see the client side functions declared in <a href="#code/app/hubs/ChatPage.java">/apps/hubs/ChatPage</a>:</p>
+        <pre><code>
+public interface ChatPage {
+    public void userJoined(String username);
+    public void sendMessage(String username, String message);
+    public void userList(Set&lt;String&gt; users);
+    public void userLeftRoom(String username);
+    public void userJoinedRoom(String username);
+    public void roomList(Set&lt;String&gt; rooms);
+}
+        </code></pre>
+        <p>Two things to note about the interface above. One is that there is no server side class the implements this interface. This interface is only used to declare what functions (messages) the browser will handle.
+        Second, complex objects may be passed to the client as well. They will be serialized to Json. In this case, we see two methods have <code>Set</code> parameters. They will be transferred as Json arrays.</p>
+        <p>Now, we can create the hub class: <a href="#code/app/hubs/ChatHub.java">/apps/hubs/ChatHub.java</a>. Only one method must be overridden <code></code> as shown below:</p>
+        <pre><code>
+public class ChatHub extends Hub&lt;ChatPage&gt; {
+    @Override
+    protected Class&lt;ChatPage&gt; getInterface() {
+        return ChatPage.class;
+    }
+}
+        </code></pre>
+        <p>As you see, you <em>must</em> return the interface class in this method.</p>
+        <p>You are now ready to write server side functions that will be callable from the client.</p>
+        <p><strong>Note:</strong> Future versions of SignalJ may allow Actors to be hubs as well.</p>
+    </div>
+    <div>
+        <h2>Hub Methods</h2>
+        <p>Any public method can be called from a client. The methods are called asynchronously inside of an actor. Each time a hub method is invoked, a new instance of the hub is created. The hub class can
+        be supplied by your dependency injection framework. For more information on this check out the documentation at the <a href="http://signalj.io">SignalJ website</a>.</p>
+        <p>Hub methods can be void or return a value. For example, a method that adds two numbers can be written in two ways that differ in the way they are handled on the client (more on that topic
+        in the client section):</p>
+        <pre><code>
+public int add(int a, int b) {
+    return a + b;
+}
+        </code></pre>
+        <p>In this case the hub returns the the number directly to the caller (again, <strong>note</strong> the code does not block and is executed and returned via actor messages). To handle this call on the
+        client, we can write the following javascript code:</p>
+        <pre><code>
+hub.server.add(1, 2).done(function(result) {
+    console.log('1 + 2 = ' + result);
+});
+        </code></pre>
+        <p>When SignalJ gets a response from the server, the promise will complete and the done function will be called with the result.</p>
+        <p>The other way of writing similar code is by using a void method and calling a method on the client. While slightly more involved, this offers more flexibility as message could be sent to other clients
+        as well. First add a method to your Hub's interface class such as <code>public void addResult(int result);</code>. Then define your hub method as follows:</p>
+        <pre><code>
+public void add(int a, int b) {
+    clients().caller.addResult(a + b);
+}
+        </code></pre>
+        <p>Now, we see the method is declared as void, and the <code>clients()</code> property of the hub was used with the <code>caller</code> (other options exist as we will see in later sections). The javascript
+        to handle this case is slight different. This time, the result will be messaged to the client and will not return in a promise:</p>
+        <pre><code>
+hub.server.add(1, 2);
+
+hub.client.addResult = function(result) {
+    console.log('1 + 2 = ' + result);
+}
+        </code></pre>
+    </div>
+    <div>
+        <h2>Hub Properties and Functions</h2>
+        <p>Hub classes have several functions available to developers to use. We have seen some examples in the previous sections. Here is a more complete list:</p>
+        <ul>
+            <li><code>clients().caller</code> - executes a function on the client that called the hub</li>
+            <li><code>clients().all</code> - executes a function on all clients connected to the hub</code></li>
+            <li><code>clients().others</code> - executes a function on all clients except the caller</li>
+            <li><code>clients().client(connectionId)</code> - executes a function on a specific connection</li>
+            <li><code>clients().AllExcept(connectionId1, connectionId2, ...)</code> - executes a function on all clients except those listed</li>
+            <li><code>clients().Group(groupName)</code> - executes a function on a specific group of clients (See group management below</li>
+            <li><code>clients().OthersInGroup(groupName)</code> - executes a function to all others in a group</li>
+        </ul>
+        <p>You can added or remove users from a group by calling the <code>groups()</code> method. There is no need to create first or destroy a group when it is empty. That is done automatically.</p>
+        <ul>
+            <li><code>groups().add(connectionId, groupName);</code> - adds a specific connection to a group</li>
+            <li><code>groups().remove(connectionId, groupName);</code> - removes a specific connection from a group</li>
+        </ul>
+        <p>On that note, lets see how we can get a client's connectionId:</p>
+        <ul>
+            <li><code>context().connectionId</code> - Retrieves the connectionId of the caller</li>
+            <li><code>context().queryString</code> - Returns the request query string that was sent along with the connection</li>
+        </ul>
+        <p>You can also pass state from the client to the server and back using callerState:</p>
+        <ul>
+            <li><code>clients().callerState</code> - returns the caller state Map&lt;String, String&gt;</li>
+        </ul>
+    </div>
+    <div>
+        <h2>Server Side Events</h2>
+        <p>You can respond to client connects, disconnects or reconnects if you wish. for example: </p>
+        <pre><code>
+@Override
+public void onDisconnected() {
+    Logger.debug("Disconnect: " + context().connectionId);
+}
+        </code></pre>
+        <p>The three events are:</p>
+        <ul>
+            <li><code>public void onConnected()</code> - Called when a client connects</li>
+            <li><code>public void onReconnected()</code> - Called when a client reconnects</li>
+            <li><code>public void onDisconnected()</code> - Called when a client disconnects</li>
+        </ul>
+        <p>Two things to note:</p>
+        <ol>
+            <li>While, usually a disconnect method occurs, obviously in the case of server shutdown the method will not fire</li>
+            <li>callerState will not be available in Server Side Events</li>
+        </ol>
+    </div>
+    <div>
+        <h2>Client Side - Connecting to a hub</h2>
+        <p>To connect to a hub, you must first connect to a hub and then start the transport. For example:</p>
+        <pre><code>
+var hub = $.connection.chatHub;
+$.connection.hub.start().done(function () {
+    console.log('Connected to hub');
+});
+        </code></pre>
+        <p>First, in the code above, you can see that you need to make a connection to a specific hub. The name <code>chatHub</code> is the name of the hub class
+        you created previously <a href="#code/app/hubs/ChatHub.java">ChatHub</a>. Note the case was change to match Json conventions. You can also assign a name
+        to a hub using the <code>HubName</code> annotation.</p>
+        <p>Second, you start the hub. In this case, the hub is started in "auto transport" mode. That means it will first try to connect with Websockets, then
+        ServerSentEvents and lastly AJAX Longpolling (A future version of SignalJ will also enable Forever Frames). You can also specify a specific transport
+        in the start method, for example:</p>
+        <pre><code>
+$.connection.hub.start().done(function ({ transport: 'serverSentEvents' }){
+    console.log('Connected using ServerSentEvents!');
+});
+        </code></pre>
+        <p><strong>Note:</strong> To use transports other than Websockets, you must enable them in your Global. Please see the section on "Server Side Setup".</p>
+        <p>Lastly, a promise is redeemed when a connection is made. you can also install a <code>fail</code> function to catch the event of a connection not being able to be established.</p>
+        <p><strong>Tip:</strong> You can turn on client side logging like so:</p>
+        <pre><code>
+$.connection.hub.logging = true;
+        </code></pre>
+    </div>
+    <div>
+        <h2>Client Side - Calling Server Methods</h2>
+        <p>There are two basic basic functions to be developed on the client: server side calls and client side events. Lets look at server side method calls first.
+        Below is an example of calling a function with expecting a return value and no parameters:</p>
+<pre><code>
+var hub = $.connection.someHub;
+$.connection.hub.start().done(function() {
+    hub.server.myMethod();
+});
+</code></pre>
+        <p>A server side method can also accept parameters:</p>
+<pre><code>
+var hub = $.connection.someHub;
+$.connection.hub.start().done(function() {
+    hub.server.myMethod(arg1, arg2, ..., argN);
+});
+</code></pre>
+        <p>A server side method can also return a value from a function as seen in the "Hub Methods" section:</p>
+<pre><code>
+var hub = $.connection.someHub;
+$.connection.hub.start().done(function() {
+    hub.server.myMethod().done(function(result) {
+        //Do something with the result
+    });
+});
+</code></pre>
+        <p>You can also catch server side failures like so:</p>
+<pre><code>
+var hub = $.connection.someHub;
+$.connection.hub.start().done(function() {
+    hub.server.myMethod().fail(function(error) {
+        console.log(error);
+    });
+});
+</code></pre>
+    </div>
+    <div>
+        <h2>Client Side - Reacting to Server Side Messages</h2>
+        <p>When one of the functions in the <code>clients()</code> is called on the server, it will fire a javascript function on the client. These are handled
+        by assigning a function to to a named properties on <code>hub.client</code>.</p>
+        <p>For example, assuming an interface like the following:</p>
+<pre><code>
+public interface MyPage {
+    public void method1();
+    public void method2(String arg1);
+    public void method3(Person person);
+}
+</code></pre>
+        <p>Using the example above, the hub class might call one of those functions like so:</p>
+<pre><code>
+clients().all.method3(new Person("John", "Smith));
+</code></pre>
+        <p>So, the javascript could look like so:</p>
+<pre><code>
+var hub = $.connection.someHub;
+hub.client.method1() = function() {
+    console.log('method1 was called');
+};
+
+hub.client.method2 = function(arg) {
+    console.log('method2 was called with the parameter: ' + arg);
+);
+
+hub.client.method3 = function(person) {
+    console.log('method3 is called with this name: ' + person.firstName);
+};
+</code></pre>
+<p>Any object that can be serialized to Json including lists and arrays, can be sent to the client.</p>
+    </div>
+    <div>
+        <h2>The ChatPage Interface</h2>
+        <p>Now that we have gone through a tour of SignalJ's features, lets go about building our chat application. First, lets create some method
+        definition in the interface <a href="#code/app/hubs/ChatPage.java">ChatPage</a></p>
+<pre><code>
+public interface ChatPage {
+    public void userJoined(String username);
+    public void sendMessage(String username, String message);
+    public void userList(Set&lt;String&gt; users);
+    public void userLeftRoom(String username);
+    public void userJoinedRoom(String username);
+    public void roomList(Set&lt;String&gt; rooms);
+}
+</code></pre>
+    </div>
+    <div>
+        <h2>The Hub Class</h2>
+        <p>First lets define the needed skeleton in <a href="#code/app/hubs/ChatHub.java">/apps/hubs/ChatHub.java</a>:</p>
+        <pre><code>
+public class ChatHub extends Hub&lt;ChatPage&gt; {
+
+    @Override
+    protected Class&lt;ChatPage&gt; getInterface() {
+        return ChatPage.class;
+    }
+}
+        </code></pre>
+        <p>Lets create our first server side code, a (fake) login method:</p>
+<pre><code>
+1. public boolean login(String username) {
+2.    if(connectionsToUsernames.containsValue(username) || username.equals("Robot")) return false;
+3.     clients().callerState.put("username", username);
+4.     joinRoom("Lobby");
+5.     clients().caller.roomList(getRoomList());
+6.     connectionsToUsernames.putIfAbsent(context().connectionId, clients().callerState.get("username"));
+7.     return true;
+8. }
+</code></pre>
+        <p>Much of the code in this method deals with the different chat rooms. Lets break it down by lines:</p>
+        <ol>
+            <li><code>public boolean login(String username) {</code> - This (very fake) fake login method returns true
+                if successful, false if the user already exists</li>
+            <li><code>if(connectionsToUsernames.containsValue(username)) return false;</code> - A static map mapping connectionIds
+                to usernames is checked for duplicates. If a duplicate is found the method returns with a false</li>
+            <li><code>clients().callerState.put("username", username);</code> - Saving the username in the callerState map
+                will make it available to subsequent calls</li>
+            <li><code>joinRoom("Lobby");</code> - This private method will join the user to the default room named "Lobby". Ultimately,
+                this will call: <code>groups().add(context().connectionId, room);</code></li>
+            <li><code>clients().caller.roomList(getRoomList());</code> - This will call the originating browser only with the
+                list of rooms</li>
+            <li><code>connectionsToUsernames.putIfAbsent(context().connectionId, clients().callerState.get("username"));</code> -
+                This will update the map between connectionIds and usernames</li>
+            <li><code>return true;</code> - If everything was successful, the server returns true to the client</li>
+        </ol>
+        <p>On the <a href="#code/public/javascripts/chat.js">client</a> this method is called like so:</p>
+        <pre><code>
+$('#loginSubmit').click(function(event) {
+    event.preventDefault();
+    hub.server.login($('#inputUsername').val()).done(function(result) {
+        if(result) {
+            $('#login').hide();
+            $('#chat').show();
+            $('#inputUsername').val('');
+            $('#alert').hide();
+        } else {
+            $('#alert').show();
+        }
+    });
+});
+        </code></pre>
+        <p>In the code above, we see that when the login method is code and is successful, the chat page is shown, if not an alert error is shown.</p>
+    </div>
+    <div>
+        <h2>Chat - More examples</h2>
+        <p>Lets look at how easy it is to actually send chat messages between the client -&gt; server -&gt; other in the room.
+        In <a href="#code/public/javascripts/chat.js">/public/javascripts/chat.js</a> we send the room name and message to the server:</p>
+        <pre><code>
+var sendMessage = function() {
+    hub.server.sendMessage($('#roomselect').val(), $("#talk").val());
+    ...
+};
+        </code></pre>
+        <p>In <a href="#code/app/hubs/ChatHub.java">/app/hubs/ChatHub</a> we see that the message is received by the server and
+        sent to everyone else in the room. We get the username we saved in <code>callerState</code> in the login method:</p>
+        <pre><code>
+public void sendMessage(String room, String message) {
+    clients().othersInGroup(room).sendMessage(clients().callerState.get("username"), message);
+}
+        </code></pre>
+        <p>Finally, back in <a href="#code/public/javascripts/chat.js">/public/javascripts/chat.js</a> we catch the <code>sendMessage</code> event:</p>
+<pre><code>
+hub.client.sendMessage = function(username, message) {
+    var el = $('&lt;div class="message"&gt;&lt;span&gt;&lt;/span&gt;&lt;p&gt;&lt;/p&gt;&lt;/div&gt;');
+    $("span", el).text(username + ': ');
+    $("p", el).text(message);
+    $(el).addClass("talk");
+    $('#messages').append(el);
+};
+</code></pre>
+    </div>
+    <div>
+        <h2>Calling into the hub from outside</h2>
+        <p>Sometimes you may want to call clients connected to a hub from another class or manage its group. To do that you can get an
+        instance of the hub from the <code>GlobalHost</code>. From the returned instance you can call the <code>clients()</code> or <code>groups()</code> methods
+        but not <code>context()</code>. In the Chat tutorial we create a <a href="#code/app/actors/Robot.java">Robot</a> that sends a message
+        to all rooms every 30 seconds:</p>
+<pre><code>
+HubContext&lt;ChatPage&gt; hub = GlobalHost.getHub(ChatHub.class);
+hub.clients().all.sendMessage("Robot", "I am alive!");
+</code></pre>
+        <p>On the first line, we see how to get a reference to a hub class (HubContext&lt;T&gt;). In the next line we see reference to
+        the HubContext can be used similarly to writing code inside the Hub.</p>
+    </div>
+    <div>
+        <h2>Advanced Topics</h2>
+        <p>You can learn about some other advanced topics at the <a href="http://signalj.io">SignalJ</a> website. Some of these topics are:</p>
+        <ul>
+            <li>Using your own dependency injection - Hub classes can be created via a IOC framework such as Guice or Spring</li>
+            <li>Configuration</li>
+            <li>Client side life time events</li>
+        </ul>
+    </div>
+    <div>
+        <h2>Future Enhancements</h2>
+        <p>Future releases of SignalJ will continue to attempt to achieve feature parity with SignalR.</p>
+        <ul>
+            <li>Forever Frames Transport - Mainly to support older versions of IE</li>
+            <li>Clustering - Clustering in SignalR is complex, however because SignalJ is based on Akka, SignalJ will use Akka's clustering.</li>
+            <li>Pluggable Authentication - The base for this work is included in 0.5.0 but will need some more rework to integrate with security projects such as SecureSocial or Deadbolt</li>
+        </ul>
+    </div>
+    <footer>
+          Signalj is maintained by <a href="https://github.com/chanan">chanan</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+                  <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-56303263-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+    </div>
+</div>
+</html>
+</body>
+</html>
