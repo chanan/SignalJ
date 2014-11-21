@@ -13,11 +13,7 @@ Several other clients exist such as for iOs, Android, and .net.
 Examples
 --------
 
-There is a a Typesafe Activator tutorial showing how to built a chat server: xxxxxxxxx
-
-If you are running SignalJ sample from github on your localhost you can check out the test page:
-
-* [Test page of various SignalJ functions](http://localhost:9000/test)
+There is a [Typesafe Activator tutorial](https://github.com/chanan/signalj-chat-java) showing how to built a chat server
 
 Setup Instructions
 ------------------
