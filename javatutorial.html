@@ -18,7 +18,7 @@
     <div id="container">
       <div class="inner">
     <div>
-        <h1>SignalJ Tutorial</h1>
+        <h1>SignalJ Java Tutorial</h1>
         <h2>SignalJ Activator Template</h2>
         <p>This tutorial is available as a <a href="http://typesafe.com/activator">Typesafe Activator template</a>. To run it,
         <a href="http://typesafe.com/platform/getstarted">download Activator</a>. Once download, do the following: </p>
@@ -54,7 +54,7 @@ hub.client.userJoined = myClientFunction(param) {
     </div>
     <div>
         <h2>Server Side Setup</h2>
-        <p>First, include the following lines in your <a href="#code/build.sbt">build.sbt</a>:</p>
+        <p>First, include the following lines in your <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/build.sbt">build.sbt</a>:</p>
         <pre><code>
 resolvers += "release repository" at "http://chanan.github.io/maven-repo/releases/"
 
@@ -72,26 +72,26 @@ libraryDependencies ++= Seq(
         </code></pre>
         <p><strong>Note:</strong> SignalJ is a JQuery plugin and requires JQuery to work. It can work with either JQuery 1.x to support older browsers, or with 2.x. This example shows including JQuery via
         Webjars, but you may include JQuery in your project via other means or by pointing to a CDN.</p>
-        <p>SignalJ is a play plugin therefore it needs to be registered in <a href="#code/conf/play.plugins">conf/play.plugins</a>. Eitehr create or edit the file and add the line:</p>
+        <p>SignalJ is a play plugin therefore it needs to be registered in <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/conf/play.plugins">conf/play.plugins</a>. Eitehr create or edit the file and add the line:</p>
         <pre><code>
 10000:signalJ.SignalJPlugin
         </code></pre>
         <p><strong>Note:</strong> The number at the start of the line is the plugin load number. You can change that number if you have other plugins and want to load SignalJ before or after them.</p>
-        <p>Next you will need to add the SignalJ routes to your <a href="#code/conf/routes">routes</a> files:</p>
+        <p>Next you will need to add the SignalJ routes to your <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/conf/routes">routes</a> files:</p>
         <pre><code>
 ->     /      signalJ.Routes
         </code></pre>
         <p>The next two step are <em>optional</em>. First, if you wish to use the ServerSentEvents or AJAX LongPolling transports you will need to extend your
-        <a href="#code/app/Global.java">Global</a> from SignalJ's Global (<code>signalJ.SignalJGlobal</code>). (Note: in the event you cannot do so, there are other options. Please see the documentation at
+        <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/Global.java">Global</a> from SignalJ's Global (<code>signalJ.SignalJGlobal</code>). (Note: in the event you cannot do so, there are other options. Please see the documentation at
         <a href="http://signalj.io">the SignalJ website</a>). If you plan to only support Websockets, this step is not needed.</p>
         <p>The second optional step is only required if want to load the SignalR's JQuery plugin (and therefore SignalJ's) from inside the the plugin itself. This options & benefits of different ways of loading
         the JQuery plugin are discussed in the next step of the tutorial (Client Side Setup). However, if you do chose to use this option then two changes need to be made. First, you will need to include sbt-web version 1.1
-        or above in your <a href="#code/project/plugins.sbt">plugins.sbt</a>: </p>
+        or above in your <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/project/plugins.sbt">plugins.sbt</a>: </p>
         <pre><code>
 addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.1.1")
         </code></pre>
         <p></p>Second, you will need to add the following line to
-        <a href="#code/build.sbt">build.sbt</a>:</p>
+        <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/build.sbt">build.sbt</a>:</p>
         <pre><code>
 WebKeys.directWebModules in Assets += "signalj"
         </code></pre>
@@ -99,8 +99,8 @@ WebKeys.directWebModules in Assets += "signalj"
     <div>
         <h2>Client Side Setup</h2>
         <p>Three script files are needed for SignalJ to work: JQuery, SignalR's JQuery plugin, and SignalJ's hubs javascript file.</p>
-        <p>First, include JQuery in your project. Use JQuery 1.x if you plan to support older browsers. In this example, I included JQuery 2 via <a href="http://webjars.org">Webjars</a>.
-        This can be found in <a href="#code/app/views/main.scala.html">/app/views/main.scala.html</a>: </p>
+        <p>First, include JQuery in your project. Use JQuery 1.x if you plan to support older browsers. In this example, I included JQuery 2 via <a target="_blank" href="http://webjars.org">Webjars</a>.
+        This can be found in <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/views/main.scala.html">/app/views/main.scala.html</a>: </p>
         <code><pre>
 &lt;script type='text/javascript' src='@routes.WebJarAssets.at(WebJarAssets.locate("jquery.min.js"))'&gt;&lt;/script&gt;
         </pre></code>
@@ -117,7 +117,7 @@ WebKeys.directWebModules in Assets += "signalj"
             <li>Or, you can link to the /signalj/jquery.signalR.js route inside of the SignalJ plugin. The benefit of this option is that it will use the un-minified version of the file in development mode and the
             minified version in production mode. The draw back of this is that changes to plugins.sbt and build.sbt must be made as specified in the "Server Side Setup" step of this tutorial outlined</li>
         </ol>
-        <p>In this tutorial, I used the third option as can be seen in <a href="#code/app/views/main.scala.html">/app/views/main.scala.html</a>: </p>
+        <p>In this tutorial, I used the third option as can be seen in <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/views/main.scala.html">/app/views/main.scala.html</a>: </p>
 <code><pre>
 &lt;script src="/signalj/jquery.signalR.js"&gt;&lt;/script&gt;
 </pre></code>
@@ -135,7 +135,7 @@ WebKeys.directWebModules in Assets += "signalj"
         <p>Before looking in detail at the Chat server, lets learn some basics of using SignalJ</p>
         <p>The hub classes are the classes that the client can invoke on the server. A hub class can be in any package, in this case I place mine in the hubs package. A hub class extends
         <code>signalJ.services.Hub</code>. This class is a generic type that requires an interface as its parameter. The interface are the functions that should be present on the client and can be
-        called from the server. In the Chat example you can see the client side functions declared in <a href="#code/app/hubs/ChatPage.java">/apps/hubs/ChatPage</a>:</p>
+        called from the server. In the Chat example you can see the client side functions declared in <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/hubs/ChatPage.java">/apps/hubs/ChatPage</a>:</p>
         <pre><code>
 public interface ChatPage {
     public void userJoined(String username);
@@ -148,7 +148,7 @@ public interface ChatPage {
         </code></pre>
         <p>Two things to note about the interface above. One is that there is no server side class the implements this interface. This interface is only used to declare what functions (messages) the browser will handle.
         Second, complex objects may be passed to the client as well. They will be serialized to Json. In this case, we see two methods have <code>Set</code> parameters. They will be transferred as Json arrays.</p>
-        <p>Now, we can create the hub class: <a href="#code/app/hubs/ChatHub.java">/apps/hubs/ChatHub.java</a>. Only one method must be overridden <code></code> as shown below:</p>
+        <p>Now, we can create the hub class: <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/hubs/ChatHub.java">/apps/hubs/ChatHub.java</a>. Only one method must be overridden <code></code> as shown below:</p>
         <pre><code>
 public class ChatHub extends Hub&lt;ChatPage&gt; {
     @Override
@@ -255,7 +255,7 @@ $.connection.hub.start().done(function () {
 });
         </code></pre>
         <p>First, in the code above, you can see that you need to make a connection to a specific hub. The name <code>chatHub</code> is the name of the hub class
-        you created previously <a href="#code/app/hubs/ChatHub.java">ChatHub</a>. Note the case was change to match Json conventions. You can also assign a name
+        you created previously <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/hubs/ChatHub.java">ChatHub</a>. Note the case was change to match Json conventions. You can also assign a name
         to a hub using the <code>HubName</code> annotation.</p>
         <p>Second, you start the hub. In this case, the hub is started in "auto transport" mode. That means it will first try to connect with Websockets, then
         ServerSentEvents and lastly AJAX Longpolling (A future version of SignalJ will also enable Forever Frames). You can also specify a specific transport
@@ -344,7 +344,7 @@ hub.client.method3 = function(person) {
     <div>
         <h2>The ChatPage Interface</h2>
         <p>Now that we have gone through a tour of SignalJ's features, lets go about building our chat application. First, lets create some method
-        definition in the interface <a href="#code/app/hubs/ChatPage.java">ChatPage</a></p>
+        definition in the interface <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/hubs/ChatPage.java">ChatPage</a></p>
 <pre><code>
 public interface ChatPage {
     public void userJoined(String username);
@@ -358,7 +358,7 @@ public interface ChatPage {
     </div>
     <div>
         <h2>The Hub Class</h2>
-        <p>First lets define the needed skeleton in <a href="#code/app/hubs/ChatHub.java">/apps/hubs/ChatHub.java</a>:</p>
+        <p>First lets define the needed skeleton in <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/hubs/ChatHub.java">/apps/hubs/ChatHub.java</a>:</p>
         <pre><code>
 public class ChatHub extends Hub&lt;ChatPage&gt; {
 
@@ -395,7 +395,7 @@ public class ChatHub extends Hub&lt;ChatPage&gt; {
                 This will update the map between connectionIds and usernames</li>
             <li><code>return true;</code> - If everything was successful, the server returns true to the client</li>
         </ol>
-        <p>On the <a href="#code/public/javascripts/chat.js">client</a> this method is called like so:</p>
+        <p>On the <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/public/javascripts/chat.js">client</a> this method is called like so:</p>
         <pre><code>
 $('#loginSubmit').click(function(event) {
     event.preventDefault();
@@ -416,21 +416,21 @@ $('#loginSubmit').click(function(event) {
     <div>
         <h2>Chat - More examples</h2>
         <p>Lets look at how easy it is to actually send chat messages between the client -&gt; server -&gt; others in the room.
-        In <a href="#code/public/javascripts/chat.js">/public/javascripts/chat.js</a> we send the room name and message to the server:</p>
+        In <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/public/javascripts/chat.js">/public/javascripts/chat.js</a> we send the room name and message to the server:</p>
         <pre><code>
 var sendMessage = function() {
     hub.server.sendMessage($('#roomselect').val(), $("#talk").val());
     ...
 };
         </code></pre>
-        <p>In <a href="#code/app/hubs/ChatHub.scala">/app/hubs/ChatHub</a> we see that the message is received by the server and
+        <p>In <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/hubs/ChatHub.java">/app/hubs/ChatHub</a> we see that the message is received by the server and
         sent to everyone else in the room. We get the username we saved in <code>callerState</code> in the login method:</p>
         <pre><code>
 def sendMessage(room: String, message: String) {
     clients.othersInGroup(room).sendMessage(clients.callerState.get("username"), message)
 }
         </code></pre>
-        <p>Finally, back in <a href="#code/public/javascripts/chat.js">/public/javascripts/chat.js</a> we catch the <code>sendMessage</code> event:</p>
+        <p>Finally, back in <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/public/javascripts/chat.js">/public/javascripts/chat.js</a> we catch the <code>sendMessage</code> event:</p>
 <pre><code>
 hub.client.sendMessage = function(username, message) {
     var el = $('&lt;div class="message"&gt;&lt;span&gt;&lt;/span&gt;&lt;p&gt;&lt;/p&gt;&lt;/div&gt;');
@@ -445,7 +445,7 @@ hub.client.sendMessage = function(username, message) {
         <h2>Calling into the hub from outside</h2>
         <p>Sometimes you may want to call clients connected to a hub from another class or manage its group. To do that you can get an
         instance of the hub from the <code>GlobalHost</code>. From the returned instance you can call the <code>clients()</code> or <code>groups()</code> methods
-        but not <code>context()</code>. In the Chat tutorial we create a <a href="#code/app/actors/Robot.scala">Robot</a> that sends a message
+        but not <code>context()</code>. In the Chat tutorial we create a <a target="_blank" href="https://github.com/chanan/signalj-chat-java/blob/master/app/actors/Robot.java">Robot</a> that sends a message
         to all rooms every 30 seconds:</p>
 <pre><code>
 val hub: HubContext[ChatPage] = GlobalHost.getHub(classOf[ChatHub])
