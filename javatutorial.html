@@ -10,7 +10,7 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <title>SignalJ Activator Tutorial</title>
+    <title>SignalJ Activator Java Tutorial</title>
 </head>
 <body>
     <a href="https://github.com/chanan/SignalJ"><img style="position: fixed; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/8b6b8ccc6da3aa5722903da7b58eb5ab1081adee/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png"></a>
@@ -415,7 +415,7 @@ $('#loginSubmit').click(function(event) {
     </div>
     <div>
         <h2>Chat - More examples</h2>
-        <p>Lets look at how easy it is to actually send chat messages between the client -&gt; server -&gt; other in the room.
+        <p>Lets look at how easy it is to actually send chat messages between the client -&gt; server -&gt; others in the room.
         In <a href="#code/public/javascripts/chat.js">/public/javascripts/chat.js</a> we send the room name and message to the server:</p>
         <pre><code>
 var sendMessage = function() {
@@ -423,11 +423,11 @@ var sendMessage = function() {
     ...
 };
         </code></pre>
-        <p>In <a href="#code/app/hubs/ChatHub.java">/app/hubs/ChatHub</a> we see that the message is received by the server and
+        <p>In <a href="#code/app/hubs/ChatHub.scala">/app/hubs/ChatHub</a> we see that the message is received by the server and
         sent to everyone else in the room. We get the username we saved in <code>callerState</code> in the login method:</p>
         <pre><code>
-public void sendMessage(String room, String message) {
-    clients().othersInGroup(room).sendMessage(clients().callerState.get("username"), message);
+def sendMessage(room: String, message: String) {
+    clients.othersInGroup(room).sendMessage(clients.callerState.get("username"), message)
 }
         </code></pre>
         <p>Finally, back in <a href="#code/public/javascripts/chat.js">/public/javascripts/chat.js</a> we catch the <code>sendMessage</code> event:</p>
@@ -445,13 +445,13 @@ hub.client.sendMessage = function(username, message) {
         <h2>Calling into the hub from outside</h2>
         <p>Sometimes you may want to call clients connected to a hub from another class or manage its group. To do that you can get an
         instance of the hub from the <code>GlobalHost</code>. From the returned instance you can call the <code>clients()</code> or <code>groups()</code> methods
-        but not <code>context()</code>. In the Chat tutorial we create a <a href="#code/app/actors/Robot.java">Robot</a> that sends a message
+        but not <code>context()</code>. In the Chat tutorial we create a <a href="#code/app/actors/Robot.scala">Robot</a> that sends a message
         to all rooms every 30 seconds:</p>
 <pre><code>
-HubContext&lt;ChatPage&gt; hub = GlobalHost.getHub(ChatHub.class);
-hub.clients().all.sendMessage("Robot", "I am alive!");
+val hub: HubContext[ChatPage] = GlobalHost.getHub(classOf[ChatHub])
+hub.clients.all.sendMessage("Robot", "I am alive!")
 </code></pre>
-        <p>On the first line, we see how to get a reference to a hub class (HubContext&lt;T&gt;). In the next line we see reference to
+        <p>On the first line, we see how to get a reference to a hub class (HubContext[T]). In the next line we see reference to
         the HubContext can be used similarly to writing code inside the Hub.</p>
     </div>
     <div>
