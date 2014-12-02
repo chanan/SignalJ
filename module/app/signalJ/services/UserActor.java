@@ -2,6 +2,7 @@ package signalJ.services;
 
 import akka.actor.*;
 import akka.japi.pf.ReceiveBuilder;
+import play.Logger;
 import scala.concurrent.duration.Duration;
 import signalJ.SignalJPlugin;
 import signalJ.infrastructure.ProtectedData;
@@ -64,7 +65,7 @@ class UserActor extends AbstractActor {
                         if (messages.get(ack.message.getMessageId()).isEmpty())
                             messages.remove(ack.message.getMessageId());
                     }
-                }).match(Terminated.class, t -> t.actor().equals(transport), t -> {
+                }).match(Terminated.class, t -> {
                     transport = Optional.empty();
                     context().setReceiveTimeout(Duration.create(SignalJPlugin.getConfiguration().getDisconnectTimeout(), TimeUnit.SECONDS));
                 }).match(Messages.StateChange.class, state -> {
